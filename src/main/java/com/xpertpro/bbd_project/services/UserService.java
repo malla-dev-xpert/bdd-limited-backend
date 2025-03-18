@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
     private final PasswordEncoder passwordEncoder;
@@ -27,9 +29,14 @@ public class UserService {
     }
 
     public String createUser(User user){
+        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByUsername(user.getUsername()));
         try{
             if (userRepository.findByEmail(user.getEmail()).isPresent()) {
                 return "EMAIL_EXIST";
+            }
+
+            if (optionalUser.isPresent()) {
+                return "USERNAME_EXIST";
             }
 
             if (userRepository.findByPhoneNumber(user.getPhoneNumber()).isPresent()) {
