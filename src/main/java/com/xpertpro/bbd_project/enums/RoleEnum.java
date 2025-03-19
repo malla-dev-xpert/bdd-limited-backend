@@ -1,7 +1,8 @@
 package com.xpertpro.bbd_project.enums;
 
-public enum Role {
+public enum RoleEnum {
     ADMIN,
     AGENT,
-    SECRETARY
+    SECRETARY,
+    COMPTABLE
 }

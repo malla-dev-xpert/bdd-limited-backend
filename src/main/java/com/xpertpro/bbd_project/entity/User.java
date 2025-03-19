@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.entity;
 
-import com.xpertpro.bbd_project.enums.Role;
+import com.xpertpro.bbd_project.enums.RoleEnum;
+import com.xpertpro.bbd_project.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +27,13 @@ public class User {
     private String password;
     private String username;
     @Enumerated(EnumType.STRING)
-    private Role userRole;
+    private RoleEnum userRoleEnum;
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.CREATE;
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    private RoleEnum roleEnum;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
+
 }

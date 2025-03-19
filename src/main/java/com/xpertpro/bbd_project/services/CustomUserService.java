@@ -22,7 +22,7 @@ public class CustomUserService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getUserRole().toString())
+                .roles(user.getUserRoleEnum().toString())
                 .build();
     }
 }
