@@ -15,6 +15,9 @@ public class RoleServices {
     private RoleRepository roleRepository;
 
     public RolesEntity createRole(String roleName, Set<PermissionsEnum> permissions) {
+        if (roleRepository.findByName(roleName).isPresent()) {
+            throw new IllegalArgumentException("Ce rôle existe déjà !");
+        }
         RolesEntity role = new RolesEntity();
         role.setName(roleName);
         role.setPermissions(permissions);  // Affectation des permissions sous forme d'énumération
