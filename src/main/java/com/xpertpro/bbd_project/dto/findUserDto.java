@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.dto;
 
+import com.xpertpro.bbd_project.entity.RolesEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ public class findUserDto {
     private String lastName;
     private String phoneNumber;
     private String email;
-    private String photoUrl;
     private String username;
+    private String status;
+    private RolesEntity role;
 }
