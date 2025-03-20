@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/users/create").permitAll()
                         .requestMatchers("/api/v1/users/auth").permitAll()
+                        .requestMatchers("/api/v1/roles/create").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();

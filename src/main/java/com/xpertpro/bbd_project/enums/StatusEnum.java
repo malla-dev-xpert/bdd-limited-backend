@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.enums;
 
-public enum Status {
+public enum StatusEnum {
     CREATE,
     DELETE,
     DISABLE,

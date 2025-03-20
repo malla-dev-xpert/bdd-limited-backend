@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
-import com.xpertpro.bbd_project.enums.RoleEnum;
-import com.xpertpro.bbd_project.enums.Status;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,26 +12,31 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String firstName;
     private String lastName;
+
     @Column(unique = true)
     private String phoneNumber;
+
     @Column(unique = true)
     private String email;
-    private String photoUrl;
+
     private String password;
     private String username;
+
     @Enumerated(EnumType.STRING)
-    private RoleEnum userRoleEnum;
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.CREATE;
-    @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
-    private RoleEnum roleEnum;
+    private StatusEnum statusEnum = StatusEnum.CREATE;
+
+//    @ManyToOne
+//    @JoinColumn(name = "role_id", nullable = false)
+//    private RolesEntity userRole;
+    private String roleName;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
 

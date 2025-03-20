@@ -1,12 +1,11 @@
 package com.xpertpro.bbd_project.dto;
 
-import com.xpertpro.bbd_project.enums.RoleEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @AllArgsConstructor @NoArgsConstructor
-public class UserDto {
+public class findUserDto {
     private Long id;
     private String firstName;
     private String lastName;
@@ -14,5 +13,4 @@ public class UserDto {
     private String email;
     private String photoUrl;
     private String username;
-    private RoleEnum userRoleEnum;
 }
