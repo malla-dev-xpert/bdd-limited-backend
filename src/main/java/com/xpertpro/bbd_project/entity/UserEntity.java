@@ -32,10 +32,9 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private StatusEnum statusEnum = StatusEnum.CREATE;
 
-//    @ManyToOne
-//    @JoinColumn(name = "role_id", nullable = false)
-//    private RolesEntity userRole;
-    private String roleName;
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private RolesEntity role;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;

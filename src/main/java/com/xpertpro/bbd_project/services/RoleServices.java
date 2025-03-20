@@ -6,6 +6,7 @@ import com.xpertpro.bbd_project.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -18,5 +19,9 @@ public class RoleServices {
         role.setName(roleName);
         role.setPermissions(permissions);  // Affectation des permissions sous forme d'énumération
         return roleRepository.save(role);
+    }
+
+    public List<RolesEntity> findAllRoles(){
+        return roleRepository.findAll();
     }
 }
