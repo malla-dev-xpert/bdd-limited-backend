@@ -52,9 +52,10 @@ public class UserService {
         }
 
         RolesEntity role = roleRepository.findByName(userDto.getRoleName())
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
 
         UserEntity user = userMapper.toEntity(userDto);
+        user.setRole(role);
         userRepository.save(user);
         return "SUCCESS";
     }

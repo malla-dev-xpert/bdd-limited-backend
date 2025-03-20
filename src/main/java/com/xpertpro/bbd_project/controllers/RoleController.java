@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/roles")
 @CrossOrigin("*")
@@ -24,4 +26,10 @@ public class RoleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
+
+    @GetMapping()
+    public List<RolesEntity> findAll(){
+       return roleServices.findAllRoles();
+    }
+
 }
