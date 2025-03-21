@@ -1,9 +1,9 @@
 package com.xpertpro.bbd_project.enums;
 
 public enum PermissionsEnum {
-    READ,
-    WRITE,
-    UPDATE,
-    DELETE,
-    ALL
+    CAN_READ,
+    CAN_WRITE,
+    CAN_UPDATE,
+    CAN_DELETE,
+    ALL_PRIVILEGES
 }

@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.mapper;
 
 import com.xpertpro.bbd_project.dto.CreateUserDto;
-import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
