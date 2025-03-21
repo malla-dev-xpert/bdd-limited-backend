@@ -2,7 +2,6 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
 import com.xpertpro.bbd_project.dto.CreateUserDto;
-import com.xpertpro.bbd_project.dto.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
