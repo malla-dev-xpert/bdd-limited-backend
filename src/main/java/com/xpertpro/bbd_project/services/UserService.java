@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.CreateUserDto;
+import com.xpertpro.bbd_project.dto.findUserDto;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -107,38 +108,28 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-//
-//        try{
-//            if(user.getEmail() != null){
-//                if(user.getStatusEnum() == StatusEnum.CREATE){
-//                    SimpleMailMessage message = new SimpleMailMessage();
-//                    message.setTo(user.getEmail());
-//                    message.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
-//                    message.setText
-//                            ("Bonjour "+ user.getFirstName() + " " + user.getLastName() + "\n" +
-//                                    "Nous sommes ravis de vous accueillir sur BBD-LIMITED ! Votre compte a été créé avec succès. Vous trouverez ci-dessous vos informations de connexion :"+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "Username : "+user.getUsername()+"\n"+
-//                                    "Mot de passe : " +clearTextPassword+"\n"+
-//                                    "Fait le : "+ user.getCreatedAt()+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "Nous vous recommandons de modifier votre mot de passe dès votre première connexion pour des raisons de sécurité."
-//                                    + "\n" + "\n"+
-//                                    "Si vous avez des questions ou besoin d’assistance, n’hésitez pas à nous contacter à bbdlimited@gmail.com."
-//                                    + "\n"+"\n"+"\n"+
-//                                    "Bienvenue et bonne expérience sur BBD LIMITED !"
-//                            );
-//                    mailSender.send(message);
-//                }
-//            }
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
 
         return "SUCCESS";
     }
+
+    public findUserDto getUserById(Long id) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+            return new findUserDto(
+                    user.getId(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getPhoneNumber(),
+                    user.getEmail(),
+                    user.getUsername(),
+                    user.getStatusEnum().toString(),
+                    user.getRole()
+            );
+        } else {
+            throw new RuntimeException("Utilisateur non trouvé avec l'ID : " + id);
+        }
+    }
+
 
 }

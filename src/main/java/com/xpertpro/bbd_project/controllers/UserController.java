@@ -2,6 +2,7 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
 import com.xpertpro.bbd_project.dto.CreateUserDto;
+import com.xpertpro.bbd_project.dto.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
@@ -68,6 +69,11 @@ public class UserController {
         }else{
             throw new IllegalArgumentException("Username not found");
         }
+    }
+
+    @GetMapping("/id/{id}")
+    public findUserDto getUserById(@PathVariable("id") Long id){
+        return userService.getUserById(id);
     }
 
 }
