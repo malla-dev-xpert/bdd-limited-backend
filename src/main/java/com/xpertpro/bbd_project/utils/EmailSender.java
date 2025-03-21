@@ -2,11 +2,14 @@ package com.xpertpro.bbd_project.utils;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 
+@Service
 public class EmailSender {
     private JavaMailSender mailSender;
 
@@ -15,14 +18,13 @@ public class EmailSender {
     }
 
     public void sendEmail(String email, String subject, String content) throws MessagingException, UnsupportedEncodingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
 
-        helper.setFrom("konelamine1122@gmail.com", "BBD LIMITED");
-        helper.setTo(email);
+        SimpleMailMessage message = new SimpleMailMessage();
 
-        helper.setSubject(subject);
-        helper.setText(content, true);
+        message.setFrom("konelamine1122@gmail.com");
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(content);
 
         mailSender.send(message);
     }
