@@ -1,8 +1,10 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
-import com.xpertpro.bbd_project.dto.CreateUserDto;
-import com.xpertpro.bbd_project.dto.findUserDto;
+import com.xpertpro.bbd_project.dto.user.CreateUserDto;
+import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
+import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
+import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
@@ -74,6 +76,16 @@ public class UserController {
     @GetMapping("/id/{id}")
     public findUserDto getUserById(@PathVariable("id") Long id){
         return userService.getUserById(id);
+    }
+
+    @PutMapping("/update/{id}")
+    public UpdateUserDto updateUser(@PathVariable Long id, @RequestBody UpdateUserDto updateUserDto) {
+        return userService.updateUser(id, updateUserDto);
+    }
+
+    @PutMapping("/change-password/{id}")
+    public String changeUserPassword(@PathVariable Long id, @RequestBody EditPasswordDto editPasswordDto) {
+        return userService.editPassword(id, editPasswordDto);
     }
 
 }

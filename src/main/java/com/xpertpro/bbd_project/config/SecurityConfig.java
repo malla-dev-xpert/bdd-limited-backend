@@ -21,7 +21,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/users/**", "/api/v1/roles/**").permitAll()
+                        .requestMatchers("/api/v1/users/**", "api/v1/roles/create").permitAll()
+                        .requestMatchers("/api/v1/users/change-password/**").authenticated()
                         .anyRequest().authenticated()
                 );
         return http.build();
