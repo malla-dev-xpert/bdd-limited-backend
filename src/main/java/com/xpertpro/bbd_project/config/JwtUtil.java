@@ -4,12 +4,14 @@ package com.xpertpro.bbd_project.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private String secret = "token-id";
+    @Value("${jwt.secret}")
+    private String secret;
     private long expirationTime = 24 * 60 * 60 * 1000;
 
     // Générer un token

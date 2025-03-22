@@ -1,6 +1,5 @@
-package com.xpertpro.bbd_project.dto;
+package com.xpertpro.bbd_project.dto.user;
 
-import com.xpertpro.bbd_project.entity.RolesEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

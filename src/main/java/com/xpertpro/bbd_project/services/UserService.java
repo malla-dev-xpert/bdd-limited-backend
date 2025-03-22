@@ -1,6 +1,9 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.CreateUserDto;
+import com.xpertpro.bbd_project.dto.user.CreateUserDto;
+import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
+import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
+import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -9,11 +12,12 @@ import com.xpertpro.bbd_project.repository.RoleRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -107,38 +111,69 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-//
-//        try{
-//            if(user.getEmail() != null){
-//                if(user.getStatusEnum() == StatusEnum.CREATE){
-//                    SimpleMailMessage message = new SimpleMailMessage();
-//                    message.setTo(user.getEmail());
-//                    message.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
-//                    message.setText
-//                            ("Bonjour "+ user.getFirstName() + " " + user.getLastName() + "\n" +
-//                                    "Nous sommes ravis de vous accueillir sur BBD-LIMITED ! Votre compte a été créé avec succès. Vous trouverez ci-dessous vos informations de connexion :"+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "Username : "+user.getUsername()+"\n"+
-//                                    "Mot de passe : " +clearTextPassword+"\n"+
-//                                    "Fait le : "+ user.getCreatedAt()+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "\n"+
-//                                    "Nous vous recommandons de modifier votre mot de passe dès votre première connexion pour des raisons de sécurité."
-//                                    + "\n" + "\n"+
-//                                    "Si vous avez des questions ou besoin d’assistance, n’hésitez pas à nous contacter à bbdlimited@gmail.com."
-//                                    + "\n"+"\n"+"\n"+
-//                                    "Bienvenue et bonne expérience sur BBD LIMITED !"
-//                            );
-//                    mailSender.send(message);
-//                }
-//            }
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
 
         return "SUCCESS";
     }
 
+    public findUserDto getUserById(Long id) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+            return new findUserDto(
+                    user.getId(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getPhoneNumber(),
+                    user.getEmail(),
+                    user.getUsername(),
+                    user.getStatusEnum().toString(),
+                    user.getRole()
+            );
+        } else {
+            throw new RuntimeException("Utilisateur non trouvé avec l'ID : " + id);
+        }
+    }
+
+    public UpdateUserDto updateUser(Long userId, UpdateUserDto updateUserDto) {
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isPresent()) {
+            UserEntity user = optionalUser.get();
+
+            if (updateUserDto.getFirstName() != null) user.setFirstName(updateUserDto.getFirstName());
+            if (updateUserDto.getLastName() != null) user.setLastName(updateUserDto.getLastName());
+            if (updateUserDto.getPhoneNumber() != null) user.setPhoneNumber(updateUserDto.getPhoneNumber());
+            if (updateUserDto.getEmail() != null) user.setEmail(updateUserDto.getEmail());
+            if (updateUserDto.getUsername() != null) user.setUsername(updateUserDto.getUsername());
+            user.setEditedAt(updateUserDto.getEditedAt());
+
+            userRepository.save(user);
+            return updateUserDto;
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
+
+    public String editPassword(Long userId, EditPasswordDto editPasswordDto) {
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isPresent()) {
+            UserEntity user = optionalUser.get();
+
+            // Vérifier si l'ancien mot de passe est correct
+            if (!passwordEncoder.matches(editPasswordDto.getOldPassword(), user.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OLD_PASSWORD_INCORRECT");
+            }
+
+            // Hacher le nouveau mot de passe et mettre à jour l'utilisateur
+            String hashedNewPassword = passwordEncoder.encode(editPasswordDto.getNewPassword());
+            user.setPassword(hashedNewPassword);
+            user.setEditedAt(editPasswordDto.getEditedAt());
+            userRepository.save(user);
+
+            return "PASSWORD_EDITED";
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
 }
