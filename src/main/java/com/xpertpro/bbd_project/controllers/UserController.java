@@ -6,16 +6,25 @@ import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RestController
@@ -34,18 +43,40 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Autowired
+    SpringTemplateEngine templateEngine;
+
     @PostMapping("/auth")
     public ResponseEntity<String> login(@RequestBody UserEntity user) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-        );
-        if (authentication.isAuthenticated()) {
-            String token = jwtUtil.generateToken(user.getUsername());
-            return ResponseEntity.ok(token);
-        } else {
-            return ResponseEntity.status(401).body("ERROR");
+        UserEntity existingUser = userRepository.findByUsername(user.getUsername());
+
+        if (existingUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé.");
         }
+
+        if (existingUser.getStatusEnum() == StatusEnum.DISABLE) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Votre compte est suspendu pour le moment.");
+        }
+
+        if (existingUser.getStatusEnum() == StatusEnum.CREATE) {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+            );
+
+            if (authentication.isAuthenticated()) {
+                String token = jwtUtil.generateToken(user.getUsername());
+                return ResponseEntity.ok(token);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiants incorrects");
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Statut utilisateur non valide.");
     }
+
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
@@ -86,6 +117,18 @@ public class UserController {
     @PutMapping("/change-password/{id}")
     public String changeUserPassword(@PathVariable Long id, @RequestBody EditPasswordDto editPasswordDto) {
         return userService.editPassword(id, editPasswordDto);
+    }
+
+    @DeleteMapping("/disable/{id}")
+    public String disbaleUser(@PathVariable Long id){
+        userService.disbaleUser(id);
+        return "Le compte de l'utilisateur a été désactivé.";
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
+        return "Le compte de l'utilisateur a été supprimé.";
     }
 
 }
