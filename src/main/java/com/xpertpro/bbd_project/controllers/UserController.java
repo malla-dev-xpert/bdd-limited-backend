@@ -19,6 +19,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -50,7 +51,17 @@ public class UserController {
 
     @PostMapping("/auth")
     public ResponseEntity<String> login(@RequestBody UserEntity user) {
-        if(user.getStatusEnum() == StatusEnum.CREATE){
+        UserEntity existingUser = userRepository.findByUsername(user.getUsername());
+
+        if (existingUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé.");
+        }
+
+        if (existingUser.getStatusEnum() == StatusEnum.DISABLE) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Votre compte est suspendu pour le moment.");
+        }
+
+        if (existingUser.getStatusEnum() == StatusEnum.CREATE) {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
             );
@@ -59,12 +70,13 @@ public class UserController {
                 String token = jwtUtil.generateToken(user.getUsername());
                 return ResponseEntity.ok(token);
             } else {
-                return ResponseEntity.status(401).body("ERROR");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiants incorrects");
             }
-        }else{
-            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Statut utilisateur non valide.");
     }
+
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
