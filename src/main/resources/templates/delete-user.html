@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Compte Supprimé - BBD LIMITED</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+    .content { padding: 20px; }
+    .info { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    .cta { background: #3498db; color: white; padding: 12px 20px; text-decoration: none; display: inline-block; margin-top: 20px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>BBD LIMITED</h2>
+  </div>
+
+  <div class="content">
+    <h3>Bonjour <span th:text="${firstName} + ' ' + ${lastName}"></span>,</h3>
+    <p>Nous vous informons que votre compte sur <strong>BBD LIMITED</strong> a été supprimé.</p>
+
+    <div class="info">
+      <p><strong>Username :</strong> <span th:text="${username}"></span></p>
+      <p><strong>Date de suppression :</strong> <span th:text="${editedAt}"></span></p>
+    </div>
+
+    <p>Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez plus d’informations, veuillez contacter notre support.</p>
+
+    <p><strong>Cordialement, <br></strong> L’équipe BBD LIMITED</p>
+
+    <a href="mailto:support@bbdlimited.com" class="cta">Contacter le support</a>
+  </div>
+</div>
+</body>
+</html>
