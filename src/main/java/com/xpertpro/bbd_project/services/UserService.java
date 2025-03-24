@@ -15,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -87,7 +89,7 @@ public class UserService {
         UserEntity user = userMapper.toEntity(userDto);
         user.setRole(role);
         user.setPassword(encodePassword(randomPassword));
-        userRepository.save(user);
+
         try {
             if (user.getEmail() != null && user.getStatusEnum() == StatusEnum.CREATE) {
                 Context context = new Context();
@@ -112,6 +114,7 @@ public class UserService {
             throw new RuntimeException(e);
         }
 
+        userRepository.save(user);
         return "SUCCESS";
     }
 
@@ -176,4 +179,43 @@ public class UserService {
             throw new RuntimeException("User not found with ID: " + userId);
         }
     }
+
+    public String disbaleUser(Long userId) {
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isPresent()) {
+            UserEntity user = optionalUser.get();
+            user.setStatusEnum(StatusEnum.DISABLE);
+            userRepository.save(user);
+
+            if(user.getStatusEnum() == StatusEnum.DISABLE){
+                // déconnecter un utilisateur après la désactivation de son compte
+                SecurityContextHolder.getContext().setAuthentication(null);
+                SecurityContextHolder.clearContext();
+
+                try {
+                    System.out.println("Statut de l'utilisateur est DISABLE, envoi de l'email...");
+                    Context context = new Context();
+                    context.setVariable("firstName", user.getFirstName());
+                    context.setVariable("lastName", user.getLastName());
+                    context.setVariable("username", user.getUsername());
+                    context.setVariable("editedAt", user.getEditedAt());
+
+                    String htmlContent = templateEngine.process("disable-user", context);
+
+                    MimeMessage mimeMessage = mailSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                    helper.setTo(user.getEmail());
+                    helper.setSubject("Compte désactivé – BBD LIMITED");
+                    helper.setText(htmlContent, true);
+
+                    mailSender.send(mimeMessage);
+                    return "user disable.";
+                } catch (Exception e) {
+                    throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage(), e);
+                }
+            }
+        }
+        throw new RuntimeException("User not found with ID: " + userId);
+    }
+
 }

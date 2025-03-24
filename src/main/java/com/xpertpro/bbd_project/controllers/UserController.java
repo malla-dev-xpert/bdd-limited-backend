@@ -6,16 +6,24 @@ import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RestController
@@ -34,16 +42,27 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Autowired
+    SpringTemplateEngine templateEngine;
+
     @PostMapping("/auth")
     public ResponseEntity<String> login(@RequestBody UserEntity user) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-        );
-        if (authentication.isAuthenticated()) {
-            String token = jwtUtil.generateToken(user.getUsername());
-            return ResponseEntity.ok(token);
-        } else {
-            return ResponseEntity.status(401).body("ERROR");
+        if(user.getStatusEnum() == StatusEnum.CREATE){
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+            );
+
+            if (authentication.isAuthenticated()) {
+                String token = jwtUtil.generateToken(user.getUsername());
+                return ResponseEntity.ok(token);
+            } else {
+                return ResponseEntity.status(401).body("ERROR");
+            }
+        }else{
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
     }
 
@@ -86,6 +105,12 @@ public class UserController {
     @PutMapping("/change-password/{id}")
     public String changeUserPassword(@PathVariable Long id, @RequestBody EditPasswordDto editPasswordDto) {
         return userService.editPassword(id, editPasswordDto);
+    }
+
+    @DeleteMapping("/disable/{id}")
+    public String disbaleUser(@PathVariable Long id){
+        userService.disbaleUser(id);
+        return "Le compte de l'utilisateur a été désactivé:";
     }
 
 }
