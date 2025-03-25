@@ -30,6 +30,7 @@ public class UserEntity {
     private String username;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private StatusEnum statusEnum = StatusEnum.CREATE;
 
     @ManyToOne

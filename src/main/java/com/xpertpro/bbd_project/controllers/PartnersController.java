@@ -2,8 +2,10 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.PartnerServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,5 +29,10 @@ public class PartnersController {
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Partenaire ajouté avec succès !");
         }
+    }
+
+    @GetMapping()
+    public Page<Partners> getAllPartners(@RequestParam(defaultValue = "0") int page) {
+        return partnerServices.getAllPartners(page);
     }
 }

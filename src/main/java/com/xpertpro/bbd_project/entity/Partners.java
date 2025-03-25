@@ -25,7 +25,7 @@ public class Partners {
     private String adresse;
 
     @Enumerated(EnumType.STRING)
-    private StatusEnum statusEnum = StatusEnum.CREATE;
+    private StatusEnum status = StatusEnum.CREATE;
 
     private String accountType;
 

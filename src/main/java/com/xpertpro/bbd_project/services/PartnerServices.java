@@ -8,9 +8,15 @@ import com.xpertpro.bbd_project.mapper.PartnersDtoMapper;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
+
+import java.util.List;
 
 @Service
 public class PartnerServices {
@@ -34,10 +40,11 @@ public class PartnerServices {
         partnerRepository.save(partners);
         return "SUCCESS";
     }
-//
-//    public List<Partenaire> obtenirTousLesPartenaires() {
-//        return partenaireRepository.findAll();
-//    }
+
+    public Page<Partners> getAllPartners(int page) {
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        return partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
+    }
 //
 //    public List<Partenaire> obtenirParType(TypeCompte typeCompte) {
 //        return partenaireRepository.findByTypeCompte(typeCompte);

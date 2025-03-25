@@ -13,6 +13,7 @@ import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -179,6 +180,11 @@ public class UserController {
     public String deleteUser(@PathVariable Long id){
         userService.deleteUser(id);
         return "Le compte de l'utilisateur a été supprimé.";
+    }
+
+    @GetMapping()
+    public Page<UserEntity> getAllUsers(@RequestParam(defaultValue = "0") int page) {
+        return userService.findAllUsers(page);
     }
 
 }
