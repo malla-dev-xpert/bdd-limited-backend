@@ -19,6 +19,7 @@ public class SessionLog {
     private String username;
     private String ipAddress;
     private LocalDateTime loginTime;
+    private LocalDateTime logoutTime;
     private String jwtToken;
     private boolean successful;
 

@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SessionLogRepository extends JpaRepository<SessionLog, Long> {
+
+    public SessionLog findByUsernameAndJwtTokenAndLogoutTimeIsNull(String username, String token);
 }

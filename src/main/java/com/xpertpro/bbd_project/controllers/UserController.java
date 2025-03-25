@@ -92,6 +92,37 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Statut utilisateur non valide.");
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        // Récupérer le token depuis le header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token manquant");
+        }
+
+        String token = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(token);
+
+        // Valider le token
+        if (username == null || !jwtUtil.validateToken(token, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token invalide");
+        }
+
+        // Trouver la session active
+        SessionLog activeSession = sessionLogRepository
+                .findByUsernameAndJwtTokenAndLogoutTimeIsNull(username, token);
+
+        if (activeSession == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session introuvable");
+        }
+
+        // Mettre à jour le log de session
+        activeSession.setLogoutTime(LocalDateTime.now());
+        sessionLogRepository.save(activeSession);
+
+        return ResponseEntity.ok("Déconnexion réussie");
+    }
+
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
