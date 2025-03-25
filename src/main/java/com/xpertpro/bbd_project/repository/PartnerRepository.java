@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface PartnerRepository extends JpaRepository<Partners, Long> {
-    List<Partners> findByAccountType(String typeCompte);
+    Page<Partners> findByAccountType(String accountType, Pageable pageable);
     Optional<Partners> findByEmail(String email);
     Optional<Partners> findByPhoneNumber(String phoneNumber);
     Page<Partners> findByStatus(StatusEnum status, Pageable pageable);

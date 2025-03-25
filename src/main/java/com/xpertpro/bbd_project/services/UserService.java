@@ -193,7 +193,7 @@ public class UserService {
         }
     }
 
-    public String disbaleUser(Long userId) {
+    public String disableUser(Long userId) {
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
         if (optionalUser.isPresent()) {
             UserEntity user = optionalUser.get();

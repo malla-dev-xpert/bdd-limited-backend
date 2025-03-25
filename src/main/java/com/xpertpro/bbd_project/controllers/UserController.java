@@ -171,8 +171,8 @@ public class UserController {
     }
 
     @DeleteMapping("/disable/{id}")
-    public String disbaleUser(@PathVariable Long id){
-        userService.disbaleUser(id);
+    public String disableUser(@PathVariable Long id){
+        userService.disableUser(id);
         return "Le compte de l'utilisateur a été désactivé.";
     }
 
