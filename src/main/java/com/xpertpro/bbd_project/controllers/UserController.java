@@ -123,6 +123,10 @@ public class UserController {
         return ResponseEntity.ok("Déconnexion réussie");
     }
 
+    @PostMapping("/{username}/force-user-logout")
+    public ResponseEntity<String> forceLogout(@PathVariable String username) {
+        return userService.forceLogout(username);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
