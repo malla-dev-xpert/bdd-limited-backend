@@ -16,9 +16,13 @@ public class Devises {
     private Long id;
     private String name;
     private Double rate;
+
     @Column(unique = true)
     private String code;
+
+    @Enumerated(EnumType.STRING)
     private StatusEnum status = StatusEnum.CREATE;
+
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 }
