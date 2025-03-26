@@ -2,7 +2,6 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
-import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.DeviseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,5 +36,11 @@ public class DeviseController {
     @GetMapping()
     public Page<Devises> getAllDevises(@RequestParam(defaultValue = "0") int page) {
         return deviseService.getAllDevises(page);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteDevises(@PathVariable Long id){
+        deviseService.deleteDevises(id);
+        return "Le devise avec a été supprimer avec succès.";
     }
 }

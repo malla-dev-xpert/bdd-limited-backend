@@ -57,4 +57,13 @@ public class DeviseService {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
         return devisesRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
+
+    public String deleteDevises(Long id) {
+        Devises devises = devisesRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Devise not found with ID: " + id));
+
+        devises.setStatus(StatusEnum.DELETE);
+        devisesRepository.save(devises);
+        return "Devises deleted successfully";
+    }
 }
