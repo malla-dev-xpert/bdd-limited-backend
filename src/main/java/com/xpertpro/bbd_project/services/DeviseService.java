@@ -2,9 +2,14 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.mapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -46,5 +51,10 @@ public class DeviseService {
         } else {
             throw new RuntimeException("Devises not found with ID: " + id);
         }
+    }
+
+    public Page<Devises> getAllDevises(int page) {
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        return devisesRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 }

@@ -1,8 +1,11 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
+import com.xpertpro.bbd_project.entity.Devises;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.DeviseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,5 +32,10 @@ public class DeviseController {
     @PutMapping("/update/{id}")
     public DeviseDto updateDevises(@PathVariable Long id, @RequestBody DeviseDto deviseDto) {
         return deviseService.updateDevise(id, deviseDto);
+    }
+
+    @GetMapping()
+    public Page<Devises> getAllDevises(@RequestParam(defaultValue = "0") int page) {
+        return deviseService.getAllDevises(page);
     }
 }

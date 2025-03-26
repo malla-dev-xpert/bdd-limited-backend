@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class Devises {
     private Double rate;
     @Column(unique = true)
     private String code;
+    private StatusEnum status = StatusEnum.CREATE;
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 }
