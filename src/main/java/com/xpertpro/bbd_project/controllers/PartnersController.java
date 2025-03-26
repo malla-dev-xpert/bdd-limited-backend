@@ -2,7 +2,6 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
-import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.PartnerServices;
 import org.springframework.beans.factory.annotation.Autowired;
