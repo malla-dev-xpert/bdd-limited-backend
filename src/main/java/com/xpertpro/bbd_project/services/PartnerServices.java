@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
+import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.mapper.PartnersDtoMapper;
@@ -54,6 +55,28 @@ public class PartnerServices {
         partners.setStatus(StatusEnum.DELETE);
         partnerRepository.save(partners);
         return "Partner deleted successfully";
+    }
+
+    public UpdatePartnersDto updatePartnersDto(Long id, UpdatePartnersDto updatePartnersDto) {
+        Optional<Partners> optionalPartners = partnerRepository.findById(id);
+
+        if (optionalPartners.isPresent()) {
+            Partners partners = optionalPartners.get();
+
+            if (updatePartnersDto.getFirstName() != null) partners.setFirstName(updatePartnersDto.getFirstName());
+            if (updatePartnersDto.getLastName() != null) partners.setLastName(updatePartnersDto.getLastName());
+            if (updatePartnersDto.getPhoneNumber() != null) partners.setPhoneNumber(updatePartnersDto.getPhoneNumber());
+            if (updatePartnersDto.getEmail() != null) partners.setEmail(updatePartnersDto.getEmail());
+            if (updatePartnersDto.getCountry() != null) partners.setCountry(updatePartnersDto.getCountry());
+            if (updatePartnersDto.getAdresse() != null) partners.setAdresse(updatePartnersDto.getAdresse());
+            if (updatePartnersDto.getAccountType() != null) partners.setAccountType(updatePartnersDto.getAccountType());
+            partners.setEditedAt(updatePartnersDto.getEditedAt());
+
+            partnerRepository.save(partners);
+            return updatePartnersDto;
+        } else {
+            throw new RuntimeException("Partners not found with ID: " + id);
+        }
     }
 
 }
