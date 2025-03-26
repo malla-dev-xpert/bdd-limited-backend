@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
-import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.PartnerServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,5 +38,11 @@ public class PartnersController {
     @GetMapping("/account-type")
     public Page<Partners> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
         return partnerServices.findPartnersByType(page, type);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deletePartners(@PathVariable Long id){
+        partnerServices.deletePartners(id);
+        return "Le partenaire avec  l'id " + id + " a été supprimer avec succès.";
     }
 }

@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class PartnerServices {
     @Autowired
@@ -44,8 +46,14 @@ public class PartnerServices {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
         return partnerRepository.findByAccountType(type, pageable);
     }
-//
-//    public void supprimerPartenaire(Long id) {
-//        partenaireRepository.deleteById(id);
-//    }
+
+    public String deletePartners(Long id) {
+        Partners partners = partnerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Partners not found with ID: " + id));
+
+        partners.setStatus(StatusEnum.DELETE);
+        partnerRepository.save(partners);
+        return "Partner deleted successfully";
+    }
+
 }
