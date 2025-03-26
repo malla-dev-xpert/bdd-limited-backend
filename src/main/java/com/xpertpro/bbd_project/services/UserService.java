@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.config.JwtUtil;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
@@ -7,12 +8,19 @@ import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
+import com.xpertpro.bbd_project.logs.SessionLog;
 import com.xpertpro.bbd_project.mapper.UserDtoMapper;
 import com.xpertpro.bbd_project.repository.RoleRepository;
+import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +31,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -33,11 +42,15 @@ public class UserService {
     @Autowired
     SpringTemplateEngine templateEngine;
     @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
     private UserDtoMapper userMapper;
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    SessionLogRepository sessionLogRepository;
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -180,7 +193,7 @@ public class UserService {
         }
     }
 
-    public String disbaleUser(Long userId) {
+    public String disableUser(Long userId) {
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
         if (optionalUser.isPresent()) {
             UserEntity user = optionalUser.get();
@@ -254,4 +267,39 @@ public class UserService {
         }
         throw new RuntimeException("User not found with ID: " + userId);
     }
+
+    public ResponseEntity<String> forceLogout(String username) {
+        // Vérifier l'existence de l'utilisateur
+        UserEntity user = userRepository.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Utilisateur non trouvé");
+        }
+
+        // Trouver toutes les sessions actives de l'utilisateur
+        List<SessionLog> activeSessions = sessionLogRepository
+                .findByUsernameAndLogoutTimeIsNull(username);
+
+        if (activeSessions.isEmpty()) {
+            return ResponseEntity.ok("Aucune session active pour " + username);
+        }
+
+        // Invalider chaque session individuellement
+        activeSessions.forEach(session -> {
+            session.setLogoutTime(LocalDateTime.now());
+            sessionLogRepository.save(session);
+        });
+
+        return ResponseEntity.ok(
+                String.format("Déconnexion forcée réussie - %d sessions invalidées",
+                        activeSessions.size())
+        );
+
+    }
+
+    public Page<UserEntity> findAllUsers(int page) {
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        return userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+    }
+
 }

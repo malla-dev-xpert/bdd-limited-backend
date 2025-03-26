@@ -7,21 +7,20 @@ import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
+import com.xpertpro.bbd_project.logs.SessionLog;
+import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
-import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDateTime;
@@ -33,6 +32,12 @@ import java.util.Optional;
 public class UserController {
     @Autowired
     UserService userService;
+
+    @Autowired
+    HttpServletRequest request;
+
+    @Autowired
+    SessionLogRepository sessionLogRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -68,6 +73,17 @@ public class UserController {
 
             if (authentication.isAuthenticated()) {
                 String token = jwtUtil.generateToken(user.getUsername());
+                String ipAddress = request.getRemoteAddr(); // Récupérer l'adresse IP
+
+                // Enregistrer la session active
+                SessionLog session = new SessionLog();
+                session.setUsername(user.getUsername());
+                session.setIpAddress(ipAddress);
+                session.setLoginTime(LocalDateTime.now());
+                session.setSuccessful(authentication.isAuthenticated());
+                session.setJwtToken(token);
+                sessionLogRepository.save(session);
+
                 return ResponseEntity.ok(token);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiants incorrects");
@@ -77,6 +93,41 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Statut utilisateur non valide.");
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        // Récupérer le token depuis le header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token manquant");
+        }
+
+        String token = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(token);
+
+        // Valider le token
+        if (username == null || !jwtUtil.validateToken(token, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token invalide");
+        }
+
+        // Trouver la session active
+        SessionLog activeSession = sessionLogRepository
+                .findByUsernameAndJwtTokenAndLogoutTimeIsNull(username, token);
+
+        if (activeSession == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session introuvable");
+        }
+
+        // Mettre à jour le log de session
+        activeSession.setLogoutTime(LocalDateTime.now());
+        sessionLogRepository.save(activeSession);
+
+        return ResponseEntity.ok("Déconnexion réussie");
+    }
+
+    @PostMapping("/{username}/force-user-logout")
+    public ResponseEntity<String> forceLogout(@PathVariable String username) {
+        return userService.forceLogout(username);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
@@ -120,8 +171,8 @@ public class UserController {
     }
 
     @DeleteMapping("/disable/{id}")
-    public String disbaleUser(@PathVariable Long id){
-        userService.disbaleUser(id);
+    public String disableUser(@PathVariable Long id){
+        userService.disableUser(id);
         return "Le compte de l'utilisateur a été désactivé.";
     }
 
@@ -129,6 +180,11 @@ public class UserController {
     public String deleteUser(@PathVariable Long id){
         userService.deleteUser(id);
         return "Le compte de l'utilisateur a été supprimé.";
+    }
+
+    @GetMapping()
+    public Page<UserEntity> getAllUsers(@RequestParam(defaultValue = "0") int page) {
+        return userService.findAllUsers(page);
     }
 
 }
