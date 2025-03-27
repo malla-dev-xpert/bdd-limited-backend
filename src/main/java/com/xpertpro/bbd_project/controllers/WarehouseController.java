@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.warehouse.WarehouseDto;
-import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.entity.Warehouse;
 import com.xpertpro.bbd_project.services.WarehouseServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +32,16 @@ public class WarehouseController {
     @GetMapping()
     public Page<Warehouse> getAllWarehouse(@RequestParam(defaultValue = "0") int page) {
         return warehouseServices.findAllWarehouse(page);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateWarehouse(@PathVariable Long id, @RequestBody WarehouseDto newWarehouse, @RequestParam(name = "userId") Long userId){
+        String result = warehouseServices.updateWarehouse(id,newWarehouse, userId);
+        switch (result) {
+            case "NAME_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Cet entrepot existe déjà !");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Entrepot modifier avec succès !");
+        }
     }
 }

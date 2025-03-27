@@ -14,6 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 
 @Service
 public class WarehouseServices {
@@ -45,5 +48,31 @@ public class WarehouseServices {
     public Page<Warehouse> findAllWarehouse(int page) {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
         return warehouseRepository.findByStatus(StatusEnum.CREATE, pageable);
+    }
+
+    public String updateWarehouse(Long id, WarehouseDto newWarehouse, Long userId) {
+        Optional<Warehouse> optionalWarehouse = warehouseRepository.findById(id);
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
+        if (warehouseRepository.findByName(newWarehouse.getName()).isPresent()) {
+            return "NAME_EXIST";
+        }
+
+        if (optionalWarehouse.isPresent() && optionalUser.isPresent()) {
+            Warehouse warehouse = optionalWarehouse.get();
+
+            if (newWarehouse.getAdresse() != null) warehouse.setAdresse(newWarehouse.getAdresse());
+            if (newWarehouse.getName() != null) warehouse.setName(newWarehouse.getName());
+            if (newWarehouse.getStorageType() != null) warehouse.setStorageType(newWarehouse.getStorageType());
+
+            warehouse.setEditedAt(LocalDateTime.now());
+            warehouse.setUser(optionalUser.get());
+
+            warehouseRepository.save(warehouse);
+            return "SUCCESS";
+        } else {
+            throw new RuntimeException("Warehouse not found with ID: " + id);
+        }
+
     }
 }
