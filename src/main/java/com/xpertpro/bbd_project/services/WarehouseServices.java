@@ -1,12 +1,14 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.warehouse.WarehouseDto;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.entity.Warehouse;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.mapper.WarehouseDtoMapper;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.repository.WarehouseRepository;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -73,6 +75,17 @@ public class WarehouseServices {
         } else {
             throw new RuntimeException("Warehouse not found with ID: " + id);
         }
+    }
 
+    public String deleteWarehouse(Long id, Long userId) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found with ID: " + id));
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        warehouse.setStatus(StatusEnum.DELETE);
+        warehouse.setUser(user);
+        warehouseRepository.save(warehouse);
+        return "Warehouse deleted successfully";
     }
 }

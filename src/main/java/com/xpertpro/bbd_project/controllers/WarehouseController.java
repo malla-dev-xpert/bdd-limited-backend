@@ -44,4 +44,10 @@ public class WarehouseController {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Entrepot modifier avec succès !");
         }
     }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteWarehouse(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        warehouseServices.deleteWarehouse(id, userId);
+        return "L'entrepôt avec  l'id " + id + " a été supprimé avec succès.";
+    }
 }
