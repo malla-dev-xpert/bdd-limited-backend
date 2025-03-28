@@ -25,4 +25,19 @@ public class HarborController {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Port ajouté avec succès !");
         }
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateHarbor
+            (@PathVariable Long id,
+             @RequestBody HarborDto newHarbor,
+             @RequestParam(name = "userId") Long userId)
+    {
+        String result = harborServices.updateHarbor(id,newHarbor, userId);
+        switch (result) {
+            case "NAME_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Ce port existe déjà !");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Port modifier avec succès !");
+        }
+    }
 }
