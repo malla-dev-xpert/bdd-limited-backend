@@ -1,8 +1,10 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
+import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.services.HarborServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,5 +47,10 @@ public class HarborController {
     public String deleteHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
         harborServices.deleteHarbor(id, userId);
         return "Le port avec  l'id " + id + " a été supprimé avec succès.";
+    }
+
+    @GetMapping()
+    public Page<Harbor> getAllHarbor(@RequestParam(defaultValue = "0") int page) {
+        return harborServices.findAllHarbor(page);
     }
 }

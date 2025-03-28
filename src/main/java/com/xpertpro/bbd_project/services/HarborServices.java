@@ -8,6 +8,10 @@ import com.xpertpro.bbd_project.mapper.HarborDtoMapper;
 import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -70,5 +74,10 @@ public class HarborServices {
         harbor.setUser(user);
         harborRepository.save(harbor);
         return "Harbor deleted successfully";
+    }
+
+    public Page<Harbor> findAllHarbor(int page) {
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        return harborRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 }
