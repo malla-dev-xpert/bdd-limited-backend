@@ -76,6 +76,18 @@ public class HarborServices {
         return "Harbor deleted successfully";
     }
 
+    public String disableHarbor(Long id, Long userId) {
+        Harbor harbor = harborRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Harbor not found with ID: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        harbor.setStatus(StatusEnum.DISABLE);
+        harbor.setUser(user);
+        harborRepository.save(harbor);
+        return "Harbor disable successfully";
+    }
+
     public Page<Harbor> findAllHarbor(int page) {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
         return harborRepository.findByStatus(StatusEnum.CREATE, pageable);
