@@ -40,4 +40,10 @@ public class HarborController {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Port modifier avec succès !");
         }
     }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        harborServices.deleteHarbor(id, userId);
+        return "Le port avec  l'id " + id + " a été supprimé avec succès.";
+    }
 }
