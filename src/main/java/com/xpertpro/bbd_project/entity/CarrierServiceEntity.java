@@ -1,5 +1,7 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,5 +22,6 @@ public class CarrierServiceEntity {
     private StatusEnum status = StatusEnum.CREATE;
     @ManyToOne
     @JoinColumn(name = "carrier_id", nullable = false)
+    @JsonIgnore @JsonBackReference
     private Carriers carriers;
 }

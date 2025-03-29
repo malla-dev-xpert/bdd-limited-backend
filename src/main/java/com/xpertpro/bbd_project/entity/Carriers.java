@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
@@ -20,9 +22,9 @@ public class Carriers {
     @Column(nullable = false, unique = true)
     private String contact;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "carrier_services_id")
-    private List<CarrierServiceEntity> carrierService;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<CarrierServiceEntity> carrierService = new ArrayList<>();;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status = StatusEnum.CREATE;

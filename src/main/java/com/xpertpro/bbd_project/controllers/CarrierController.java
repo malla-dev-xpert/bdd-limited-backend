@@ -1,8 +1,10 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.carrier.CarrierDto;
+import com.xpertpro.bbd_project.entity.Carriers;
 import com.xpertpro.bbd_project.services.CarrierServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,5 +26,10 @@ public class CarrierController {
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Transporteur ajouté avec succès !");
         }
+    }
+
+    @GetMapping()
+    public Page<Carriers> getAllCarriers(@RequestParam(defaultValue = "0") int page) {
+        return carrierServices.getAllCarriers(page);
     }
 }

@@ -3,8 +3,14 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.carrier.CarrierDto;
 import com.xpertpro.bbd_project.entity.CarrierServiceEntity;
 import com.xpertpro.bbd_project.entity.Carriers;
+import com.xpertpro.bbd_project.entity.Devises;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.CarrierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,5 +46,10 @@ public class CarrierServices {
         carriers.setCarrierService(services);
         carrierRepository.save(carriers);
         return "SUCCESS";
+    }
+
+    public Page<Carriers> getAllCarriers(int page) {
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        return carrierRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 }
