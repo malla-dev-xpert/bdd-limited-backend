@@ -24,4 +24,7 @@ public class CarrierServiceEntity {
     @JoinColumn(name = "carrier_id", nullable = false)
     @JsonIgnore @JsonBackReference
     private Carriers carriers;
+    @JoinColumn(name = "user_id")
+    @ManyToOne
+    private UserEntity user;
 }

@@ -30,4 +30,7 @@ public class Carriers {
     private StatusEnum status = StatusEnum.CREATE;
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+    @JoinColumn(name = "user_id")
+    @ManyToOne
+    private UserEntity user;
 }

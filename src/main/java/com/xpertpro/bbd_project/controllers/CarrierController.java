@@ -18,8 +18,8 @@ public class CarrierController {
     CarrierServices carrierServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> ajouter(@RequestBody CarrierDto carrierDto) {
-        String result = carrierServices.createCarrier(carrierDto);
+    public ResponseEntity<String> ajouter(@RequestBody CarrierDto carrierDto, @RequestParam(name = "userId") Long userId) {
+        String result = carrierServices.createCarrier(carrierDto, userId);
         switch (result) {
             case "CONTACT_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Contact déjà utilisé !");
@@ -31,5 +31,20 @@ public class CarrierController {
     @GetMapping()
     public Page<Carriers> getAllCarriers(@RequestParam(defaultValue = "0") int page) {
         return carrierServices.getAllCarriers(page);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateHarbor
+            (@PathVariable Long id,
+             @RequestBody CarrierDto carrierDto,
+             @RequestParam(name = "userId") Long userId)
+    {
+        String result = carrierServices.updateCarrier(id,carrierDto, userId);
+        switch (result) {
+            case "CONTACT_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Ce contact existe déjà !");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Transporteur modifier avec succès !");
+        }
     }
 }
