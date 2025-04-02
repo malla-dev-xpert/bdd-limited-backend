@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data @AllArgsConstructor @NoArgsConstructor
-@Entity @Table(name = "conatiners")
+@Entity @Table(name = "containers")
 public class Containers {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

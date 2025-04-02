@@ -33,6 +33,11 @@ public class CarrierController {
         return carrierServices.getAllCarriers(page);
     }
 
+    @GetMapping("/{id}")
+    public Carriers getCarriersById(@PathVariable Long id) {
+        return carrierServices.getCarrierById(id);
+    }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updateHarbor
             (@PathVariable Long id,

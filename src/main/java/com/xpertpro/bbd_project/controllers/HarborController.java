@@ -59,4 +59,9 @@ public class HarborController {
     public Page<Harbor> getAllHarbor(@RequestParam(defaultValue = "0") int page) {
         return harborServices.findAllHarbor(page);
     }
+
+    @GetMapping("/{id}")
+    public Harbor getHarborById(@PathVariable Long id) {
+        return harborServices.getHarborById(id);
+    }
 }

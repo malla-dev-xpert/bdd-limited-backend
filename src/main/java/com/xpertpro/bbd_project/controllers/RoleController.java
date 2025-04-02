@@ -32,4 +32,9 @@ public class RoleController {
        return roleServices.findAllRoles();
     }
 
+    @GetMapping("/{id}")
+    public RolesEntity getRoleById(@PathVariable Long id){
+        return roleServices.getRoleById(id);
+    }
+
 }

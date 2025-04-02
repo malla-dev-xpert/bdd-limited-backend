@@ -34,6 +34,11 @@ public class WarehouseController {
         return warehouseServices.findAllWarehouse(page);
     }
 
+    @GetMapping("/{id}")
+    public Warehouse getWarehouseById(@PathVariable Long id) {
+        return warehouseServices.getWarehousById(id);
+    }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updateWarehouse(@PathVariable Long id, @RequestBody WarehouseDto newWarehouse, @RequestParam(name = "userId") Long userId){
         String result = warehouseServices.updateWarehouse(id,newWarehouse, userId);

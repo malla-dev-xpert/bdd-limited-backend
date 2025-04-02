@@ -96,4 +96,14 @@ public class CarrierServices {
         carrierRepository.save(carriers);
         return "Carrier deleted successfully";
     }
+
+    public Carriers getCarrierById(Long id) {
+        Optional<Carriers> optionalCarriers = carrierRepository.findById(id);
+        if (optionalCarriers.isPresent()) {
+            Carriers carriers = optionalCarriers.get();
+            return carriers;
+        } else {
+            throw new RuntimeException("Transporteur non trouvé avec l'ID : " + id);
+        }
+    }
 }

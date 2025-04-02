@@ -36,6 +36,11 @@ public class PartnersController {
         return partnerServices.getAllPartners(page);
     }
 
+    @GetMapping("/{id}")
+    public Partners getPartnerById(@PathVariable Long id) {
+        return partnerServices.getPartnerById(id);
+    }
+
     @GetMapping("/account-type")
     public Page<Partners> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
         return partnerServices.findPartnersByType(page, type);
