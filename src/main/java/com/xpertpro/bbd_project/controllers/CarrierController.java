@@ -47,4 +47,10 @@ public class CarrierController {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Transporteur modifier avec succès !");
         }
     }
+
+    @DeleteMapping("/delete/{id}")
+    public String delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        carrierServices.deleteCarrier(id, userId);
+        return "Le transporteur avec  l'id " + id + " a été supprimé avec succès.";
+    }
 }

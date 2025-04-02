@@ -4,7 +4,7 @@ import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.mapper.PartnersDtoMapper;
+import com.xpertpro.bbd_project.dtoMapper.PartnersDtoMapper;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

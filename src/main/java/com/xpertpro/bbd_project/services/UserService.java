@@ -9,7 +9,7 @@ import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.logs.SessionLog;
-import com.xpertpro.bbd_project.mapper.UserDtoMapper;
+import com.xpertpro.bbd_project.dtoMapper.UserDtoMapper;
 import com.xpertpro.bbd_project.repository.RoleRepository;
 import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;

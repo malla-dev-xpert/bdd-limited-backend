@@ -84,4 +84,16 @@ public class CarrierServices {
             throw new RuntimeException("User not found with ID: " + id);
         }
     }
+
+    public String deleteCarrier(Long id, Long userId) {
+        Carriers carriers = carrierRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Carrier not found with ID: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        carriers.setStatus(StatusEnum.DELETE);
+        carriers.setUser(user);
+        carrierRepository.save(carriers);
+        return "Carrier deleted successfully";
+    }
 }
