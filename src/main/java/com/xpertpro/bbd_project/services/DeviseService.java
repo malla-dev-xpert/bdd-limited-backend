@@ -3,7 +3,7 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.mapper.DeviseDtoMapper;
+import com.xpertpro.bbd_project.dtoMapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

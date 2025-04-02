@@ -49,6 +49,12 @@ public class HarborController {
         return "Le port avec  l'id " + id + " a été supprimé avec succès.";
     }
 
+    @DeleteMapping("/disable/{id}")
+    public String disableHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        harborServices.disableHarbor(id, userId);
+        return "Le port avec  l'id " + id + " a été desactiver avec succès.";
+    }
+
     @GetMapping()
     public Page<Harbor> getAllHarbor(@RequestParam(defaultValue = "0") int page) {
         return harborServices.findAllHarbor(page);

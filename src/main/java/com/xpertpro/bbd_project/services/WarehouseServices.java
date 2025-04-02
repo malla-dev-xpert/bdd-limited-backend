@@ -4,7 +4,7 @@ import com.xpertpro.bbd_project.dto.warehouse.WarehouseDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.entity.Warehouse;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.mapper.WarehouseDtoMapper;
+import com.xpertpro.bbd_project.dtoMapper.WarehouseDtoMapper;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.repository.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;

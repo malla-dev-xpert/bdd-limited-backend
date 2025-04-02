@@ -1,4 +1,4 @@
-package com.xpertpro.bbd_project.mapper;
+package com.xpertpro.bbd_project.dtoMapper;
 
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;

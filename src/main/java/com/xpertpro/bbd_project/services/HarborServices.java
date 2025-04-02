@@ -4,7 +4,7 @@ import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.mapper.HarborDtoMapper;
+import com.xpertpro.bbd_project.dtoMapper.HarborDtoMapper;
 import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +74,18 @@ public class HarborServices {
         harbor.setUser(user);
         harborRepository.save(harbor);
         return "Harbor deleted successfully";
+    }
+
+    public String disableHarbor(Long id, Long userId) {
+        Harbor harbor = harborRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Harbor not found with ID: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        harbor.setStatus(StatusEnum.DISABLE);
+        harbor.setUser(user);
+        harborRepository.save(harbor);
+        return "Harbor disable successfully";
     }
 
     public Page<Harbor> findAllHarbor(int page) {
