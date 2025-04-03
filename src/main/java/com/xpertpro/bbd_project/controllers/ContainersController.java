@@ -56,4 +56,10 @@ public class ContainersController {
     public Containers getContainerById(@PathVariable Long id){
         return containerServices.getContainerById(id);
     }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        containerServices.deleteContainer(id, userId);
+        return "Le Conteneur avec  l'id " + id + " a été supprimé avec succès.";
+    }
 }

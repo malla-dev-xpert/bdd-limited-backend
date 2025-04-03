@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
+import com.xpertpro.bbd_project.entity.Carriers;
 import com.xpertpro.bbd_project.entity.Containers;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -80,5 +81,17 @@ public class ContainerServices {
         } else {
             throw new RuntimeException("Conteneur non trouvé avec l'ID : " + id);
         }
+    }
+
+    public String deleteContainer(Long id, Long userId) {
+        Containers containers = containersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        containers.setStatus(StatusEnum.DELETE);
+        containers.setUser(user);
+        containersRepository.save(containers);
+        return "Container deleted successfully";
     }
 }
