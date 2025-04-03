@@ -28,6 +28,7 @@ public class Partners {
     private StatusEnum status = StatusEnum.CREATE;
 
     private String accountType;
+    private Double balance = 0.0; //solde du client
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
