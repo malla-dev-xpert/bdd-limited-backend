@@ -2,6 +2,7 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.entity.Harbor;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.HarborDtoMapper;
@@ -91,5 +92,15 @@ public class HarborServices {
     public Page<Harbor> findAllHarbor(int page) {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
         return harborRepository.findByStatus(StatusEnum.CREATE, pageable);
+    }
+
+    public Harbor getHarborById(Long id) {
+        Optional<Harbor> optionalHarbor = harborRepository.findById(id);
+        if (optionalHarbor.isPresent()) {
+            Harbor harbor = optionalHarbor.get();
+            return harbor;
+        } else {
+            throw new RuntimeException("Port non trouvé avec l'ID : " + id);
+        }
     }
 }

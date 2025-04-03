@@ -38,6 +38,11 @@ public class DeviseController {
         return deviseService.getAllDevises(page);
     }
 
+    @GetMapping("/{id}")
+    public Devises getDevisesById(@PathVariable Long id) {
+        return deviseService.getDeviseById(id);
+    }
+
     @DeleteMapping("/delete/{id}")
     public String deleteDevises(@PathVariable Long id){
         deviseService.deleteDevises(id);

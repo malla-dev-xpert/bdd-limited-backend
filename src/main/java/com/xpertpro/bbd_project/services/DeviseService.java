@@ -66,4 +66,14 @@ public class DeviseService {
         devisesRepository.save(devises);
         return "Devises deleted successfully";
     }
+
+    public Devises getDeviseById(Long id) {
+        Optional<Devises> optionalDevises = devisesRepository.findById(id);
+        if (optionalDevises.isPresent()) {
+            Devises devises = optionalDevises.get();
+            return devises;
+        } else {
+            throw new RuntimeException("Devise non trouvé avec l'ID : " + id);
+        }
+    }
 }

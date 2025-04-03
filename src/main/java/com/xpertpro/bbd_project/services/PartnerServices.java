@@ -3,6 +3,7 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
+import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.PartnersDtoMapper;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
@@ -76,6 +77,16 @@ public class PartnerServices {
             return updatePartnersDto;
         } else {
             throw new RuntimeException("Partners not found with ID: " + id);
+        }
+    }
+
+    public Partners getPartnerById(Long id) {
+        Optional<Partners> optionalPartners = partnerRepository.findById(id);
+        if (optionalPartners.isPresent()) {
+            Partners partners = optionalPartners.get();
+            return partners;
+        } else {
+            throw new RuntimeException("Partenaire non trouvé avec l'ID : " + id);
         }
     }
 

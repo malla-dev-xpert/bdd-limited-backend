@@ -86,4 +86,14 @@ public class WarehouseServices {
         warehouseRepository.save(warehouse);
         return "Warehouse deleted successfully";
     }
+
+    public Warehouse getWarehousById(Long id) {
+        Optional<Warehouse> optionalWarehouse = warehouseRepository.findById(id);
+        if (optionalWarehouse.isPresent()) {
+            Warehouse warehouse = optionalWarehouse.get();
+            return warehouse;
+        } else {
+            throw new RuntimeException("Entrepot non trouvé avec l'ID : " + id);
+        }
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -26,5 +27,15 @@ public class RoleServices {
 
     public List<RolesEntity> findAllRoles(){
         return roleRepository.findAll();
+    }
+
+    public RolesEntity getRoleById(Long id) {
+        Optional<RolesEntity> optionalRolesEntity = roleRepository.findById(id);
+        if (optionalRolesEntity.isPresent()) {
+            RolesEntity role = optionalRolesEntity.get();
+            return role;
+        } else {
+            throw new RuntimeException("Role non trouvé avec l'ID : " + id);
+        }
     }
 }
