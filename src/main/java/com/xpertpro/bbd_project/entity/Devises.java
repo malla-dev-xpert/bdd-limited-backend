@@ -14,11 +14,11 @@ public class Devises {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private Double rate;
+    private String name; // Ex: Dollar, Euro
+    private Double rate; // Le taux de change
 
     @Column(unique = true)
-    private String code;
+    private String code; // Ex: USD, EUR
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status = StatusEnum.CREATE;
