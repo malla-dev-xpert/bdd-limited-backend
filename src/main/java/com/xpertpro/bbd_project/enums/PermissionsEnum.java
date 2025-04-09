@@ -5,5 +5,5 @@ public enum PermissionsEnum {
     CAN_WRITE,
     CAN_UPDATE,
     CAN_DELETE,
-    ALL_PRIVILEGES
+    IS_ADMIN
 }
