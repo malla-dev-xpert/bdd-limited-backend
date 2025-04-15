@@ -33,6 +33,10 @@ public class WarehouseServices {
             return "NAME_EXIST";
         }
 
+        if (warehouseRepository.findByAdresse(warehouse.getAdresse()).isPresent()) {
+            return "ADRESS_EXIST";
+        }
+
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         Warehouse warehouse1 = warehouseDtoMapper.toEntity(warehouse);
@@ -46,7 +50,7 @@ public class WarehouseServices {
     }
 
     public Page<Warehouse> findAllWarehouse(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
         return warehouseRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 

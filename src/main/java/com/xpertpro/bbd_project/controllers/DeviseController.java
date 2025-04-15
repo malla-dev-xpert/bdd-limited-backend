@@ -23,6 +23,8 @@ public class DeviseController {
         switch (result) {
             case "CODE_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Code déjà utilisé !");
+            case "NAME_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de devise déjà utilisé !");
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Devise ajouté avec succès !");
         }
