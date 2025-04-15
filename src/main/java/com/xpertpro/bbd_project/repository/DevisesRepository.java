@@ -12,5 +12,6 @@ import java.util.Optional;
 @Repository
 public interface DevisesRepository extends JpaRepository<Devises, Long> {
     Optional<Devises> findByCode(String code);
+    Optional<Devises> findByName(String name);
     Page<Devises> findByStatus(StatusEnum status, Pageable pageable);
 }

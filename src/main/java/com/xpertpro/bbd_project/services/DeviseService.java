@@ -28,6 +28,10 @@ public class DeviseService {
             return "CODE_EXIST";
         }
 
+        if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
+            return "NAME_EXIST";
+        }
+
         Devises devises = deviseDtoMapper.toEntity(deviseDto);
 
         devises.setCreatedAt(deviseDto.getCreatedAt());
@@ -54,7 +58,7 @@ public class DeviseService {
     }
 
     public Page<Devises> getAllDevises(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
         return devisesRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 

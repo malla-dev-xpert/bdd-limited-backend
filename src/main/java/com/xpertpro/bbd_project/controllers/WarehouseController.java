@@ -24,6 +24,8 @@ public class WarehouseController {
         switch (result) {
             case "NAME_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Cet entrepot existe déjà !");
+            case "ADRESS_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Un entrepôt existe déjà avec cette adresse !");
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Entrepot ajouté avec succès !");
         }
