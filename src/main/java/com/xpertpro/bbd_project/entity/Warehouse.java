@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Entity @Table(name = "warehouse")
@@ -27,4 +30,8 @@ public class Warehouse {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Packages> packages = new ArrayList<>();
 }
