@@ -82,6 +82,7 @@ public class PackageServices {
                     dto.setDimensions(pkg.getDimensions());
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setStatus(pkg.getStatus().name());
                     dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
                     return dto;
                 })

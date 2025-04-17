@@ -16,4 +16,5 @@ public class PackageResponseDto {
         private LocalDateTime editedAt;
         private Long warehouseId;
         private Long containerId;
+        private String status;
 }
