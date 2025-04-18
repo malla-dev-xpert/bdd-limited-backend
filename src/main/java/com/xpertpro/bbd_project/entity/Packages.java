@@ -27,7 +27,7 @@ public class Packages {
     private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
-    private StatusEnum status = StatusEnum.CREATE;
+    private StatusEnum status = StatusEnum.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id")
@@ -40,4 +40,8 @@ public class Packages {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partner_id")
+    private Partners partner;
 }

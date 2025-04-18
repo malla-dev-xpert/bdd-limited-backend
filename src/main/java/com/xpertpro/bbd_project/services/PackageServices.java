@@ -6,6 +6,7 @@ import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.PackageRepository;
+import com.xpertpro.bbd_project.repository.PartnerRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.repository.WarehouseRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,12 +26,16 @@ public class PackageServices {
     PackageDtoMapper packageDtoMapper;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    PartnerRepository partnerRepository;
 
-    public String createPackage(Long warehouseId, PackageCreateDto dto, Long userId) {
+    public String createPackage(Long warehouseId, PackageCreateDto dto, Long userId, Long clientId) {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new EntityNotFoundException("Entrepôt non trouvé"));
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+        Partners partners = partnerRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client non trouvé"));
 
         if(packageRepository.findByReference(dto.getReference()).isPresent()){
             return "DUPLICATE_REFERENCE";
@@ -41,9 +46,10 @@ public class PackageServices {
         pkg.setDimensions(dto.getDimensions());
         pkg.setReference(dto.getReference());
         pkg.setCreatedAt(dto.getCreatedAt());
-        pkg.setStatus(StatusEnum.CREATE);
+        pkg.setStatus(StatusEnum.PENDING);
         pkg.setWarehouse(warehouse);
         pkg.setUser(user);
+        pkg.setPartner(partners);
 
         packageRepository.save(pkg);
         return "SUCCESS";
@@ -79,25 +85,38 @@ public class PackageServices {
                         dto.setWeight(pkg.getWeight());
                         dto.setDimensions(pkg.getDimensions());
                         dto.setCreatedAt(pkg.getCreatedAt());
-                        dto.setCreatedAt(pkg.getCreatedAt());
+                        dto.setEditedAt(pkg.getEditedAt());
                         dto.setStatus(pkg.getStatus().name());
                         dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                        dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                        dto.setPartnerId(pkg.getPartner() != null ? pkg.getPartner().getId() : null);
+                        dto.setPartnerName(pkg.getPartner() != null
+                                ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
+                                : null);
+                        dto.setPartnerPhoneNumber(pkg.getPartner() != null
+                                ? pkg.getPartner().getPhoneNumber()
+                                : null);
+
                         return dto;
                     })
                     .collect(Collectors.toList());
 
     }
 
-    public String deleteDevises(Long id, Long userId) {
+    public String receivePackages(Long id, Long userId, Long warehouseId) {
         Packages packages = packageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        packages.setStatus(StatusEnum.DELETE);
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                        .orElseThrow(() -> new RuntimeException("Warehouse not found with ID: " + id));
+
+        packages.setStatus(StatusEnum.RECEIVED);
         packages.setUser(user);
+        packages.setWarehouse(warehouse);
         packageRepository.save(packages);
-        return "Package deleted successfully";
+        return "Package Received successfully";
     }
 }

@@ -16,5 +16,9 @@ public class PackageResponseDto {
         private LocalDateTime editedAt;
         private Long warehouseId;
         private Long containerId;
+        private Long userId;
+        private Long partnerId;
+        private String partnerName;
+        private String partnerPhoneNumber;
         private String status;
 }

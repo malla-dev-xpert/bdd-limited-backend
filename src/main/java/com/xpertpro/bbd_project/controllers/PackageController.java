@@ -3,6 +3,7 @@ package com.xpertpro.bbd_project.controllers;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.entity.Packages;
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.services.PackageServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,8 +24,9 @@ public class PackageController {
     public ResponseEntity<String> createPackage(
             @RequestParam(name = "warehouseId") Long warehouseId,
             @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "partnerId") Long clientId,
             @RequestBody PackageCreateDto pkg) {
-        String result = packageServices.createPackage(warehouseId, pkg, userId);
+        String result = packageServices.createPackage(warehouseId, pkg, userId, clientId);
         switch (result) {
             case "DUPLICATE_REFERENCE":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Ce colis existe deja !");
@@ -43,11 +45,12 @@ public class PackageController {
         return packageServices.getPackagesByWarehouse(warehouseId);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deletePackage(
+    @DeleteMapping("/receive/{id}")
+    public String receivePackage(
             @PathVariable Long id,
-            @RequestParam(name = "userId") Long userId) {
-        packageServices.deleteDevises(id, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Colis supprimer avec succès !");
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "warehouseId") Long warehouseId) {
+        packageServices.receivePackages(id, userId, warehouseId);
+        return "Colis recu avec succès !";
     }
 }
