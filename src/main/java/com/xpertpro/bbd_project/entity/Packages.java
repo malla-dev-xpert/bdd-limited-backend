@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -44,4 +46,7 @@ public class Packages {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_id")
     private Partners partner;
+
+    @OneToMany(mappedBy = "packages", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Items> items = new ArrayList<>();
 }

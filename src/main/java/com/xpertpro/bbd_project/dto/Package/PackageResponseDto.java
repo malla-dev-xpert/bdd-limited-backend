@@ -1,10 +1,12 @@
 package com.xpertpro.bbd_project.dto.Package;
 
+import com.xpertpro.bbd_project.dto.ItemDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class PackageResponseDto {
@@ -21,4 +23,5 @@ public class PackageResponseDto {
         private String partnerName;
         private String partnerPhoneNumber;
         private String status;
+        private List<ItemDto> items;
 }

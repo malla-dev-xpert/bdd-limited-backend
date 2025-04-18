@@ -1,9 +1,8 @@
 package com.xpertpro.bbd_project.controllers;
 
+import com.xpertpro.bbd_project.dto.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
-import com.xpertpro.bbd_project.entity.Packages;
-import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.services.PackageServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -61,4 +60,15 @@ public class PackageController {
         packageServices.deletePackages(id, userId);
         return "Colis supprimer avec succès !";
     }
+
+    @PostMapping("/{packageId}/add-items")
+    public ResponseEntity<String> addItems(
+            @PathVariable Long packageId,
+            @RequestBody List<ItemDto> items,
+            @RequestParam(name = "userId") Long userId
+    ) {
+        packageServices.addItemsToPackage(packageId, items, userId);
+        return ResponseEntity.ok("Articles ajoutés au colis");
+    }
+
 }

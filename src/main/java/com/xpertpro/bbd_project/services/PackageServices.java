@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
@@ -97,10 +98,40 @@ public class PackageServices {
                                 ? pkg.getPartner().getPhoneNumber()
                                 : null);
 
+                        List<ItemDto> itemDtos = pkg.getItems().stream().map(item -> {
+                            ItemDto itemDto = new ItemDto();
+                            itemDto.setId(item.getId());
+                            itemDto.setDescription(item.getDescription());
+                            itemDto.setQuantity(item.getQuantity());
+                            return itemDto;
+                        }).collect(Collectors.toList());
+
+                        dto.setItems(itemDtos);
+
                         return dto;
                     })
                     .collect(Collectors.toList());
 
+    }
+
+    public String addItemsToPackage(Long packageId, List<ItemDto> items, Long userId) {
+        Packages pkg = packageRepository.findById(packageId)
+                .orElseThrow(() -> new RuntimeException("Colis introuvable"));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        for (ItemDto dto : items) {
+            Items item = new Items();
+            item.setDescription(dto.getDescription());
+            item.setQuantity(dto.getQuantity());
+            item.setPackages(pkg);
+            item.setStatus(StatusEnum.CREATE);
+            item.setUser(user);
+            pkg.getItems().add(item);
+        }
+        packageRepository.save(pkg);
+
+        return "SUCCESS";
     }
 
     public String receivePackages(Long id, Long userId, Long warehouseId) {
