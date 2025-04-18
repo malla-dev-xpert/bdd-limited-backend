@@ -42,4 +42,12 @@ public class PackageController {
     public List<PackageResponseDto> getPackageByWarehouse(@RequestParam(name = "warehouseId") Long warehouseId) {
         return packageServices.getPackagesByWarehouse(warehouseId);
     }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deletePackage(
+            @PathVariable Long id,
+            @RequestParam(name = "userId") Long userId) {
+        packageServices.deleteDevises(id, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Colis supprimer avec succès !");
+    }
 }

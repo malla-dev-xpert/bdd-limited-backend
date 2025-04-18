@@ -3,10 +3,7 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
-import com.xpertpro.bbd_project.entity.Packages;
-import com.xpertpro.bbd_project.entity.Payments;
-import com.xpertpro.bbd_project.entity.UserEntity;
-import com.xpertpro.bbd_project.entity.Warehouse;
+import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
@@ -73,20 +70,34 @@ public class PackageServices {
     public List<PackageResponseDto> getPackagesByWarehouse(Long warehouseId) {
         List<Packages> packages = packageRepository.findByWarehouseId(warehouseId);
 
-        return packages.stream()
-                .map(pkg -> {
-                    PackageResponseDto dto = new PackageResponseDto();
-                    dto.setId(pkg.getId());
-                    dto.setReference(pkg.getReference());
-                    dto.setWeight(pkg.getWeight());
-                    dto.setDimensions(pkg.getDimensions());
-                    dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setStatus(pkg.getStatus().name());
-                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
-                    return dto;
-                })
-                .collect(Collectors.toList());
+            return packages.stream()
+                    .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                    .map(pkg -> {
+                        PackageResponseDto dto = new PackageResponseDto();
+                        dto.setId(pkg.getId());
+                        dto.setReference(pkg.getReference());
+                        dto.setWeight(pkg.getWeight());
+                        dto.setDimensions(pkg.getDimensions());
+                        dto.setCreatedAt(pkg.getCreatedAt());
+                        dto.setCreatedAt(pkg.getCreatedAt());
+                        dto.setStatus(pkg.getStatus().name());
+                        dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
     }
 
+    public String deleteDevises(Long id, Long userId) {
+        Packages packages = packageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        packages.setStatus(StatusEnum.DELETE);
+        packages.setUser(user);
+        packageRepository.save(packages);
+        return "Package deleted successfully";
+    }
 }

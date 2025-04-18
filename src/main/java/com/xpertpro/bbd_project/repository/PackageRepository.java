@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface PackageRepository extends JpaRepository<Packages, Long> {
     List<Packages> findByWarehouseIdAndContainerIsNull(Long warehouseId);
     Optional<Packages> findByReference(String reference);
+    Optional<Packages> findByStatus(String status);
     List<Packages> findByWarehouseId(Long warehouseId);
 }
