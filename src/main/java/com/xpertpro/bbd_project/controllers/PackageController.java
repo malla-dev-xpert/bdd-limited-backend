@@ -53,4 +53,12 @@ public class PackageController {
         packageServices.receivePackages(id, userId, warehouseId);
         return "Colis recu avec succès !";
     }
+
+    @DeleteMapping("/delete/{id}")
+    public String deltePackage(
+            @PathVariable Long id,
+            @RequestParam(name = "userId") Long userId) {
+        packageServices.deletePackages(id, userId);
+        return "Colis supprimer avec succès !";
+    }
 }

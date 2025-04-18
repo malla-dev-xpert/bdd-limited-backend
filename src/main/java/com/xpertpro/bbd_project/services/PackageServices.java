@@ -119,4 +119,17 @@ public class PackageServices {
         packageRepository.save(packages);
         return "Package Received successfully";
     }
+
+    public String deletePackages(Long id, Long userId) {
+        Packages packages = packageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        packages.setStatus(StatusEnum.DELETE);
+        packages.setUser(user);
+        packageRepository.save(packages);
+        return "Package deleted successfully";
+    }
 }
