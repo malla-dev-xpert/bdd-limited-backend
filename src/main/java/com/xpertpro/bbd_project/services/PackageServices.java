@@ -6,14 +6,13 @@ import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.repository.PackageRepository;
-import com.xpertpro.bbd_project.repository.PartnerRepository;
-import com.xpertpro.bbd_project.repository.UserRepository;
-import com.xpertpro.bbd_project.repository.WarehouseRepository;
+import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,31 +28,42 @@ public class PackageServices {
     UserRepository userRepository;
     @Autowired
     PartnerRepository partnerRepository;
+    @Autowired
+    ItemsRepository itemsRepository;
 
-    public String createPackage(Long warehouseId, PackageCreateDto dto, Long userId, Long clientId) {
-        Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                .orElseThrow(() -> new EntityNotFoundException("Entrepôt non trouvé"));
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
-        Partners partners = partnerRepository.findById(clientId)
-                .orElseThrow(() -> new EntityNotFoundException("Client non trouvé"));
+    @Transactional
+    public Packages createPackageWithItems(Long warehouseId,
+                                           Long userId,
+                                           Long partnerId,
+                                           PackageCreateDto dto) {
 
-        if(packageRepository.findByReference(dto.getReference()).isPresent()){
-            return "DUPLICATE_REFERENCE";
+        if (packageRepository.findByReference(dto.getReference()).isPresent()) {
+            throw new RuntimeException("DUPLICATE_REFERENCE");
         }
 
-        Packages pkg = packageDtoMapper.toEntity(dto);
-        pkg.setWeight(dto.getWeight());
-        pkg.setDimensions(dto.getDimensions());
-        pkg.setReference(dto.getReference());
-        pkg.setCreatedAt(dto.getCreatedAt());
-        pkg.setStatus(StatusEnum.PENDING);
-        pkg.setWarehouse(warehouse);
-        pkg.setUser(user);
-        pkg.setPartner(partners);
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-        packageRepository.save(pkg);
-        return "SUCCESS";
+        Partners partner = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
+
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Entrepôt introuvable"));
+
+        // Création du colis
+        Packages newPackage = new Packages();
+        newPackage.setReference(dto.getReference());
+        newPackage.setWeight(dto.getWeight());
+        newPackage.setDimensions(dto.getDimensions());
+        newPackage.setCreatedAt(dto.getCreatedAt());
+        newPackage.setUser(user);
+        newPackage.setPartner(partner);
+        newPackage.setWarehouse(warehouse);
+        newPackage.setStatus(StatusEnum.PENDING);
+
+        packageRepository.save(newPackage);
+
+        return newPackage;
     }
 
     public List<PackageResponseDto> listUnassignedPackages(Long warehouseId) {
@@ -79,6 +89,7 @@ public class PackageServices {
 
             return packages.stream()
                     .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                    .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
                     .map(pkg -> {
                         PackageResponseDto dto = new PackageResponseDto();
                         dto.setId(pkg.getId());

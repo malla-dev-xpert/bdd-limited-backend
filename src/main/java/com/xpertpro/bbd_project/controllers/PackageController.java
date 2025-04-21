@@ -3,6 +3,7 @@ package com.xpertpro.bbd_project.controllers;
 import com.xpertpro.bbd_project.dto.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.entity.Packages;
 import com.xpertpro.bbd_project.services.PackageServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/packages")
@@ -20,19 +22,27 @@ public class PackageController {
     PackageServices packageServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPackage(
+    public ResponseEntity<Map<String, Object>> createPackage(
             @RequestParam(name = "warehouseId") Long warehouseId,
             @RequestParam(name = "userId") Long userId,
             @RequestParam(name = "partnerId") Long clientId,
             @RequestBody PackageCreateDto pkg) {
-        String result = packageServices.createPackage(warehouseId, pkg, userId, clientId);
-        switch (result) {
-            case "DUPLICATE_REFERENCE":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Ce colis existe deja !");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Colis ajouté avec succès !");
+
+        Packages newPackages = packageServices.createPackageWithItems(warehouseId, userId, clientId, pkg);
+
+        Long createdId = newPackages.getId();
+
+        if (createdId == -1L) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    Map.of("message", "Ce colis existe déjà !")
+            );
         }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                Map.of("id", createdId, "message", "Colis ajouté avec succès !")
+        );
     }
+
 
     @GetMapping("/unassigned")
     public List<PackageResponseDto> getUnassignedPackages(@RequestParam(name = "warehouseId") Long warehouseId) {
