@@ -10,6 +10,10 @@ import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -122,6 +126,52 @@ public class PackageServices {
                         return dto;
                     })
                     .collect(Collectors.toList());
+
+    }
+
+    public List<PackageResponseDto> getAllPackages(int page) {
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Packages> packages = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+
+        return packages.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
+                .map(pkg -> {
+                    PackageResponseDto dto = new PackageResponseDto();
+                    dto.setId(pkg.getId());
+                    dto.setReference(pkg.getReference());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setDimensions(pkg.getDimensions());
+                    dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setEditedAt(pkg.getEditedAt());
+                    dto.setStatus(pkg.getStatus().name());
+                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                    dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
+                    dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
+                    dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                    dto.setPartnerId(pkg.getPartner() != null ? pkg.getPartner().getId() : null);
+                    dto.setPartnerName(pkg.getPartner() != null
+                            ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
+                            : null);
+                    dto.setPartnerPhoneNumber(pkg.getPartner() != null
+                            ? pkg.getPartner().getPhoneNumber()
+                            : null);
+
+                    List<ItemDto> itemDtos = pkg.getItems().stream().map(item -> {
+                        ItemDto itemDto = new ItemDto();
+                        itemDto.setId(item.getId());
+                        itemDto.setDescription(item.getDescription());
+                        itemDto.setQuantity(item.getQuantity());
+                        return itemDto;
+                    }).collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
     }
 

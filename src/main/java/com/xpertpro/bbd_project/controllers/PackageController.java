@@ -54,6 +54,11 @@ public class PackageController {
         return packageServices.getPackagesByWarehouse(warehouseId);
     }
 
+    @GetMapping()
+    public List<PackageResponseDto> findAll(@RequestParam(defaultValue = "0") int page) {
+        return packageServices.getAllPackages(page);
+    }
+
     @DeleteMapping("/receive/{id}")
     public String receivePackage(
             @PathVariable Long id,
