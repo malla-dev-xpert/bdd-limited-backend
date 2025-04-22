@@ -1,9 +1,8 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
-import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.PartnersDtoMapper;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
@@ -23,7 +22,7 @@ public class PartnerServices {
     @Autowired
     PartnersDtoMapper partnersDtoMapper;
 
-    public String createPartners(CreatePartnersDto partnersDto) {
+    public String createPartners(PartnerDto partnersDto) {
 
         if (partnerRepository.findByEmail(partnersDto.getEmail()).isPresent()) {
             return "EMAIL_EXIST";
@@ -44,9 +43,18 @@ public class PartnerServices {
         return partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 
-    public Page<Partners> findPartnersByType(int page, String type) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
-        return partnerRepository.findByAccountType(type, pageable);
+    public Page<PartnerDto> findPartnersByType(int page, String type) {
+        Page<Partners> partners = partnerRepository.findByAccountType(type, PageRequest.of(page, 10));
+        return partners.map(partner -> new PartnerDto(
+                partner.getId(),
+                partner.getFirstName(),
+                partner.getLastName(),
+                partner.getPhoneNumber(),
+                partner.getEmail(),
+                partner.getCountry(),
+                partner.getAdresse(),
+                partner.getAccountType())
+        );
     }
 
     public String deletePartners(Long id) {

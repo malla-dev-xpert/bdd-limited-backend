@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Entity @Table(name = "warehouse")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Warehouse {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

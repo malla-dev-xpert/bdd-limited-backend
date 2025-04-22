@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
-import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.PartnerServices;
@@ -19,7 +19,7 @@ public class PartnersController {
     PartnerServices partnerServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> register(@RequestBody CreatePartnersDto partnersDto) {
+    public ResponseEntity<String> register(@RequestBody PartnerDto partnersDto) {
         String result = partnerServices.createPartners(partnersDto);
         switch (result) {
             case "EMAIL_EXIST":
@@ -42,7 +42,7 @@ public class PartnersController {
     }
 
     @GetMapping("/account-type")
-    public Page<Partners> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
+    public Page<PartnerDto> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
         return partnerServices.findPartnersByType(page, type);
     }
 
