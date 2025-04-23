@@ -15,7 +15,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -50,7 +53,7 @@ public class WarehouseServices {
     }
 
     public Page<Warehouse> findAllWarehouse(int page) {
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, 30, Sort.by("createdAt").descending());
         return warehouseRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 

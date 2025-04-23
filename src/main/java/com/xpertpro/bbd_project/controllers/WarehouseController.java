@@ -2,12 +2,15 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.warehouse.WarehouseDto;
 import com.xpertpro.bbd_project.entity.Warehouse;
+import com.xpertpro.bbd_project.repository.WarehouseRepository;
 import com.xpertpro.bbd_project.services.WarehouseServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -17,6 +20,8 @@ public class WarehouseController {
 
     @Autowired
     WarehouseServices warehouseServices;
+    @Autowired
+    WarehouseRepository warehouseRepository;
 
     @PostMapping("/create")
     public ResponseEntity<String> createWarehouse(@RequestBody WarehouseDto warehouseDto, @RequestParam(name = "userId") Long userId) {

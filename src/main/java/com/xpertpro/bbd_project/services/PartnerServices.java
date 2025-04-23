@@ -39,12 +39,12 @@ public class PartnerServices {
     }
 
     public Page<Partners> getAllPartners(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
+        Pageable pageable = PageRequest.of(page, 50, Sort.by("createdAt").descending());
         return partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
     }
 
     public Page<PartnerDto> findPartnersByType(int page, String type) {
-        Page<Partners> partners = partnerRepository.findByAccountType(type, PageRequest.of(page, 10));
+        Page<Partners> partners = partnerRepository.findByAccountType(type, PageRequest.of(page, 50));
         return partners.map(partner -> new PartnerDto(
                 partner.getId(),
                 partner.getFirstName(),

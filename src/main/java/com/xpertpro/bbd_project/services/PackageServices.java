@@ -7,7 +7,6 @@ import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

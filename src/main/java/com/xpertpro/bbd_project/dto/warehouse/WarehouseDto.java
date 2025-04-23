@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class WarehouseDto {
-
+private Long id;
     private String name;
     private String adresse;
     private String storageType;
