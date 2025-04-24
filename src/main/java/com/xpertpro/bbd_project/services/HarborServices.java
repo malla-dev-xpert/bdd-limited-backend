@@ -1,8 +1,8 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.entity.Harbor;
-import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.HarborDtoMapper;
@@ -15,7 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class HarborServices {
@@ -89,9 +92,36 @@ public class HarborServices {
         return "Harbor disable successfully";
     }
 
-    public Page<Harbor> findAllHarbor(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
-        return harborRepository.findByStatus(StatusEnum.CREATE, pageable);
+    public List<HarborDto> getAllHarbor(int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Harbor> harbors = harborRepository.findByStatus(StatusEnum.CREATE, pageable);
+
+        return harbors.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(Harbor::getCreatedAt).reversed())
+                .map(pkg -> {
+                    HarborDto dto = new HarborDto();
+                    dto.setId(pkg.getId());
+                    dto.setName(pkg.getName());
+                    dto.setLocation(pkg.getLocation());
+                    dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setEditedAt(pkg.getEditedAt());
+
+                    List<ContainersDto> containersDtos = pkg.getContainers().stream().map(item -> {
+                        ContainersDto containersDto = new ContainersDto();
+                        containersDto.setReference(item.getReference());
+                        containersDto.setIsAvailable(item.getIsAvailable());
+                        return containersDto;
+                    }).collect(Collectors.toList());
+
+                    dto.setContainers(containersDtos);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
     }
 
     public Harbor getHarborById(Long id) {

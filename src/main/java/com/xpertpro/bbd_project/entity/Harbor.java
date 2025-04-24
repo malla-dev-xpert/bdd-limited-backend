@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity @Data @AllArgsConstructor @NoArgsConstructor
 @Table(name = "harbor")
@@ -27,4 +29,7 @@ public class Harbor {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    @OneToMany(mappedBy = "harbor", cascade = CascadeType.ALL)
+    private List<Containers> containers = new ArrayList<>();
 }

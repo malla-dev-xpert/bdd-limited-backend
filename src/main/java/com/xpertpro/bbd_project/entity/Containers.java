@@ -35,4 +35,7 @@ public class Containers {
     @OneToMany(mappedBy = "container", cascade = CascadeType.ALL)
     private List<Packages> packages = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "harbor_id")
+    private Harbor harbor;
 }

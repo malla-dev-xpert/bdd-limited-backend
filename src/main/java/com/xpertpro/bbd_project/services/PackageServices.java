@@ -129,7 +129,7 @@ public class PackageServices {
     }
 
     public List<PackageResponseDto> getAllPackages(int page) {
-        int pageSize = 10;
+        int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
         Page<Packages> packages = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
