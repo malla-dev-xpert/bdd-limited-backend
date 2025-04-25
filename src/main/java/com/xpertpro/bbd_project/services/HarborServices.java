@@ -107,6 +107,10 @@ public class HarborServices {
                     dto.setName(pkg.getName());
                     dto.setLocation(pkg.getLocation());
                     dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setUserid(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                    dto.setUserName(pkg.getUser() != null
+                            ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName()
+                            : null);
                     dto.setEditedAt(pkg.getEditedAt());
 
                     List<ContainersDto> containersDtos = pkg.getContainers().stream().map(item -> {

@@ -14,6 +14,8 @@ public class HarborDto {
     private String name;
     private String location;
     private List<ContainersDto> containers;
+    private Long userid;
+    private String userName;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
