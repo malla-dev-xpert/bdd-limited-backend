@@ -12,4 +12,5 @@ public class ContainersDto {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
     private Boolean isAvailable;
+    private String status;
 }

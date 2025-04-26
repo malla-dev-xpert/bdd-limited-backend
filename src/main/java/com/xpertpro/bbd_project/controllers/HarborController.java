@@ -57,8 +57,8 @@ public class HarborController {
     }
 
     @GetMapping()
-    public List<HarborDto> getAllHarbor(@RequestParam(defaultValue = "0") int page) {
-        return harborServices.getAllHarbor(page);
+    public List<HarborDto> getAllHarbor(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return harborServices.getAllHarbor(page, query);
     }
 
     @GetMapping("/{id}")

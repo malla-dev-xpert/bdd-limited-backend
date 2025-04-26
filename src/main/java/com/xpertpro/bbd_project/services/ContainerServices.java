@@ -3,9 +3,11 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.entity.Carriers;
 import com.xpertpro.bbd_project.entity.Containers;
+import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
+import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,8 @@ public class ContainerServices {
     ContainersRepository containersRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    HarborRepository harborRepository;
 
 
     public String createContainer(ContainersDto containersDto, Long userId) {
@@ -91,6 +95,21 @@ public class ContainerServices {
 
         containers.setStatus(StatusEnum.DELETE);
         containers.setUser(user);
+        containersRepository.save(containers);
+        return "Container deleted successfully";
+    }
+
+    public String retrieveContainerToHArbor(Long id, Long userId, Long harborId) {
+        Containers containers = containersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+        Harbor harbor = harborRepository.findById(harborId)
+                .orElseThrow(() -> new RuntimeException("harbor not found with ID: " + id));
+
+        containers.setStatus(StatusEnum.RETRIEVE);
+        containers.setUser(user);
+        containers.setHarbor(harbor);
         containersRepository.save(containers);
         return "Container deleted successfully";
     }

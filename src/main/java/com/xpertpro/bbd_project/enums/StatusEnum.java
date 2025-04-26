@@ -6,6 +6,7 @@ public enum StatusEnum {
     DISABLE,
     PENDING,
     RECEIVED,
+    RETRIEVE,
     INPROGRESS,
     DELIVERED
 }

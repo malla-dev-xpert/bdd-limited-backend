@@ -92,11 +92,22 @@ public class HarborServices {
         return "Harbor disable successfully";
     }
 
-    public List<HarborDto> getAllHarbor(int page) {
+    public List<HarborDto> getAllHarbor(int page, String query) {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
         Page<Harbor> harbors = harborRepository.findByStatus(StatusEnum.CREATE, pageable);
+
+        if (query != null && !query.isEmpty()) {
+            harbors = harborRepository.findByStatusAndSearchQuery(
+                    StatusEnum.CREATE,
+                    "%" + query.toLowerCase() + "%",
+                    pageable
+            );
+        } else {
+            harbors = harborRepository.findByStatus(StatusEnum.CREATE, pageable);
+        }
+
 
         return harbors.stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
@@ -107,7 +118,7 @@ public class HarborServices {
                     dto.setName(pkg.getName());
                     dto.setLocation(pkg.getLocation());
                     dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setUserid(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                    dto.setUserid(pkg.getUser().getId());
                     dto.setUserName(pkg.getUser() != null
                             ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName()
                             : null);
@@ -117,6 +128,7 @@ public class HarborServices {
                         ContainersDto containersDto = new ContainersDto();
                         containersDto.setReference(item.getReference());
                         containersDto.setIsAvailable(item.getIsAvailable());
+                        containersDto.setStatus(item.getStatus().name());
                         return containersDto;
                     }).collect(Collectors.toList());
 
