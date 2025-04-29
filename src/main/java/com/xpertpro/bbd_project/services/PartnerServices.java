@@ -3,9 +3,12 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
+import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.PartnersDtoMapper;
+import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
+import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +28,13 @@ public class PartnerServices {
     PartnerRepository partnerRepository;
     @Autowired
     PartnersDtoMapper partnersDtoMapper;
+    @Autowired
+    PackageRepository packageRepository;
+    @Autowired
+    UserRepository userRepository;
 
-    public String createPartners(PartnerDto partnersDto) {
+    public String createPartners(PartnerDto partnersDto, Long userId) {
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         if (partnerRepository.findByEmail(partnersDto.getEmail()).isPresent()) {
             return "EMAIL_EXIST";
@@ -36,6 +45,7 @@ public class PartnerServices {
         }
 
         Partners partners = partnersDtoMapper.toEntity(partnersDto);
+        partners.setUser(user);
 
         partnerRepository.save(partners);
         return "SUCCESS";
@@ -92,13 +102,26 @@ public class PartnerServices {
         );
     }
 
-    public String deletePartners(Long id) {
-        Partners partners = partnerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Partners not found with ID: " + id));
+    public String deletePartner(Long partnerId, Long userId) {
+        Optional<Partners> optionalPartner = partnerRepository.findById(partnerId);
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (optionalPartner.isEmpty()) {
+            return "PARTNER_NOT_FOUND";
+        }
 
-        partners.setStatus(StatusEnum.DELETE);
-        partnerRepository.save(partners);
-        return "Partner deleted successfully";
+        Partners partner = optionalPartner.get();
+
+        boolean hasPackages = packageRepository.existsByPartnerId(partnerId);
+        if (hasPackages) {
+            return "PACKAGE_FOUND";
+        }
+
+        partner.setStatus(StatusEnum.DELETE);
+        partner.setEditedAt(LocalDateTime.now());
+        partner.setUser(user);
+        partnerRepository.save(partner);
+
+        return "DELETED";
     }
 
     public UpdatePartnersDto updatePartnersDto(Long id, UpdatePartnersDto updatePartnersDto) {

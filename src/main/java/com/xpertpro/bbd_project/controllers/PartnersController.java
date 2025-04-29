@@ -21,8 +21,8 @@ public class PartnersController {
     PartnerServices partnerServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> register(@RequestBody PartnerDto partnersDto) {
-        String result = partnerServices.createPartners(partnersDto);
+    public ResponseEntity<String> register(@RequestBody PartnerDto partnersDto, @RequestParam(name = "userId") Long userId) {
+        String result = partnerServices.createPartners(partnersDto, userId);
         switch (result) {
             case "EMAIL_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Email déjà utilisé par un partenaire !");
@@ -49,9 +49,16 @@ public class PartnersController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deletePartners(@PathVariable Long id){
-        partnerServices.deletePartners(id);
-        return "Le partenaire avec  l'id " + id + " a été supprimer avec succès.";
+    public ResponseEntity<String> delete(@PathVariable(name = "id") Long partnerId, @RequestParam(name = "userId")Long userId) {
+        String result = partnerServices.deletePartner(partnerId, userId);
+        switch (result) {
+            case "PARTNER_NOT_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Partenaire non trouvé !");
+            case "PACKAGE_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Impossible de supprimer, des colis existent pour ce partenaire.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Partenaire supprimé avec succès !");
+        }
     }
 
     @PutMapping("/update/{id}")
