@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/partners")
 @CrossOrigin("*")
@@ -32,8 +34,8 @@ public class PartnersController {
     }
 
     @GetMapping()
-    public Page<Partners> getAllPartners(@RequestParam(defaultValue = "0") int page) {
-        return partnerServices.getAllPartners(page);
+    public List<PartnerDto> getAllPartners(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return partnerServices.getAllPartner(page, query);
     }
 
     @GetMapping("/{id}")

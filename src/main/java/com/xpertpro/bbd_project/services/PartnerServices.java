@@ -13,7 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PartnerServices {
@@ -38,9 +41,41 @@ public class PartnerServices {
         return "SUCCESS";
     }
 
-    public Page<Partners> getAllPartners(int page) {
-        Pageable pageable = PageRequest.of(page, 50, Sort.by("createdAt").descending());
-        return partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
+    public List<PartnerDto> getAllPartner(int page, String query) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Partners> partners = partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
+
+        if (query != null && !query.isEmpty()) {
+            partners = partnerRepository.findByStatusAndSearchQuery(
+                    StatusEnum.CREATE,
+                    "%" + query.toLowerCase() + "%",
+                    pageable
+            );
+        } else {
+            partners = partnerRepository.findByStatus(StatusEnum.CREATE, pageable);
+        }
+
+
+        return partners.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(Partners::getCreatedAt).reversed())
+                .map(pkg -> {
+                    PartnerDto dto = new PartnerDto();
+                    dto.setId(pkg.getId());
+                    dto.setAccountType(pkg.getAccountType());
+                    dto.setAdresse(pkg.getAdresse());
+                    dto.setCountry(pkg.getCountry());
+                    dto.setEmail(pkg.getEmail());
+                    dto.setFirstName(pkg.getFirstName());
+                    dto.setLastName(pkg.getLastName());
+                    dto.setPhoneNumber(pkg.getPhoneNumber());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
     }
 
     public Page<PartnerDto> findPartnersByType(int page, String type) {
