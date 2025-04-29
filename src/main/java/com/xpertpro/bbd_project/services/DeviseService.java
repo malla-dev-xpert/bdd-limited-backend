@@ -24,12 +24,11 @@ public class DeviseService {
 
     public String createDevise(DeviseDto deviseDto) {
 
-        if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
-            return "CODE_EXIST";
-        }
-
         if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
             return "NAME_EXIST";
+        }
+        if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
+            return "CODE_EXIST";
         }
 
         Devises devises = deviseDtoMapper.toEntity(deviseDto);

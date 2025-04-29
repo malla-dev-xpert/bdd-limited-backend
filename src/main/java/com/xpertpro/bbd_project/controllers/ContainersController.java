@@ -62,4 +62,10 @@ public class ContainersController {
         containerServices.deleteContainer(id, userId);
         return "Le Conteneur avec  l'id " + id + " a été supprimé avec succès.";
     }
+
+    @DeleteMapping("/retrieve/{id}/harbor/{harborId}")
+    public String retrieveContainerToHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @PathVariable("harborId") Long harborId){
+        containerServices.retrieveContainerToHArbor(id, userId, harborId);
+        return "Le Conteneur avec  l'id " + id + " a été retirer avec succès.";
+    }
 }

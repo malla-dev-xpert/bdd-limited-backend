@@ -21,10 +21,10 @@ public class DeviseController {
     public ResponseEntity<String> createDevise(@RequestBody DeviseDto deviseDto){
         String result = deviseService.createDevise(deviseDto);
         switch (result) {
-            case "CODE_EXIST":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Code déjà utilisé !");
             case "NAME_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de devise déjà utilisé !");
+            case "CODE_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Code déjà utilisé !");
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Devise ajouté avec succès !");
         }

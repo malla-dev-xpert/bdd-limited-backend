@@ -4,10 +4,11 @@ import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.services.HarborServices;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -56,8 +57,8 @@ public class HarborController {
     }
 
     @GetMapping()
-    public Page<Harbor> getAllHarbor(@RequestParam(defaultValue = "0") int page) {
-        return harborServices.findAllHarbor(page);
+    public List<HarborDto> getAllHarbor(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return harborServices.getAllHarbor(page, query);
     }
 
     @GetMapping("/{id}")

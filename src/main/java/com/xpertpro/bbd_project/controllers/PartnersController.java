@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
-import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.services.PartnerServices;
@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/partners")
@@ -19,8 +21,8 @@ public class PartnersController {
     PartnerServices partnerServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> register(@RequestBody CreatePartnersDto partnersDto) {
-        String result = partnerServices.createPartners(partnersDto);
+    public ResponseEntity<String> register(@RequestBody PartnerDto partnersDto, @RequestParam(name = "userId") Long userId) {
+        String result = partnerServices.createPartners(partnersDto, userId);
         switch (result) {
             case "EMAIL_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Email déjà utilisé par un partenaire !");
@@ -32,8 +34,8 @@ public class PartnersController {
     }
 
     @GetMapping()
-    public Page<Partners> getAllPartners(@RequestParam(defaultValue = "0") int page) {
-        return partnerServices.getAllPartners(page);
+    public List<PartnerDto> getAllPartners(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return partnerServices.getAllPartner(page, query);
     }
 
     @GetMapping("/{id}")
@@ -42,14 +44,21 @@ public class PartnersController {
     }
 
     @GetMapping("/account-type")
-    public Page<Partners> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
+    public Page<PartnerDto> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
         return partnerServices.findPartnersByType(page, type);
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deletePartners(@PathVariable Long id){
-        partnerServices.deletePartners(id);
-        return "Le partenaire avec  l'id " + id + " a été supprimer avec succès.";
+    public ResponseEntity<String> delete(@PathVariable(name = "id") Long partnerId, @RequestParam(name = "userId")Long userId) {
+        String result = partnerServices.deletePartner(partnerId, userId);
+        switch (result) {
+            case "PARTNER_NOT_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Partenaire non trouvé !");
+            case "PACKAGE_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Impossible de supprimer, des colis existent pour ce partenaire.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Partenaire supprimé avec succès !");
+        }
     }
 
     @PutMapping("/update/{id}")

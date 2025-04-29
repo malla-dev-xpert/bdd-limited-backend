@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Entity @Table(name = "containers")
@@ -15,10 +17,12 @@ public class Containers {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String reference;
+
     @Enumerated(EnumType.STRING)
-    private StatusEnum status = StatusEnum.CREATE;
+    private StatusEnum status = StatusEnum.PENDING;
+
     private Boolean isAvailable;
 
     private LocalDateTime createdAt;
@@ -28,4 +32,10 @@ public class Containers {
     @ManyToOne
     private UserEntity user;
 
+    @OneToMany(mappedBy = "container", cascade = CascadeType.ALL)
+    private List<Packages> packages = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "harbor_id")
+    private Harbor harbor;
 }

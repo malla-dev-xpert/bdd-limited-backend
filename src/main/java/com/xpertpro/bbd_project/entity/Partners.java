@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Entity @Table(name = "partners")
@@ -32,5 +34,12 @@ public class Partners {
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
+
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Packages> packages = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
 }

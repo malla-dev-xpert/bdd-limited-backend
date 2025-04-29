@@ -1,12 +1,12 @@
 package com.xpertpro.bbd_project.dtoMapper;
 
-import com.xpertpro.bbd_project.dto.partners.CreatePartnersDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PartnersDtoMapper {
-    public Partners toEntity(CreatePartnersDto dto) {
+    public Partners toEntity(PartnerDto dto) {
         Partners partners = new Partners();
         partners.setCountry(dto.getCountry());
         partners.setEmail(dto.getEmail());
