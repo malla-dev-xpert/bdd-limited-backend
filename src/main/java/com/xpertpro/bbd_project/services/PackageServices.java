@@ -7,6 +7,7 @@ import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -222,5 +224,32 @@ public class PackageServices {
         packages.setUser(user);
         packageRepository.save(packages);
         return "Package deleted successfully";
+    }
+
+    public String updatePackage(Long id, Long userId, PackageResponseDto dto) {
+        Packages existingPackage = packageRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Package not found with id: " + id));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+        Warehouse warehouse = warehouseRepository.findById(dto.getWarehouseId())
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
+
+        Partners partner = partnerRepository.findById(dto.getPartnerId())
+                .orElseThrow(() -> new EntityNotFoundException("Partner not found"));
+        if (packageRepository.findByReference(dto.getReference()).isPresent()) {
+            return "DUPLICATE_REFERENCE";
+        }
+
+        existingPackage.setReference(dto.getReference());
+        existingPackage.setWeight(dto.getWeight());
+        existingPackage.setDimensions(dto.getDimensions());
+        existingPackage.setEditedAt(LocalDateTime.now());
+        existingPackage.setWarehouse(warehouse);
+        existingPackage.setPartner(partner);
+        existingPackage.setUser(user);
+
+        packageRepository.save(existingPackage);
+
+        return "Package updated";
     }
 }

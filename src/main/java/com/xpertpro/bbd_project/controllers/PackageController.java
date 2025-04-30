@@ -86,4 +86,19 @@ public class PackageController {
         return ResponseEntity.ok("Articles ajoutés au colis");
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updatePackage(
+            @PathVariable Long id,
+            @RequestParam(name = "userId")Long userId,
+            @RequestBody PackageResponseDto dto
+    ) {
+        String result = packageServices.updatePackage(id, userId, dto);
+        switch (result) {
+            case "DUPLICATE_REFERENCE":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de colis déjà utilisé !");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Colis modifier avec succès !");
+        }
+    }
+
 }
