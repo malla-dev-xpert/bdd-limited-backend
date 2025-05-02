@@ -5,6 +5,7 @@ import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.entity.Warehouse;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.WarehouseDtoMapper;
+import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.repository.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -29,6 +27,8 @@ public class WarehouseServices {
     private UserRepository userRepository;
     @Autowired
     private WarehouseDtoMapper warehouseDtoMapper;
+    @Autowired
+    private PackageRepository packageRepository;
 
     public String createWarehouse(WarehouseDto warehouse, Long userId) {
 
@@ -83,15 +83,25 @@ public class WarehouseServices {
     }
 
     public String deleteWarehouse(Long id, Long userId) {
-        Warehouse warehouse = warehouseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Warehouse not found with ID: " + id));
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+        Optional<Warehouse> optionalWarehouse = warehouseRepository.findById(id);
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (optionalWarehouse.isEmpty()) {
+            return "WAREHOUSE_NOT_FOUND";
+        }
+
+        Warehouse warehouse = optionalWarehouse.get();
+
+        boolean hasPackages = packageRepository.existsByWarehouseId(id);
+        if (hasPackages) {
+            return "PACKAGE_FOUND";
+        }
 
         warehouse.setStatus(StatusEnum.DELETE);
+        warehouse.setEditedAt(LocalDateTime.now());
         warehouse.setUser(user);
         warehouseRepository.save(warehouse);
-        return "Warehouse deleted successfully";
+
+        return "DELETED";
     }
 
     public Warehouse getWarehousById(Long id) {

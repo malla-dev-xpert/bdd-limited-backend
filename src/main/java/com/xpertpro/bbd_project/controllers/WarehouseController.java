@@ -10,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 
 @RestController
 @RequestMapping("api/v1/warehouses")
@@ -58,8 +56,13 @@ public class WarehouseController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deleteWarehouse(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
-        warehouseServices.deleteWarehouse(id, userId);
-        return "L'entrepôt avec  l'id " + id + " a été supprimé avec succès.";
+    public ResponseEntity<String> delete(@PathVariable(name = "id") Long id, @RequestParam(name = "userId")Long userId) {
+        String result = warehouseServices.deleteWarehouse(id, userId);
+        switch (result) {
+            case "PACKAGE_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Impossible de supprimer, des colis existent dans cet entrepôt.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Entrepôt supprimé avec succès !");
+        }
     }
 }
