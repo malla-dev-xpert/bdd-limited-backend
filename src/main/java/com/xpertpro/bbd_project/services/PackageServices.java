@@ -114,7 +114,9 @@ public class PackageServices {
                                 ? pkg.getPartner().getPhoneNumber()
                                 : null);
 
-                        List<ItemDto> itemDtos = pkg.getItems().stream().map(item -> {
+                        List<ItemDto> itemDtos = pkg.getItems().stream()
+                                .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                                .map(item -> {
                             ItemDto itemDto = new ItemDto();
                             itemDto.setId(item.getId());
                             itemDto.setDescription(item.getDescription());
@@ -160,7 +162,9 @@ public class PackageServices {
                             ? pkg.getPartner().getPhoneNumber()
                             : null);
 
-                    List<ItemDto> itemDtos = pkg.getItems().stream().map(item -> {
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .map(item -> {
                         ItemDto itemDto = new ItemDto();
                         itemDto.setId(item.getId());
                         itemDto.setDescription(item.getDescription());

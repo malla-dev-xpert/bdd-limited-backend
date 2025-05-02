@@ -1,19 +1,15 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.ItemDto;
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
-import com.xpertpro.bbd_project.entity.Items;
-import com.xpertpro.bbd_project.entity.Packages;
-import com.xpertpro.bbd_project.entity.UserEntity;
-import com.xpertpro.bbd_project.entity.Warehouse;
+import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ItemsRepository;
 import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -65,5 +61,19 @@ public class ItemServices {
         itemsRepository.save(items);
 
         return "DELETED";
+    }
+
+    public String updateItem(Long id, Long packageId, ItemDto dto) {
+        packageRepository.findById(packageId)
+                .orElseThrow(() -> new EntityNotFoundException("Package not found with id: " + id));
+        Items existingItem = itemsRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + id));
+
+        existingItem.setQuantity(dto.getQuantity());
+        existingItem.setDescription(dto.getDescription());
+
+        itemsRepository.save(existingItem);
+
+        return "Item updated";
     }
 }

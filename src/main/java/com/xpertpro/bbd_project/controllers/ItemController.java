@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.ItemDto;
-import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.services.ItemServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,5 +35,15 @@ public class ItemController {
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Article supprimer avec succès !");
         }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updatePackage(
+            @PathVariable Long id,
+            @RequestParam(name = "packageId")Long packageId,
+            @RequestBody ItemDto dto
+    ) {
+        itemServices.updateItem(id, packageId, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Article modifier avec succès !");
     }
 }
