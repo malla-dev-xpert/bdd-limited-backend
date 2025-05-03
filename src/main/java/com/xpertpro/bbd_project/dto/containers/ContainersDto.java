@@ -1,10 +1,12 @@
 package com.xpertpro.bbd_project.dto.containers;
 
+import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class ContainersDto {
@@ -18,4 +20,5 @@ public class ContainersDto {
     private String userName;
     private Long harborId;
     private String harborName;
+    private List<PackageResponseDto> packages;
 }

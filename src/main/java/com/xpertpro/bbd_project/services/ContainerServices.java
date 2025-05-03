@@ -1,6 +1,5 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.entity.*;
@@ -122,6 +121,22 @@ public class ContainerServices {
                     dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
 //                    dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
 //                    dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
+
+                    List<PackageResponseDto> packageResponseDtos = pkg.getPackages().stream()
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .map(packages -> {
+                                PackageResponseDto packageDto = new PackageResponseDto();
+                                packageDto.setId(packages.getId());
+                                packageDto.setReference(packages.getReference());
+                                packageDto.setPartnerName(packages.getPartner().getFirstName() + " " + packages.getPartner().getLastName());
+                                packageDto.setPartnerPhoneNumber(packages.getPartner().getPhoneNumber());
+                                packageDto.setWarehouseName(packages.getWarehouse().getName());
+                                packageDto.setWarehouseAddress(packages.getWarehouse().getAdresse());
+                                return packageDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setPackages(packageResponseDtos);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
