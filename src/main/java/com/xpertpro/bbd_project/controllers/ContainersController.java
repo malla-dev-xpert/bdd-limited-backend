@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("api/v1/containers")
@@ -28,7 +30,7 @@ public class ContainersController {
             case "REF_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Numéro d'identification déjà utilisé !");
             default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Le contenu a été ajouté avec succès!");
+                return ResponseEntity.status(HttpStatus.CREATED).body("Le conteneur a été ajouté avec succès!");
         }
     }
 
@@ -48,7 +50,7 @@ public class ContainersController {
     }
 
     @GetMapping()
-    public Page<Containers> getAllContainers(@RequestParam(defaultValue = "0") int page) {
+    public List<ContainersDto> getAllContainers(@RequestParam(defaultValue = "0") int page) {
         return containerServices.getAllContainers(page);
     }
 
@@ -58,9 +60,18 @@ public class ContainersController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deleteContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
-        containerServices.deleteContainer(id, userId);
-        return "Le Conteneur avec  l'id " + id + " a été supprimé avec succès.";
+    public ResponseEntity<String> deleteContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        String result = containerServices.deleteContainerById(id, userId);
+        switch (result) {
+            case "CONTAINER_NOT_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Conteneur introuvable.");
+            case "USER_NOT_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Utilisateur introuvable.");
+            case "PACKAGE_EXIST":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Impossible de supprimer : Des colis existent dans ce conteneur.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Le conteneur a été supprimer avec succès!");
+        }
     }
 
     @DeleteMapping("/retrieve/{id}/harbor/{harborId}")

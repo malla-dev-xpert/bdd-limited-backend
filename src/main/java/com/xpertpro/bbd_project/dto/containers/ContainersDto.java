@@ -8,9 +8,14 @@ import java.time.LocalDateTime;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class ContainersDto {
+    private Long id;
     private String reference;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
     private Boolean isAvailable;
     private String status;
+    private Long userId;
+    private String userName;
+    private Long harborId;
+    private String harborName;
 }
