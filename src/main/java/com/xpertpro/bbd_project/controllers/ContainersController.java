@@ -37,8 +37,8 @@ public class ContainersController {
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updateContainer
             (@PathVariable Long id,
-             @RequestBody ContainersDto containersDto,
-             @RequestParam(name = "userId") Long userId)
+             @RequestParam(name = "userId") Long userId,
+             @RequestBody ContainersDto containersDto)
     {
         String result = containerServices.updateContainer(id,containersDto, userId);
         switch (result) {

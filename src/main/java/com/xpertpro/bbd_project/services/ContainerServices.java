@@ -58,21 +58,23 @@ public class ContainerServices {
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé"));
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
 
-        if (containersRepository.findByReference(containersDto.getReference()).isPresent()) {
+        Optional<Containers> existingContainer = containersRepository.findByReference(containersDto.getReference());
+        if (existingContainer.isPresent() && !existingContainer.get().getId().equals(id)) {
             return "REF_EXIST";
         }
 
-        if(optionalUser.isPresent()){
+        if (optionalUser.isPresent()) {
             if (containersDto.getReference() != null) newContainer.setReference(containersDto.getReference());
             if (containersDto.getIsAvailable() != null) newContainer.setIsAvailable(containersDto.getIsAvailable());
             newContainer.setEditedAt(containersDto.getEditedAt());
 
             containersRepository.save(newContainer);
             return "SUCCESS";
-        }else{
+        } else {
             throw new RuntimeException("User not found with ID: " + id);
         }
     }
+
 
     @Transactional
     public String deleteContainerById(Long containerId, Long userId) {
