@@ -29,6 +29,7 @@ public class Packages {
     private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 30)
     private StatusEnum status = StatusEnum.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)

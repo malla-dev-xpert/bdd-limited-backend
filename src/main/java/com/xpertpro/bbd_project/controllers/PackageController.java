@@ -68,6 +68,15 @@ public class PackageController {
         return "Colis recu avec succès !";
     }
 
+    @DeleteMapping("/{id}/container/{containerId}/delete")
+    public String deleteOnContainer(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(name = "userId") Long userId,
+            @PathVariable(name = "containerId") Long containerId) {
+        packageServices.deletePackagesOnContainer(id, userId, containerId);
+        return "Colis retiré du conteneur" + containerId + " avec succès !";
+    }
+
     @DeleteMapping("/delete/{id}")
     public String deltePackage(
             @PathVariable Long id,

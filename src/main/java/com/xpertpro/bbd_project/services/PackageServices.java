@@ -35,6 +35,8 @@ public class PackageServices {
     PartnerRepository partnerRepository;
     @Autowired
     ItemsRepository itemsRepository;
+    @Autowired
+    ContainersRepository containersRepository;
 
     @Transactional
     public Packages createPackageWithItems(Long warehouseId,
@@ -215,6 +217,24 @@ public class PackageServices {
         packages.setWarehouse(warehouse);
         packageRepository.save(packages);
         return "Package Received successfully";
+    }
+
+    public String deletePackagesOnContainer(Long id, Long userId, Long containerId) {
+        Packages packages = packageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        Containers containers = containersRepository.findById(containerId)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+
+        packages.setStatus(StatusEnum.DELETE_ON_CONTAINER);
+        packages.setUser(user);
+        packages.setContainer(containers);
+        packages.setEditedAt(LocalDateTime.now());
+        packageRepository.save(packages);
+        return "Package delete on container successfully";
     }
 
     public String deletePackages(Long id, Long userId) {

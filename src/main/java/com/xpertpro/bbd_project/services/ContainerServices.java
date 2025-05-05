@@ -75,7 +75,6 @@ public class ContainerServices {
         }
     }
 
-
     @Transactional
     public String deleteContainerById(Long containerId, Long userId) {
         Optional<Containers> optionalContainer = containersRepository.findById(containerId);
@@ -126,6 +125,7 @@ public class ContainerServices {
 
                     List<PackageResponseDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
                             .map(packages -> {
                                 PackageResponseDto packageDto = new PackageResponseDto();
                                 packageDto.setId(packages.getId());
