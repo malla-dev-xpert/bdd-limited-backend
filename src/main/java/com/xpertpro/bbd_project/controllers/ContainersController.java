@@ -2,7 +2,9 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.entity.Containers;
+import com.xpertpro.bbd_project.entity.EmbarquementRequest;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
+import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.ContainerServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,8 @@ public class ContainersController {
     ContainerServices containerServices;
     @Autowired
     ContainersRepository containersRepository;
+    @Autowired
+    ContainerPackageService containerPackageService;
 
     @PostMapping("/create")
     public ResponseEntity<String> addContainers(@RequestBody ContainersDto containersDto, @RequestParam(name = "userId") Long userId) {
@@ -49,13 +53,20 @@ public class ContainersController {
         }
     }
 
+    @PostMapping("/embarquer")
+    public ResponseEntity<Containers> embarquerColis(
+            @RequestBody EmbarquementRequest request) {
+        return ResponseEntity.ok(
+                containerPackageService.embarquerColis(request));
+    }
+
     @GetMapping()
     public List<ContainersDto> getAllContainers(@RequestParam(defaultValue = "0") int page) {
         return containerServices.getAllContainers(page);
     }
 
     @GetMapping("/{id}")
-    public Containers getContainerById(@PathVariable Long id){
+    public ContainersDto getContainerById(@PathVariable Long id){
         return containerServices.getContainerById(id);
     }
 

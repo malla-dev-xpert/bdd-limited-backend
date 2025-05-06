@@ -9,5 +9,6 @@ public enum StatusEnum {
     RETRIEVE,
     DELETE_ON_CONTAINER,
     INPROGRESS,
+    IN_CONTAINER,
     DELIVERED
 }

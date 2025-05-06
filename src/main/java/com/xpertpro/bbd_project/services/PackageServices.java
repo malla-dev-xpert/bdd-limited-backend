@@ -277,6 +277,14 @@ public class PackageServices {
         Containers containers = containersRepository.findById(containerId)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
 
+        if (!containers.equals(packages.getContainer())) {
+            return "PACKAGES_NOT_FOR_CONTAINER";
+        }
+
+        if (containers.getStatus() != StatusEnum.PENDING) {
+            return "CONTAINER_IN_PROGRESS";
+        }
+
         packages.setStatus(StatusEnum.DELETE_ON_CONTAINER);
         packages.setUser(user);
         packages.setContainer(containers);

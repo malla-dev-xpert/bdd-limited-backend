@@ -145,16 +145,6 @@ public class ContainerServices {
 
     }
 
-    public Containers getContainerById(Long id) {
-        Optional<Containers> optionalContainers = containersRepository.findById(id);
-        if (optionalContainers.isPresent()) {
-            Containers containers = optionalContainers.get();
-            return containers;
-        } else {
-            throw new RuntimeException("Conteneur non trouvé avec l'ID : " + id);
-        }
-    }
-
     public String retrieveContainerToHArbor(Long id, Long userId, Long harborId) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
@@ -169,4 +159,45 @@ public class ContainerServices {
         containersRepository.save(containers);
         return "Container deleted successfully";
     }
+
+    @Transactional()
+    public ContainersDto getContainerById(Long containerId) {
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new RuntimeException("Conteneur non trouvé avec l'ID: " + containerId));
+
+        if (container.getStatus() == StatusEnum.DELETE) {
+            throw new RuntimeException("Ce conteneur est supprimé");
+        }
+
+        ContainersDto dto = new ContainersDto();
+        dto.setId(container.getId());
+        dto.setReference(container.getReference());
+        dto.setCreatedAt(container.getCreatedAt());
+        dto.setEditedAt(container.getEditedAt());
+        dto.setStatus(container.getStatus().name());
+        dto.setIsAvailable(container.getIsAvailable());
+        dto.setUserName(container.getUser() != null
+                ? container.getUser().getFirstName() + " " + container.getUser().getLastName()
+                : null);
+        dto.setUserId(container.getUser() != null ? container.getUser().getId() : null);
+
+        List<PackageResponseDto> packageResponseDtos = container.getPackages().stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
+                .map(pkg -> {
+                    PackageResponseDto packageDto = new PackageResponseDto();
+                    packageDto.setId(pkg.getId());
+                    packageDto.setReference(pkg.getReference());
+                    packageDto.setPartnerName(pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName());
+                    packageDto.setPartnerPhoneNumber(pkg.getPartner().getPhoneNumber());
+                    packageDto.setWarehouseName(pkg.getWarehouse().getName());
+                    packageDto.setWarehouseAddress(pkg.getWarehouse().getAdresse());
+                    return packageDto;
+                }).collect(Collectors.toList());
+
+        dto.setPackages(packageResponseDtos);
+
+        return dto;
+    }
+
 }

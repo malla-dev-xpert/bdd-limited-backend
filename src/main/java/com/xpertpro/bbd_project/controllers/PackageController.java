@@ -78,12 +78,20 @@ public class PackageController {
             @PathVariable(name = "id") Long id,
             @RequestParam(name = "userId") Long userId,
             @PathVariable(name = "containerId") Long containerId) {
-        packageServices.deletePackagesOnContainer(id, userId, containerId);
-        return "Colis retiré du conteneur" + containerId + " avec succès !";
+        String result = packageServices.deletePackagesOnContainer(id, userId, containerId);
+        switch (result){
+            case "PACKAGES_NOT_FOR_CONTAINER":
+                return "Le colis n'appartient pas à ce conteneur";
+            case "CONTAINER_IN_PROGRESS":
+                return "Impossible de retirer un colis d'un conteneur en cours de livraison";
+            default:
+                return "Colis retiré du conteneur" + containerId + " avec succès !";
+
+        }
     }
 
     @DeleteMapping("/delete/{id}")
-    public String deltePackage(
+    public String deletePackage(
             @PathVariable Long id,
             @RequestParam(name = "userId") Long userId) {
         packageServices.deletePackages(id, userId);
