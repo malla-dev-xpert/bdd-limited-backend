@@ -21,18 +21,17 @@ public class ContainerPackageService {
     private final PackageRepository packageRepository;
 
     @Transactional
-    public Containers embarquerColis(EmbarquementRequest request) {
+    public String embarquerColis(EmbarquementRequest request) {
         Containers container = containerRepository.findById(request.getContainerId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Conteneur non trouvé avec l'ID: " + request.getContainerId()));
 
         if (!Boolean.TRUE.equals(container.getIsAvailable())) {
-            throw new OperationNotAllowedException("Le conteneur n'est pas disponible pour l'embarquement");
+            return "CONTAINER_NOT_AVAILABLE";
         }
 
         if (container.getStatus() != StatusEnum.PENDING) {
-            throw new OperationNotAllowedException(
-                    "Seuls les conteneurs en statut PENDING peuvent recevoir des colis");
+            return "CONTAINER_NOT_IN_PENDING";
         }
 
         List<Packages> packages = packageRepository.findAllById(request.getPackageId());
@@ -54,7 +53,8 @@ public class ContainerPackageService {
         container.setEditedAt(LocalDateTime.now());
 
         packageRepository.saveAll(packages);
-        return containerRepository.save(container);
+        containerRepository.save(container);
+        return "SAVED";
     }
 
 

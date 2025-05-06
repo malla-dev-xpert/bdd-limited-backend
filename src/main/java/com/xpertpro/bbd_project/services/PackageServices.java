@@ -267,31 +267,33 @@ public class PackageServices {
         return "Package Received successfully";
     }
 
-    public String deletePackagesOnContainer(Long id, Long userId, Long containerId) {
-        Packages packages = packageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));
+    public String removePackageFromContainer(Long packageId, Long userId, Long containerId) {
+        Packages packages = packageRepository.findById(packageId)
+                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + packageId));
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        Containers containers = containersRepository.findById(containerId)
-                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + containerId));
 
-        if (!containers.equals(packages.getContainer())) {
-            return "PACKAGES_NOT_FOR_CONTAINER";
+        if (!container.equals(packages.getContainer())) {
+            return "PACKAGE_NOT_IN_SPECIFIED_CONTAINER";
         }
 
-        if (containers.getStatus() != StatusEnum.PENDING) {
-            return "CONTAINER_IN_PROGRESS";
+        if (container.getStatus() != StatusEnum.PENDING) {
+            return "CONTAINER_NOT_EDITABLE";
         }
 
-        packages.setStatus(StatusEnum.DELETE_ON_CONTAINER);
+        packages.setContainer(null);
+        packages.setStatus(StatusEnum.RECEIVED);
         packages.setUser(user);
-        packages.setContainer(containers);
         packages.setEditedAt(LocalDateTime.now());
+
         packageRepository.save(packages);
-        return "Package delete on container successfully";
+        return "PACKAGE_REMOVED_FROM_CONTAINER";
     }
+
 
     public String deletePackages(Long id, Long userId) {
         Packages packages = packageRepository.findById(id)

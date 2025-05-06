@@ -78,11 +78,11 @@ public class PackageController {
             @PathVariable(name = "id") Long id,
             @RequestParam(name = "userId") Long userId,
             @PathVariable(name = "containerId") Long containerId) {
-        String result = packageServices.deletePackagesOnContainer(id, userId, containerId);
+        String result = packageServices.removePackageFromContainer(id, userId, containerId);
         switch (result){
-            case "PACKAGES_NOT_FOR_CONTAINER":
+            case "PACKAGE_NOT_IN_SPECIFIED_CONTAINER":
                 return "Le colis n'appartient pas à ce conteneur";
-            case "CONTAINER_IN_PROGRESS":
+            case "CONTAINER_NOT_EDITABLE":
                 return "Impossible de retirer un colis d'un conteneur en cours de livraison";
             default:
                 return "Colis retiré du conteneur" + containerId + " avec succès !";
