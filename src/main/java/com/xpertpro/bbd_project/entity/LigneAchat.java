@@ -1,7 +1,12 @@
 package com.xpertpro.bbd_project.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data @AllArgsConstructor @NoArgsConstructor
+@Entity(name = "ligneachats")
 public class LigneAchat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -9,10 +14,10 @@ public class LigneAchat {
 
     @ManyToOne
     @JoinColumn(name = "achat_id")
-    private Achats achat;
+    private Achats achats;
 
     @ManyToOne
-    @JoinColumn(name = "item_id") // Référence à ton entité actuelle Items
+    @JoinColumn(name = "item_id")
     private Items item;
 
     private Integer quantite;

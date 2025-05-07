@@ -16,10 +16,12 @@ public class Versements {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String reference;
     private Double montantTotal;
     private Double montantRestant;
 
-    private LocalDateTime dateVersement = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime editedAt;
 
     @ManyToOne
     @JoinColumn(name = "partner_id", nullable = false)

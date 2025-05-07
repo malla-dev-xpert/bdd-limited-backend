@@ -16,7 +16,8 @@ public class Achats {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime dateAchat = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime editedAt;
 
     @ManyToOne
     @JoinColumn(name = "versement_id", nullable = false)
@@ -26,6 +27,6 @@ public class Achats {
     @JoinColumn(name = "fournisseur_id")
     private Partners fournisseur;
 
-    @OneToMany(mappedBy = "achat", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
     private List<LigneAchat> lignes = new ArrayList<>();
 }
