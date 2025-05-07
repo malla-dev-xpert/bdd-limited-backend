@@ -42,4 +42,8 @@ public class Partners {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL)
+    private List<Versements> versements = new ArrayList<>();
+
+
 }

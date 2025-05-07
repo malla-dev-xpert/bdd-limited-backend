@@ -123,6 +123,7 @@ public class PackageServices {
                             itemDto.setId(item.getId());
                             itemDto.setDescription(item.getDescription());
                             itemDto.setQuantity(item.getQuantity());
+                            itemDto.setUnitPrice(item.getUnitPrice());
                             return itemDto;
                         }).collect(Collectors.toList());
 
@@ -171,6 +172,7 @@ public class PackageServices {
                         itemDto.setId(item.getId());
                         itemDto.setDescription(item.getDescription());
                         itemDto.setQuantity(item.getQuantity());
+                        itemDto.setUnitPrice(item.getUnitPrice());
                         return itemDto;
                     }).collect(Collectors.toList());
 
@@ -219,6 +221,7 @@ public class PackageServices {
                                 itemDto.setId(item.getId());
                                 itemDto.setDescription(item.getDescription());
                                 itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
                                 return itemDto;
                             }).collect(Collectors.toList());
 
@@ -240,6 +243,7 @@ public class PackageServices {
             Items item = new Items();
             item.setDescription(dto.getDescription());
             item.setQuantity(dto.getQuantity());
+            item.setUnitPrice(dto.getUnitPrice());
             item.setPackages(pkg);
             item.setStatus(StatusEnum.CREATE);
             item.setUser(user);

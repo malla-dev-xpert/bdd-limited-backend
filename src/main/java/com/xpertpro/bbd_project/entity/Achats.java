@@ -1,0 +1,31 @@
+package com.xpertpro.bbd_project.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data @AllArgsConstructor @NoArgsConstructor
+@Entity(name = "achats")
+public class Achats {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime dateAchat = LocalDateTime.now();
+
+    @ManyToOne
+    @JoinColumn(name = "versement_id", nullable = false)
+    private Versements versement;
+
+    @ManyToOne
+    @JoinColumn(name = "fournisseur_id")
+    private Partners fournisseur;
+
+    @OneToMany(mappedBy = "achat", cascade = CascadeType.ALL)
+    private List<LigneAchat> lignes = new ArrayList<>();
+}
