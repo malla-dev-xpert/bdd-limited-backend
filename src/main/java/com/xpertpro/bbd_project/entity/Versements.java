@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,15 +18,22 @@ public class Versements {
     private Long id;
 
     private String reference;
-    private Double montantTotal;
+    private Double montantVerser;
     private Double montantRestant;
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
+
     @ManyToOne
     @JoinColumn(name = "partner_id", nullable = false)
     private Partners partner;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @OneToMany(mappedBy = "versement", cascade = CascadeType.ALL)
     private List<Achats> achats = new ArrayList<>();
