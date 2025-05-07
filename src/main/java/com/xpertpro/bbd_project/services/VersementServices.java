@@ -2,6 +2,8 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
+import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -94,18 +96,53 @@ public class VersementServices {
                             ? pkg.getPartner().getCountry()
                             : null);
 
-//                    List<ItemDto> itemDtos = pkg.getItems().stream()
-//                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
-//                            .map(item -> {
-//                                ItemDto itemDto = new ItemDto();
-//                                itemDto.setId(item.getId());
-//                                itemDto.setDescription(item.getDescription());
-//                                itemDto.setQuantity(item.getQuantity());
-//                                itemDto.setUnitPrice(item.getUnitPrice());
-//                                return itemDto;
-//                            }).collect(Collectors.toList());
-//
-//                    dto.setItems(itemDtos);
+                    List<AchatDto> achatDtos = pkg.getAchats().stream()
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .map(item -> {
+                                AchatDto achatDto = new AchatDto();
+                                achatDto.setId(item.getId());
+                                achatDto.setFournisseur(item.getFournisseur() != null
+                                        ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
+                                        : null);
+                                achatDto.setFournisseurPhone(item.getFournisseur() != null
+                                        ? item.getFournisseur().getPhoneNumber()
+                                        : null);
+                                achatDto.setMontantRestant(item.getVersement() != null
+                                        ? item.getVersement().getMontantRestant()
+                                        : null);
+                                achatDto.setMontantVerser(item.getVersement() != null
+                                        ? item.getVersement().getMontantVerser()
+                                        : null);
+                                achatDto.setReferenceVersement(item.getVersement() != null
+                                        ? item.getVersement().getReference()
+                                        : null);
+
+                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
+                                        .map(ligne -> {
+                                            LigneAchatDto ligneDto = new LigneAchatDto();
+                                            ligneDto.setId(ligne.getId());
+                                            ligneDto.setAchatId(ligne.getAchats() != null
+                                                    ? ligne.getAchats().getId()
+                                                    : null);
+                                            ligneDto.setQuantity(ligne.getQuantite());
+                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
+                                            ligneDto.setItemId(ligne.getItem() != null
+                                                    ? ligne.getItem().getId()
+                                                    : null);
+                                            ligneDto.setDescriptionItem(ligne.getItem() != null
+                                                    ? ligne.getItem().getDescription()
+                                                    : null);
+                                            ligneDto.setQuantityItem(ligne.getItem().getQuantity());
+                                            ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
+                                            return ligneDto;
+                                        }).collect(Collectors.toList());
+
+                                achatDto.setLignes(ligneDtos);
+
+                                return achatDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setAchats(achatDtos);
 
                     return dto;
                 })

@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,9 @@ public class Achats {
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
 
     @ManyToOne
     @JoinColumn(name = "versement_id", nullable = false)

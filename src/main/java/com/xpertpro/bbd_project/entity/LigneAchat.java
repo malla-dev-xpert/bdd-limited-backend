@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,8 @@ public class LigneAchat {
     @ManyToOne
     @JoinColumn(name = "achat_id")
     private Achats achats;
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
 
     @ManyToOne
     @JoinColumn(name = "item_id")

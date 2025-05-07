@@ -1,6 +1,5 @@
 package com.xpertpro.bbd_project.dto.achats;
 
-import com.xpertpro.bbd_project.entity.LigneAchat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,10 +10,9 @@ public class AchatDto {
     private Long id;
     private LocalDateTime createdAt;
     private String referenceVersement;
-    private Double montantTotalVersement;
-    private Double montantRestantVersement;
-    private String partnerName;
-    private String partnerPhone;
-    private String partnerCountry;
-    private List<LigneAchat> lignes;
+    private Double montantVerser;
+    private Double montantRestant;
+    private String fournisseur;
+    private String fournisseurPhone;
+    private List<LigneAchatDto> lignes;
 }
