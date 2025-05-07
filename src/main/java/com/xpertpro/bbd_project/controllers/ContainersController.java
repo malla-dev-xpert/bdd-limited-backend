@@ -98,4 +98,15 @@ public class ContainersController {
         containerServices.retrieveContainerToHArbor(id, userId, harborId);
         return "Le Conteneur avec  l'id " + id + " a été retirer avec succès.";
     }
+
+    @GetMapping("/delivery/{id}")
+    public String deliveryContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        String result = containerServices.startDelivery(id, userId);
+        switch (result){
+            case "NO_PACKAGE_FOR_DELIVERY":
+                return "Impossible de démarrer la livraison, pas de colis dans le conteneur.";
+            default:
+                return "Le Conteneur avec  l'id " + id + " est encours de livraison.";
+        }
+    }
 }

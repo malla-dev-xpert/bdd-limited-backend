@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -200,4 +201,21 @@ public class ContainerServices {
         return dto;
     }
 
+    public String startDelivery(Long id, Long userId) {
+        Containers containers = containersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        if(containers.getPackages().isEmpty()){
+            return "NO_PACKAGE_FOR_DELIVERY";
+        }
+
+        containers.setStatus(StatusEnum.INPROGRESS);
+        containers.setUser(user);
+        containers.setEditedAt(LocalDateTime.now());
+        containersRepository.save(containers);
+        return "La livraison démarre avec succès.";
+    }
 }
