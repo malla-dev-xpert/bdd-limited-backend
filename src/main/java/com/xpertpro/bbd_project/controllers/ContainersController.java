@@ -2,7 +2,9 @@ package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.entity.Containers;
+import com.xpertpro.bbd_project.entity.EmbarquementRequest;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
+import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.ContainerServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,8 @@ public class ContainersController {
     ContainerServices containerServices;
     @Autowired
     ContainersRepository containersRepository;
+    @Autowired
+    ContainerPackageService containerPackageService;
 
     @PostMapping("/create")
     public ResponseEntity<String> addContainers(@RequestBody ContainersDto containersDto, @RequestParam(name = "userId") Long userId) {
@@ -49,13 +53,28 @@ public class ContainersController {
         }
     }
 
+    @PostMapping("/embarquer")
+    public ResponseEntity<String> embarquerColis(
+            @RequestBody EmbarquementRequest request) {
+        String result = containerPackageService.embarquerColis(request);
+
+        switch (result) {
+            case "CONTAINER_NOT_AVAILABLE":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas disponible pour l'embarquement.");
+            case "CONTAINER_NOT_IN_PENDING":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas dans le bon statut pour l'embarquement.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Colis embarquer avec succès !");
+        }
+    }
+
     @GetMapping()
     public List<ContainersDto> getAllContainers(@RequestParam(defaultValue = "0") int page) {
         return containerServices.getAllContainers(page);
     }
 
     @GetMapping("/{id}")
-    public Containers getContainerById(@PathVariable Long id){
+    public ContainersDto getContainerById(@PathVariable Long id){
         return containerServices.getContainerById(id);
     }
 
@@ -78,5 +97,16 @@ public class ContainersController {
     public String retrieveContainerToHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @PathVariable("harborId") Long harborId){
         containerServices.retrieveContainerToHArbor(id, userId, harborId);
         return "Le Conteneur avec  l'id " + id + " a été retirer avec succès.";
+    }
+
+    @GetMapping("/delivery/{id}")
+    public String deliveryContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        String result = containerServices.startDelivery(id, userId);
+        switch (result){
+            case "NO_PACKAGE_FOR_DELIVERY":
+                return "Impossible de démarrer la livraison, pas de colis dans le conteneur.";
+            default:
+                return "Le Conteneur avec  l'id " + id + " est encours de livraison.";
+        }
     }
 }

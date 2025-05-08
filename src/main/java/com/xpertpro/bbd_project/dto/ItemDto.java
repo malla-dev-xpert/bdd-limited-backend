@@ -9,4 +9,5 @@ public class ItemDto {
     private Long id;
     private String description;
     private double quantity;
+    private double unitPrice;
 }

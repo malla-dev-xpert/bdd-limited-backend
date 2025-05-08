@@ -59,6 +59,11 @@ public class PackageController {
         return packageServices.getAllPackages(page);
     }
 
+    @GetMapping("/received")
+    public List<PackageResponseDto> findAllPackagesReceived(@RequestParam(defaultValue = "0") int page) {
+        return packageServices.getAllPackagesReceived(page);
+    }
+
     @DeleteMapping("/receive/{id}")
     public String receivePackage(
             @PathVariable Long id,
@@ -68,8 +73,25 @@ public class PackageController {
         return "Colis recu avec succès !";
     }
 
+    @DeleteMapping("/{id}/container/{containerId}/delete")
+    public String deleteOnContainer(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(name = "userId") Long userId,
+            @PathVariable(name = "containerId") Long containerId) {
+        String result = packageServices.removePackageFromContainer(id, userId, containerId);
+        switch (result){
+            case "PACKAGE_NOT_IN_SPECIFIED_CONTAINER":
+                return "Le colis n'appartient pas à ce conteneur";
+            case "CONTAINER_NOT_EDITABLE":
+                return "Impossible de retirer un colis d'un conteneur en cours de livraison";
+            default:
+                return "Colis retiré du conteneur" + containerId + " avec succès !";
+
+        }
+    }
+
     @DeleteMapping("/delete/{id}")
-    public String deltePackage(
+    public String deletePackage(
             @PathVariable Long id,
             @RequestParam(name = "userId") Long userId) {
         packageServices.deletePackages(id, userId);

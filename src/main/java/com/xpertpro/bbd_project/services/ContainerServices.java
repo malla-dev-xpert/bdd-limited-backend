@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +76,6 @@ public class ContainerServices {
         }
     }
 
-
     @Transactional
     public String deleteContainerById(Long containerId, Long userId) {
         Optional<Containers> optionalContainer = containersRepository.findById(containerId);
@@ -126,6 +126,7 @@ public class ContainerServices {
 
                     List<PackageResponseDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
                             .map(packages -> {
                                 PackageResponseDto packageDto = new PackageResponseDto();
                                 packageDto.setId(packages.getId());
@@ -145,16 +146,6 @@ public class ContainerServices {
 
     }
 
-    public Containers getContainerById(Long id) {
-        Optional<Containers> optionalContainers = containersRepository.findById(id);
-        if (optionalContainers.isPresent()) {
-            Containers containers = optionalContainers.get();
-            return containers;
-        } else {
-            throw new RuntimeException("Conteneur non trouvé avec l'ID : " + id);
-        }
-    }
-
     public String retrieveContainerToHArbor(Long id, Long userId, Long harborId) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
@@ -168,5 +159,63 @@ public class ContainerServices {
         containers.setHarbor(harbor);
         containersRepository.save(containers);
         return "Container deleted successfully";
+    }
+
+    @Transactional()
+    public ContainersDto getContainerById(Long containerId) {
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new RuntimeException("Conteneur non trouvé avec l'ID: " + containerId));
+
+        if (container.getStatus() == StatusEnum.DELETE) {
+            throw new RuntimeException("Ce conteneur est supprimé");
+        }
+
+        ContainersDto dto = new ContainersDto();
+        dto.setId(container.getId());
+        dto.setReference(container.getReference());
+        dto.setCreatedAt(container.getCreatedAt());
+        dto.setEditedAt(container.getEditedAt());
+        dto.setStatus(container.getStatus().name());
+        dto.setIsAvailable(container.getIsAvailable());
+        dto.setUserName(container.getUser() != null
+                ? container.getUser().getFirstName() + " " + container.getUser().getLastName()
+                : null);
+        dto.setUserId(container.getUser() != null ? container.getUser().getId() : null);
+
+        List<PackageResponseDto> packageResponseDtos = container.getPackages().stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
+                .map(pkg -> {
+                    PackageResponseDto packageDto = new PackageResponseDto();
+                    packageDto.setId(pkg.getId());
+                    packageDto.setReference(pkg.getReference());
+                    packageDto.setPartnerName(pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName());
+                    packageDto.setPartnerPhoneNumber(pkg.getPartner().getPhoneNumber());
+                    packageDto.setWarehouseName(pkg.getWarehouse().getName());
+                    packageDto.setWarehouseAddress(pkg.getWarehouse().getAdresse());
+                    return packageDto;
+                }).collect(Collectors.toList());
+
+        dto.setPackages(packageResponseDtos);
+
+        return dto;
+    }
+
+    public String startDelivery(Long id, Long userId) {
+        Containers containers = containersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        if(containers.getPackages().isEmpty()){
+            return "NO_PACKAGE_FOR_DELIVERY";
+        }
+
+        containers.setStatus(StatusEnum.INPROGRESS);
+        containers.setUser(user);
+        containers.setEditedAt(LocalDateTime.now());
+        containersRepository.save(containers);
+        return "La livraison démarre avec succès.";
     }
 }

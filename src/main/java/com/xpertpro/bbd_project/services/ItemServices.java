@@ -32,6 +32,7 @@ public class ItemServices {
                     dto.setId(pkg.getId());
                     dto.setQuantity(pkg.getQuantity());
                     dto.setDescription(pkg.getDescription());
+                    dto.setUnitPrice(pkg.getUnitPrice());
 
                     return dto;
                 })
@@ -71,6 +72,7 @@ public class ItemServices {
 
         existingItem.setQuantity(dto.getQuantity());
         existingItem.setDescription(dto.getDescription());
+        existingItem.setUnitPrice(dto.getUnitPrice());
 
         itemsRepository.save(existingItem);
 

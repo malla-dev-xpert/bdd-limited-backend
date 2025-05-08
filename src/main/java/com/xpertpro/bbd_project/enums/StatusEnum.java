@@ -7,6 +7,8 @@ public enum StatusEnum {
     PENDING,
     RECEIVED,
     RETRIEVE,
+    DELETE_ON_CONTAINER,
     INPROGRESS,
+    IN_CONTAINER,
     DELIVERED
 }

@@ -35,6 +35,8 @@ public class PackageServices {
     PartnerRepository partnerRepository;
     @Autowired
     ItemsRepository itemsRepository;
+    @Autowired
+    ContainersRepository containersRepository;
 
     @Transactional
     public Packages createPackageWithItems(Long warehouseId,
@@ -121,6 +123,7 @@ public class PackageServices {
                             itemDto.setId(item.getId());
                             itemDto.setDescription(item.getDescription());
                             itemDto.setQuantity(item.getQuantity());
+                            itemDto.setUnitPrice(item.getUnitPrice());
                             return itemDto;
                         }).collect(Collectors.toList());
 
@@ -169,8 +172,58 @@ public class PackageServices {
                         itemDto.setId(item.getId());
                         itemDto.setDescription(item.getDescription());
                         itemDto.setQuantity(item.getQuantity());
+                        itemDto.setUnitPrice(item.getUnitPrice());
                         return itemDto;
                     }).collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+    }
+
+    public List<PackageResponseDto> getAllPackagesReceived(int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Packages> packages = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+
+        return packages.stream()
+                .filter(pkg -> pkg.getStatus() == StatusEnum.RECEIVED)
+                .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
+                .map(pkg -> {
+                    PackageResponseDto dto = new PackageResponseDto();
+                    dto.setId(pkg.getId());
+                    dto.setReference(pkg.getReference());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setDimensions(pkg.getDimensions());
+                    dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setEditedAt(pkg.getEditedAt());
+                    dto.setStatus(pkg.getStatus().name());
+                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                    dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
+                    dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
+                    dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                    dto.setPartnerId(pkg.getPartner() != null ? pkg.getPartner().getId() : null);
+                    dto.setPartnerName(pkg.getPartner() != null
+                            ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
+                            : null);
+                    dto.setPartnerPhoneNumber(pkg.getPartner() != null
+                            ? pkg.getPartner().getPhoneNumber()
+                            : null);
+
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                return itemDto;
+                            }).collect(Collectors.toList());
 
                     dto.setItems(itemDtos);
 
@@ -190,6 +243,7 @@ public class PackageServices {
             Items item = new Items();
             item.setDescription(dto.getDescription());
             item.setQuantity(dto.getQuantity());
+            item.setUnitPrice(dto.getUnitPrice());
             item.setPackages(pkg);
             item.setStatus(StatusEnum.CREATE);
             item.setUser(user);
@@ -216,6 +270,34 @@ public class PackageServices {
         packageRepository.save(packages);
         return "Package Received successfully";
     }
+
+    public String removePackageFromContainer(Long packageId, Long userId, Long containerId) {
+        Packages packages = packageRepository.findById(packageId)
+                .orElseThrow(() -> new RuntimeException("Package not found with ID: " + packageId));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + containerId));
+
+        if (!container.equals(packages.getContainer())) {
+            return "PACKAGE_NOT_IN_SPECIFIED_CONTAINER";
+        }
+
+        if (container.getStatus() != StatusEnum.PENDING) {
+            return "CONTAINER_NOT_EDITABLE";
+        }
+
+        packages.setContainer(null);
+        packages.setStatus(StatusEnum.RECEIVED);
+        packages.setUser(user);
+        packages.setEditedAt(LocalDateTime.now());
+
+        packageRepository.save(packages);
+        return "PACKAGE_REMOVED_FROM_CONTAINER";
+    }
+
 
     public String deletePackages(Long id, Long userId) {
         Packages packages = packageRepository.findById(id)
