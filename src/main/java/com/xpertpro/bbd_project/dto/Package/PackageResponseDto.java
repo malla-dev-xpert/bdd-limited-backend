@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.dto.Package;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

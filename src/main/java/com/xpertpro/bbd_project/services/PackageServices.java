@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;

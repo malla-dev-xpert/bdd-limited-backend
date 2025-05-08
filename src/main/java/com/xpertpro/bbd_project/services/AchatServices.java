@@ -54,6 +54,7 @@ public class AchatServices {
             item.setQuantity(ligneDto.getQuantityItem());
             item.setUser(user);
             item.setAchats(achat);
+            item.setCreatedAt(LocalDateTime.now());
             item.setUnitPrice(ligneDto.getPrixUnitaire());
             item.setStatus(StatusEnum.CREATE);
             itemsRepository.save(item);

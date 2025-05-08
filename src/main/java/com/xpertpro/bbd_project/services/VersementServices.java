@@ -1,7 +1,5 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
