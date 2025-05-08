@@ -21,6 +21,10 @@ public class Items {
     private StatusEnum status;
 
     @ManyToOne
+    @JoinColumn(name = "achat_id")
+    private Achats achats;
+
+    @ManyToOne
     @JoinColumn(name = "package_id")
     private Packages packages;
 
