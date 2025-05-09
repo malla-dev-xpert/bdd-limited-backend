@@ -92,7 +92,7 @@ public class ItemServices {
         Page<Items> items = itemsRepository.findByStatusNot(StatusEnum.DELETE, pageable);
 
         return items.stream()
-                .filter(item -> item.getStatus() == StatusEnum.CREATE)
+//                .filter(item -> item.getStatus() == StatusEnum.CREATE)
                 .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
                 .map(item -> {
                     ItemResponseDto dto = new ItemResponseDto();
@@ -100,9 +100,10 @@ public class ItemServices {
                     dto.setDescription(item.getDescription());
                     dto.setQuantity(item.getQuantity());
                     dto.setUnitPrice(item.getUnitPrice());
-                    dto.setAchatDate(item.getAchats().getCreatedAt());
+                    dto.setAchatDate(item.getAchats() != null ? item.getAchats().getCreatedAt() : null);
+                    dto.setStatus(item.getStatus().name());
 
-                    Partners client = item.getAchats().getFournisseur();
+                    Partners client = item.getAchats() != null ? item.getAchats().getFournisseur() : null;
                     dto.setClientId(client.getId());
                     dto.setClientName(client.getFirstName() + " " + client.getLastName());
                     dto.setClientPhone(client.getPhoneNumber());

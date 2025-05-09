@@ -14,4 +14,5 @@ public class ItemResponseDto {
     private Long clientId;
     private String clientName;
     private String clientPhone;
+    private String status;
 }

@@ -146,13 +146,14 @@ public class PackageServices {
                 .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
                 .map(pkg -> {
                     PackageResponseDto dto = new PackageResponseDto();
-                    dto.setId(pkg.getId());
+                    dto.setId(pkg.getId() != null ? pkg.getId() : null);
                     dto.setReference(pkg.getReference());
                     dto.setWeight(pkg.getWeight());
                     dto.setDimensions(pkg.getDimensions());
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
                     dto.setStatus(pkg.getStatus().name());
+                    dto.setContainerId(pkg.getContainer() != null ? pkg.getContainer().getId() : null);
                     dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
                     dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
                     dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
@@ -169,7 +170,7 @@ public class PackageServices {
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
                         ItemDto itemDto = new ItemDto();
-                        itemDto.setId(item.getId());
+                        itemDto.setId(item.getId() != null ? item.getId() : null);
                         itemDto.setDescription(item.getDescription());
                         itemDto.setQuantity(item.getQuantity());
                         itemDto.setUnitPrice(item.getUnitPrice());
@@ -200,8 +201,9 @@ public class PackageServices {
                     dto.setWeight(pkg.getWeight());
                     dto.setDimensions(pkg.getDimensions());
                     dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setEditedAt(pkg.getEditedAt());
+                    dto.setEditedAt(pkg.getEditedAt() != null ? pkg.getEditedAt() : null);
                     dto.setStatus(pkg.getStatus().name());
+                    dto.setContainerId(pkg.getContainer() != null ? pkg.getContainer().getId() : null);
                     dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
                     dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
                     dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);

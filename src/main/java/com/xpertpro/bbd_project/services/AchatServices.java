@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateLigneDto;
@@ -27,6 +28,8 @@ public class AchatServices {
     AchatRepository achatRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    PackageRepository packageRepository;
 
 
     @Transactional
@@ -40,45 +43,47 @@ public class AchatServices {
                 partnerId, StatusEnum.CREATE
         ).orElseThrow(() -> new RuntimeException("Aucun versement actif"));
 
+        // Créer le colis
+        PackageCreateDto packDto = dto.getPackageDto();
+        Packages pack = new Packages();
+        pack.setReference(packDto.getReference());
+        pack.setWeight(packDto.getWeight());
+        pack.setDimensions(packDto.getDimensions());
+        pack.setCreatedAt(
+                packDto.getCreatedAt() != null ? packDto.getCreatedAt() : LocalDateTime.now()
+        );
+        packageRepository.save(pack);
+
+        // Créer l'achat
         Achats achat = new Achats();
         achat.setCreatedAt(LocalDateTime.now());
         achat.setStatus(StatusEnum.CREATE);
         achat.setFournisseur(partner);
         achat.setVersement(versement);
-        achat = achatRepository.save(achat);
+        achatRepository.save(achat);
 
-        double total = 0;
         for (CreateLigneDto ligneDto : dto.getLignes()) {
+            // Créer item
             Items item = new Items();
             item.setDescription(ligneDto.getDescriptionItem());
             item.setQuantity(ligneDto.getQuantityItem());
+            item.setUnitPrice(ligneDto.getPrixUnitaire());
             item.setUser(user);
             item.setAchats(achat);
-            item.setCreatedAt(LocalDateTime.now());
-            item.setUnitPrice(ligneDto.getPrixUnitaire());
+            item.setPackages(pack); // rattachement au colis
             item.setStatus(StatusEnum.CREATE);
+            item.setCreatedAt(packDto.getCreatedAt() != null ? packDto.getCreatedAt() : LocalDateTime.now());
             itemsRepository.save(item);
 
+            // Créer ligne d'achat
             LigneAchat ligne = new LigneAchat();
             ligne.setAchats(achat);
             ligne.setItem(item);
             ligne.setQuantite(ligneDto.getQuantityItem());
             ligne.setPrixTotal(ligneDto.getQuantityItem() * ligneDto.getPrixUnitaire());
             ligne.setStatus(StatusEnum.CREATE);
-
             achat.getLignes().add(ligne);
-            total += ligne.getPrixTotal();
         }
-
-        // Validation du montant
-//        Double montantGlobal = versementRepo.getTotalMontantRestantByPartnerId(partnerId);
-//        if (montantGlobal < total) {
-//            throw new RuntimeException("Solde insuffisant");
-//        }
-        versement.setMontantRestant(versement.getMontantRestant() - total);
-        versement.setEditedAt(LocalDateTime.now());
-
-        achatRepository.save(achat); // Mise à jour avec le versement
     }
 
 
