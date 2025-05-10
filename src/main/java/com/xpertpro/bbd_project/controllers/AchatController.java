@@ -16,11 +16,12 @@ public class AchatController {
 
     @PostMapping("/create")
     public ResponseEntity<String> createAchat(
-            @RequestParam(name = "partnerId")Long partnerId,
-            @RequestParam(name = "userId")Long userId,
+            @RequestParam(name = "clientId")Long clientId,
+            @RequestParam(name = "supplierId")Long supplierId,
+            @RequestParam(name = "userId") Long userId,
             @RequestBody CreateAchatDto dto
     ) {
-        achatServices.createAchatForClient(partnerId,userId, dto);
+        achatServices.createAchatForClient(clientId,supplierId, userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body("ACHAT_CREATED");
     }
 }

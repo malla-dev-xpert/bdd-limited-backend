@@ -31,6 +31,10 @@ public class Achats {
     @JoinColumn(name = "fournisseur_id")
     private Partners fournisseur;
 
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private Partners client;
+
     @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
     private List<LigneAchat> lignes = new ArrayList<>();
 }
