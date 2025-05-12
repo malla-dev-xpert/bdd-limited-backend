@@ -14,5 +14,7 @@ public class AchatDto {
     private Double montantRestant;
     private String fournisseur;
     private String fournisseurPhone;
+    private String client;
+    private String clientPhone;
     private List<LigneAchatDto> lignes;
 }

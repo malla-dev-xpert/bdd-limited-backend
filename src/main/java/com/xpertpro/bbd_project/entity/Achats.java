@@ -19,6 +19,7 @@ public class Achats {
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+    private Double montantTotal;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
@@ -30,6 +31,10 @@ public class Achats {
     @ManyToOne
     @JoinColumn(name = "fournisseur_id")
     private Partners fournisseur;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private Partners client;
 
     @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
     private List<LigneAchat> lignes = new ArrayList<>();

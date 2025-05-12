@@ -1,7 +1,5 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
@@ -21,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -148,5 +147,82 @@ public class VersementServices {
                 })
                 .collect(Collectors.toList());
 
+    }
+
+    public List<VersementDto> getByClientId(Long clientId, int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        // Récupération des versements pour le client spécifié
+        Page<Versements> versements = versementRepo.findByPartnerIdAndStatusNot(clientId, StatusEnum.DELETE, pageable);
+
+        return versements.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(Versements::getCreatedAt).reversed())
+                .map(pkg -> {
+                    VersementDto dto = new VersementDto();
+                    dto.setId(pkg.getId());
+                    dto.setReference(pkg.getReference());
+                    dto.setMontantRestant(pkg.getMontantRestant());
+                    dto.setMontantVerser(pkg.getMontantVerser());
+                    dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setEditedAt(pkg.getEditedAt());
+
+                    // Info partenaire (client)
+                    if (pkg.getPartner() != null) {
+                        dto.setPartnerName(pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName());
+                        dto.setPartnerPhone(pkg.getPartner().getPhoneNumber());
+                        dto.setPartnerCountry(pkg.getPartner().getCountry());
+                    }
+
+                    // Liste des achats associés
+                    List<AchatDto> achatDtos = pkg.getAchats().stream()
+                            .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                            .map(item -> {
+                                AchatDto achatDto = new AchatDto();
+                                achatDto.setId(item.getId());
+
+                                // Info fournisseur
+                                if (item.getFournisseur() != null) {
+                                    achatDto.setFournisseur(
+                                            item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
+                                    );
+                                    achatDto.setFournisseurPhone(item.getFournisseur().getPhoneNumber());
+                                }
+
+                                // Info versement
+                                if (item.getVersement() != null) {
+                                    achatDto.setMontantRestant(item.getVersement().getMontantRestant());
+                                    achatDto.setMontantVerser(item.getVersement().getMontantVerser());
+                                    achatDto.setReferenceVersement(item.getVersement().getReference());
+                                }
+
+                                // Lignes d'achat
+                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
+                                        .map(ligne -> {
+                                            LigneAchatDto ligneDto = new LigneAchatDto();
+                                            ligneDto.setId(ligne.getId());
+                                            ligneDto.setAchatId(ligne.getAchats() != null ? ligne.getAchats().getId() : null);
+                                            ligneDto.setQuantity(ligne.getQuantite());
+                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
+
+                                            if (ligne.getItem() != null) {
+                                                ligneDto.setItemId(ligne.getItem().getId());
+                                                ligneDto.setDescriptionItem(ligne.getItem().getDescription());
+                                                ligneDto.setQuantityItem(ligne.getItem().getQuantity());
+                                                ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
+                                            }
+
+                                            return ligneDto;
+                                        }).collect(Collectors.toList());
+
+                                achatDto.setLignes(ligneDtos);
+                                return achatDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setAchats(achatDtos);
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

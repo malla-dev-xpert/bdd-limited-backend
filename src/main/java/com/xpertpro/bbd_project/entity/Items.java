@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,6 +21,12 @@ public class Items {
     private double unitPrice;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
+
+    @ManyToOne
+    @JoinColumn(name = "achat_id")
+    private Achats achats;
+
+    private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "package_id")

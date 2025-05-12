@@ -3,6 +3,7 @@ package com.xpertpro.bbd_project.controllers;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.services.VersementServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,14 @@ public class VersementController {
     @GetMapping()
     public List<VersementDto> getAll(@RequestParam(name = "page") int page){
         return versementServices.getAll(page);
+    }
+
+    @GetMapping("/client")
+    public ResponseEntity<List<VersementDto>> getVersementsByClient(
+            @RequestParam(name = "clientId") Long clientId,
+            @RequestParam(defaultValue = "0") int page) {
+
+        return ResponseEntity.ok(versementServices.getByClientId(clientId, page));
     }
 
 }

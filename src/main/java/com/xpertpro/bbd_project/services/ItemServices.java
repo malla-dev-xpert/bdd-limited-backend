@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemResponseDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ItemsRepository;
@@ -8,8 +9,13 @@ import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -78,4 +84,33 @@ public class ItemServices {
 
         return "Item updated";
     }
+
+    public List<ItemResponseDto> getAllItem(int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Items> items = itemsRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+
+        return items.stream()
+//                .filter(item -> item.getStatus() == StatusEnum.CREATE)
+                .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
+                .map(item -> {
+                    ItemResponseDto dto = new ItemResponseDto();
+                    dto.setItemId(item.getId());
+                    dto.setDescription(item.getDescription());
+                    dto.setQuantity(item.getQuantity());
+                    dto.setUnitPrice(item.getUnitPrice());
+                    dto.setAchatDate(item.getAchats() != null ? item.getAchats().getCreatedAt() : null);
+                    dto.setStatus(item.getStatus().name());
+
+                    Partners client = item.getAchats() != null ? item.getAchats().getFournisseur() : null;
+                    dto.setClientId(client.getId());
+                    dto.setClientName(client.getFirstName() + " " + client.getLastName());
+                    dto.setClientPhone(client.getPhoneNumber());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
 }

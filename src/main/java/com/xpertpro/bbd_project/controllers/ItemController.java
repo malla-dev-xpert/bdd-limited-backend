@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.controllers;
 
-import com.xpertpro.bbd_project.dto.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
+import com.xpertpro.bbd_project.dto.items.ItemResponseDto;
 import com.xpertpro.bbd_project.services.ItemServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,12 @@ public class ItemController {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Article supprimer avec succès !");
         }
     }
+
+    @GetMapping()
+    public ResponseEntity<List<ItemResponseDto>> getAll(@RequestParam(name = "page") int page) {
+        return ResponseEntity.ok(itemServices.getAllItem(page));
+    }
+
 
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updatePackage(
