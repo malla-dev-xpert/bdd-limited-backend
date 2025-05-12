@@ -21,6 +21,6 @@ public interface VersementRepo extends JpaRepository<Versements, Long> {
     @Query(value = "SELECT SUM(v.montantRestant) FROM Versements v WHERE v.partner.id = :partnerId AND v.status = 'CREATE'", nativeQuery = true)
     Double getTotalMontantRestantByPartnerId(Long partnerId);
 
-    Optional<Versements> findFirstByPartnerIdAndStatusOrderByCreatedAtDesc(Long partnerId, StatusEnum status);
+    Page<Versements> findByPartnerIdAndStatusNot(Long partnerId, StatusEnum status, Pageable pageable);
 
 }

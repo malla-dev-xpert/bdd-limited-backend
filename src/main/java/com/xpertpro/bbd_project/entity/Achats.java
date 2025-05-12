@@ -19,6 +19,7 @@ public class Achats {
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+    private Double montantTotal;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;

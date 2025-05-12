@@ -21,7 +21,14 @@ public class AchatController {
             @RequestParam(name = "userId") Long userId,
             @RequestBody CreateAchatDto dto
     ) {
-        achatServices.createAchatForClient(clientId,supplierId, userId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body("ACHAT_CREATED");
+        String result = achatServices.createAchatForClient(clientId,supplierId, userId, dto);
+        switch (result){
+            case "INVALID_VERSEMENT":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Invalid versement.");
+            case "INACTIF_VERSEMENT":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Inactif versement.");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("ACHAT_CREATED");
+        }
     }
 }
