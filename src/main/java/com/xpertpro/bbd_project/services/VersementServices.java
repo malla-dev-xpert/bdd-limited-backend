@@ -60,7 +60,7 @@ public class VersementServices {
         versementRepo.save(newVersement);
 
         // Générer une référence
-        String ref = String.format("VERSEMENT-%05d", newVersement.getId());
+        String ref = String.format("BBDPAY-%02d", newVersement.getId());
         newVersement.setReference(ref);
 
         versementRepo.save(newVersement);
@@ -81,7 +81,7 @@ public class VersementServices {
                     VersementDto dto = new VersementDto();
                     dto.setId(pkg.getId());
                     dto.setReference(pkg.getReference());
-                    dto.setMontantRestant(pkg.getMontantRestant());
+                    dto.setMontantRestant(pkg.getMontantVerser());
                     dto.setMontantVerser(pkg.getMontantVerser());
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
@@ -90,6 +90,9 @@ public class VersementServices {
                             : null);
                     dto.setPartnerName(pkg.getPartner() != null
                             ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
+                            : null);
+                    dto.setPartnerAccountType(pkg.getPartner() != null
+                            ? pkg.getPartner().getAccountType()
                             : null);
                     dto.setPartnerPhone(pkg.getPartner() != null
                             ? pkg.getPartner().getPhoneNumber()
