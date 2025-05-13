@@ -85,6 +85,9 @@ public class VersementServices {
                     dto.setMontantVerser(pkg.getMontantVerser());
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
+                    dto.setCliendId(pkg.getPartner() != null
+                            ? pkg.getPartner().getId()
+                            : null);
                     dto.setPartnerName(pkg.getPartner() != null
                             ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
                             : null);

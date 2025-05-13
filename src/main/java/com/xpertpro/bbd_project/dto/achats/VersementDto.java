@@ -15,5 +15,6 @@ public class VersementDto {
     private String partnerName;
     private String partnerPhone;
     private String partnerCountry;
+    private Long cliendId;
     private List<AchatDto> achats;
 }
