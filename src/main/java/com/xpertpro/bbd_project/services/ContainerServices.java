@@ -44,6 +44,7 @@ public class ContainerServices {
             containers.setReference(containersDto.getReference());
             containers.setIsAvailable(containersDto.getIsAvailable());
             containers.setCreatedAt(containersDto.getCreatedAt());
+            containers.setSize(containersDto.getSize());
             containers.setUser(optionalUser.get());
 
             containersRepository.save(containers);
@@ -66,6 +67,7 @@ public class ContainerServices {
 
         if (optionalUser.isPresent()) {
             if (containersDto.getReference() != null) newContainer.setReference(containersDto.getReference());
+            if (containersDto.getSize() != null) newContainer.setSize(containersDto.getSize());
             if (containersDto.getIsAvailable() != null) newContainer.setIsAvailable(containersDto.getIsAvailable());
             newContainer.setEditedAt(containersDto.getEditedAt());
 
@@ -117,6 +119,7 @@ public class ContainerServices {
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
                     dto.setStatus(pkg.getStatus().name());
+                    dto.setSize(pkg.getSize());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setIsAvailable(pkg.getIsAvailable());
                     dto.setUserName(pkg.getUser() != null ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);

@@ -52,7 +52,7 @@ public class VersementServices {
         Versements newVersement = new Versements();
         newVersement.setMontantVerser(dto.getMontantVerser());
         newVersement.setMontantRestant(dto.getMontantVerser() + montantRestantGlobal);
-        newVersement.setCreatedAt(LocalDateTime.now());
+        newVersement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         newVersement.setUser(user);
         newVersement.setPartner(partner);
         newVersement.setStatus(StatusEnum.CREATE);

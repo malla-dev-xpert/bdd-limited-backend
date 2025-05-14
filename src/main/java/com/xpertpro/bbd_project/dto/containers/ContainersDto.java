@@ -12,6 +12,7 @@ import java.util.List;
 public class ContainersDto {
     private Long id;
     private String reference;
+    private String size;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
     private Boolean isAvailable;
