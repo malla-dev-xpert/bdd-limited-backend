@@ -62,7 +62,7 @@ public class PackageServices {
         newPackage.setReference(dto.getReference());
         newPackage.setWeight(dto.getWeight());
         newPackage.setDimensions(dto.getDimensions());
-        newPackage.setCreatedAt(dto.getCreatedAt());
+        newPackage.setCreatedAt(LocalDateTime.now());
         newPackage.setUser(user);
         newPackage.setPartner(partner);
         newPackage.setWarehouse(warehouse);

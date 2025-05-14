@@ -19,6 +19,7 @@ public class Containers {
     private Long id;
     @Column(nullable = false, unique = true)
     private String reference;
+    private String size;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status = StatusEnum.PENDING;

@@ -35,8 +35,14 @@ public class AchatServices {
     @Autowired
     PackageRepository packageRepository;
 
+    @Autowired
+    ContainersRepository containersRepository;
+
+    @Autowired
+    WarehouseRepository warehouseRepository;
+
     @Transactional
-    public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
+    public String createAchatForClient(Long clientId, Long supplierId, Long userId, Long warehouseId, Long containerId, CreateAchatDto dto) {
         try {
             // Récupération des entités
             UserEntity user = userRepository.findById(userId)
@@ -45,6 +51,10 @@ public class AchatServices {
                     .orElseThrow(() -> new RuntimeException("Client introuvable"));
             Partners supplier = partnerRepository.findById(supplierId)
                     .orElseThrow(() -> new RuntimeException("Fournisseur introuvable"));
+            Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                    .orElseThrow(() -> new RuntimeException("Entrepot introuvable"));
+            Containers containers = containersRepository.findById(containerId)
+                    .orElseThrow(() -> new RuntimeException("Conteneur introuvable"));
 
             // Récupération du versement spécifique
             Versements versement = versementRepo.findById(dto.getVersementId())
@@ -82,6 +92,10 @@ public class AchatServices {
             pack.setWeight(packDto.getWeight());
             pack.setDimensions(packDto.getDimensions());
             pack.setCreatedAt(packDto.getCreatedAt() != null ? packDto.getCreatedAt() : LocalDateTime.now());
+            pack.setPartner(partner);
+            pack.setWarehouse(warehouse);
+            pack.setContainer(containers);
+            pack.setUser(user);
             packageRepository.save(pack);
 
             // Création de l'achat
@@ -119,6 +133,8 @@ public class AchatServices {
                 ligne.setStatus(StatusEnum.CREATE);
                 lignesToAdd.add(ligne);
             }
+
+
 
             // Sauvegarde en batch
             itemsRepository.saveAll(itemsToSave);

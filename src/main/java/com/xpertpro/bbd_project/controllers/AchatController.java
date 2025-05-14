@@ -19,9 +19,11 @@ public class AchatController {
             @RequestParam(name = "clientId")Long clientId,
             @RequestParam(name = "supplierId")Long supplierId,
             @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "warehouseId") Long warehouseId,
+            @RequestParam(name = "containerId") Long containerId,
             @RequestBody CreateAchatDto dto
     ) {
-        String result = achatServices.createAchatForClient(clientId,supplierId, userId, dto);
+        String result = achatServices.createAchatForClient(clientId,supplierId, userId, warehouseId, containerId, dto);
         switch (result){
             case "INVALID_VERSEMENT":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Invalid versement.");

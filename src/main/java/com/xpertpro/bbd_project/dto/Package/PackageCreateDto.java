@@ -13,6 +13,6 @@ public class PackageCreateDto {
     private String reference;
     private Double weight;
     private String dimensions;
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime editedAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime editedAt;
 }
