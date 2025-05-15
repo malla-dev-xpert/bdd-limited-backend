@@ -36,6 +36,14 @@ public class ContainerPackageService {
 
         List<Packages> packages = packageRepository.findAllById(request.getPackageId());
 
+        // Vérifier si les colis sont déjà dans un autre conteneur
+        packages.forEach(pkg -> {
+            if (pkg.getContainer() != null && !pkg.getContainer().getId().equals(container.getId())) {
+                throw new OperationNotAllowedException(
+                        "Le colis " + pkg.getReference() + " est déjà dans le conteneur " + pkg.getContainer().getId());
+            }
+        });
+
         packages.forEach(pkg -> {
             if (pkg.getStatus() != StatusEnum.RECEIVED) {
                 throw new OperationNotAllowedException(

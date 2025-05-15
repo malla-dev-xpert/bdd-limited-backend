@@ -56,16 +56,22 @@ public class ContainersController {
     @PostMapping("/embarquer")
     public ResponseEntity<String> embarquerColis(
             @RequestBody EmbarquementRequest request) {
-        String result = containerPackageService.embarquerColis(request);
 
-        switch (result) {
-            case "CONTAINER_NOT_AVAILABLE":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas disponible pour l'embarquement.");
-            case "CONTAINER_NOT_IN_PENDING":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas dans le bon statut pour l'embarquement.");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Colis embarquer avec succès !");
+        try{
+            String result = containerPackageService.embarquerColis(request);
+
+            switch (result) {
+                case "CONTAINER_NOT_AVAILABLE":
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas disponible pour l'embarquement.");
+                case "CONTAINER_NOT_IN_PENDING":
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas dans le bon statut pour l'embarquement.");
+                default:
+                    return ResponseEntity.status(HttpStatus.CREATED).body("Colis embarquer avec succès !");
+            }
+        }catch (ContainerPackageService.OperationNotAllowedException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+
     }
 
     @GetMapping()
