@@ -1,8 +1,10 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.VersementServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +38,39 @@ public class VersementController {
             @RequestParam(defaultValue = "0") int page) {
 
         return ResponseEntity.ok(versementServices.getByClientId(clientId, page));
+    }
+
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateVersement(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestParam Long clientId,
+            @RequestBody VersementDto dto) {
+
+        try {
+            boolean updated = versementServices.updateVersement(id, userId, clientId, dto);
+            return ResponseEntity.ok().build();
+        } catch (ContainerPackageService.ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Échec de la mise à jour");
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteVersement(
+            @PathVariable Long id,
+            @RequestParam(name = "userId") Long userId
+    ) {
+        String result = versementServices.deleteVersement(id, userId);
+        switch (result){
+            case "IMPOSSIBLE":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Impossible de supprimer: des achats sont déjà associés à ce versement");
+            default:
+                return ResponseEntity.status(HttpStatus.CREATED).body("Paiement supprimer avec succès.");
+        }
+
     }
 
 }

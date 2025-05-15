@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AchatRepository extends JpaRepository<Achats, Long> {
+    boolean existsByVersementId(Long versementId);
 }
