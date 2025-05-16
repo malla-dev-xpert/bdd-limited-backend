@@ -300,7 +300,6 @@ public class PackageServices {
         return "PACKAGE_REMOVED_FROM_CONTAINER";
     }
 
-
     public String deletePackages(Long id, Long userId) {
         Packages packages = packageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Package not found with ID: " + id));

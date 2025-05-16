@@ -1,13 +1,17 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
+import com.xpertpro.bbd_project.entity.Containers;
 import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.HarborDtoMapper;
 import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -127,8 +131,38 @@ public class HarborServices {
                     List<ContainersDto> containersDtos = pkg.getContainers().stream().map(item -> {
                         ContainersDto containersDto = new ContainersDto();
                         containersDto.setReference(item.getReference());
+                        containersDto.setId(item.getId());
+                        containersDto.setSize(item.getSize());
                         containersDto.setIsAvailable(item.getIsAvailable());
                         containersDto.setStatus(item.getStatus().name());
+
+                        List<PackageResponseDto> packageResponseDtos = item.getPackages().stream()
+                                .filter(pkgItem -> pkgItem.getStatus() != StatusEnum.DELETE)
+                                .map(pkgItem -> {
+                                    PackageResponseDto pkgDto = new PackageResponseDto();
+                                    pkgDto.setId(pkgItem.getId() != null ? pkgItem.getId() : null);
+                                    pkgDto.setPartnerName(pkgItem.getPartner() != null ? pkgItem.getPartner().getFirstName() + " " + pkgItem.getPartner().getLastName() : null);
+                                    pkgDto.setPartnerPhoneNumber(pkgItem.getPartner() != null ? pkgItem.getPartner().getPhoneNumber() : null);
+                                    pkgDto.setReference(pkgItem.getReference());
+
+                                    List<ItemDto> itemDtos = pkgItem.getItems().stream()
+                                            .filter(itemData -> itemData.getStatus() != StatusEnum.DELETE)
+                                            .map(itemData -> {
+                                                ItemDto itemDto = new ItemDto();
+                                                itemDto.setId(itemData.getId() != null ? itemData.getId() : null);
+                                                itemDto.setDescription(itemData.getDescription());
+                                                itemDto.setQuantity(itemData.getQuantity());
+                                                itemDto.setUnitPrice(itemData.getUnitPrice());
+                                                return itemDto;
+                                            }).collect(Collectors.toList());
+
+                                    pkgDto.setItems(itemDtos);
+
+                                    return pkgDto;
+                                }).collect(Collectors.toList());
+
+                        containersDto.setPackages(packageResponseDtos);
+
                         return containersDto;
                     }).collect(Collectors.toList());
 
@@ -140,13 +174,49 @@ public class HarborServices {
 
     }
 
-    public Harbor getHarborById(Long id) {
-        Optional<Harbor> optionalHarbor = harborRepository.findById(id);
-        if (optionalHarbor.isPresent()) {
-            Harbor harbor = optionalHarbor.get();
-            return harbor;
-        } else {
-            throw new RuntimeException("Port non trouvé avec l'ID : " + id);
-        }
+    public HarborDto getHarborById(Long id) {
+        // Trouver le harbor par ID avec le statut CREATE
+        Harbor harbor = harborRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Harbor not found with id: " + id));
+
+        // Convertir en DTO
+        HarborDto dto = new HarborDto();
+        dto.setId(harbor.getId());
+        dto.setName(harbor.getName());
+        dto.setLocation(harbor.getLocation());
+        dto.setCreatedAt(harbor.getCreatedAt());
+        dto.setUserid(harbor.getUser().getId());
+        dto.setUserName(harbor.getUser() != null
+                ? harbor.getUser().getFirstName() + " " + harbor.getUser().getLastName()
+                : null);
+        dto.setEditedAt(harbor.getEditedAt());
+
+        // Convertir les containers associés
+        List<ContainersDto> containersDtos = harbor.getContainers().stream()
+                .filter(container -> container.getStatus() != StatusEnum.DELETE)
+                .map(item -> {
+                    ContainersDto containersDto = new ContainersDto();
+                    containersDto.setReference(item.getReference());
+                    containersDto.setIsAvailable(item.getIsAvailable());
+                    containersDto.setStatus(item.getStatus().name());
+
+                    List<PackageResponseDto> packageResponseDtos = item.getPackages().stream()
+                            .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                            .map(pkg -> {
+                                PackageResponseDto pkgDto = new PackageResponseDto();
+                                pkgDto.setId(pkg.getId() != null ? pkg.getId() : null);
+                                pkgDto.setPartnerName(pkg.getPartner() != null ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName() : null);
+                                pkgDto.setPartnerPhoneNumber(pkg.getPartner() != null ? pkg.getPartner().getPhoneNumber() : null);
+                                return pkgDto;
+                            }).collect(Collectors.toList());
+
+                    containersDto.setPackages(packageResponseDtos);
+
+                    return containersDto;
+                }).collect(Collectors.toList());
+
+        dto.setContainers(containersDtos);
+
+        return dto;
     }
 }

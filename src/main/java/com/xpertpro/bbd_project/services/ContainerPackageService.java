@@ -1,10 +1,13 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.entity.Containers;
-import com.xpertpro.bbd_project.entity.EmbarquementRequest;
+import com.xpertpro.bbd_project.entity.Harbor;
+import com.xpertpro.bbd_project.entityMapper.EmbarquementRequest;
 import com.xpertpro.bbd_project.entity.Packages;
+import com.xpertpro.bbd_project.entityMapper.HarborEmbarquementRequest;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
+import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.PackageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ public class ContainerPackageService {
 
     private final ContainersRepository containerRepository;
     private final PackageRepository packageRepository;
+    private final HarborRepository harborRepository;
 
     @Transactional
     public String embarquerColis(EmbarquementRequest request) {
@@ -62,6 +66,48 @@ public class ContainerPackageService {
 
         packageRepository.saveAll(packages);
         containerRepository.save(container);
+        return "SAVED";
+    }
+
+    @Transactional
+    public String embarquerConteneursDansPort(HarborEmbarquementRequest request) {
+        Harbor harbor = harborRepository.findById(request.getHarborId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Port non trouvé avec l'ID: " + request.getHarborId()));
+
+        if (harbor.getStatus() != StatusEnum.CREATE) {
+            return "HARBOR_NOT_AVAILABLE";
+        }
+
+        List<Containers> containers = containerRepository.findAllById(request.getContainerId());
+
+        // Vérifier si les conteneurs sont déjà dans un autre port
+        containers.forEach(container -> {
+            if (container.getHarbor() != null && !container.getHarbor().getId().equals(harbor.getId())) {
+                throw new OperationNotAllowedException(
+                        "Le conteneur " + container.getReference() + " est déjà dans le port " + container.getHarbor().getId());
+            }
+        });
+
+//        containers.forEach(container -> {
+//            if (container.getStatus() != StatusEnum.PENDING && container.getStatus() != StatusEnum.IN_CONTAINER) {
+//                throw new OperationNotAllowedException(
+//                        "Le conteneur " + container.getReference() + " n'a pas le statut approprié (PENDING ou IN_CONTAINER)");
+//            }
+//        });
+
+        containers.forEach(container -> {
+            container.setHarbor(harbor);
+//            container.setStatus(StatusEnum.IN_HARBOR);
+            container.setEditedAt(LocalDateTime.now());
+        });
+
+        harbor.getContainers().addAll(containers);
+//        harbor.setStatus(StatusEnum.PENDING);
+        harbor.setEditedAt(LocalDateTime.now());
+
+        containerRepository.saveAll(containers);
+        harborRepository.save(harbor);
         return "SAVED";
     }
 

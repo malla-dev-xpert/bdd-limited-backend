@@ -1,4 +1,4 @@
-package com.xpertpro.bbd_project.entity;
+package com.xpertpro.bbd_project.entityMapper;
 
 import lombok.Data;
 
