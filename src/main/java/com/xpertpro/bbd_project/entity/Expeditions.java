@@ -33,7 +33,7 @@ public class Expeditions {
     private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    private StatusEnum status = StatusEnum.CREATE;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

@@ -18,4 +18,5 @@ public class ExpeditionDto {
     private LocalDateTime arrivalDate;
     private LocalDateTime startDate;
     private Long clientId;
+    private String clientName;
 }

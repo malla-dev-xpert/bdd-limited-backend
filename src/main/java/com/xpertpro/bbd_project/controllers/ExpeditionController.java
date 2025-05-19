@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/expeditions")
 @CrossOrigin("*")
@@ -26,5 +28,10 @@ public class ExpeditionController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+    }
+
+    @GetMapping()
+    public List<ExpeditionDto> findAll(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return expeditionServices.getAll(page, query);
     }
 }
