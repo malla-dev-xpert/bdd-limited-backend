@@ -2,6 +2,7 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.ExpeditionDto;
 import com.xpertpro.bbd_project.dtoMapper.ExpeditionDtoMapper;
+import com.xpertpro.bbd_project.entity.Containers;
 import com.xpertpro.bbd_project.entity.Expeditions;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.UserEntity;
@@ -9,6 +10,8 @@ import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ExpeditionRepository;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -87,4 +90,41 @@ public class ExpeditionServices {
                 .collect(Collectors.toList());
 
     }
+
+    @Transactional
+    public void startExpedition(Long expeditionId) {
+        Expeditions expedition = expeditionRepository.findById(expeditionId)
+                .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+
+        if (expedition.getStatus() == StatusEnum.INPROGRESS) {
+            throw new IllegalStateException("L'expédition est déjà en cours.");
+        }
+
+        if (expedition.getStatus() != StatusEnum.PENDING) {
+            throw new IllegalStateException("Impossible de démarrer une expédition qui n'est pas en attente.");
+        }
+
+        expedition.setStatus(StatusEnum.INPROGRESS);
+        expedition.setEditedAt(LocalDateTime.now());
+        expeditionRepository.save(expedition);
+    }
+
+    @Transactional
+    public void confirmExpedition(Long expeditionId) {
+        Expeditions expedition = expeditionRepository.findById(expeditionId)
+                .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+
+        if (expedition.getStatus() == StatusEnum.DELIVERED) {
+            throw new IllegalStateException("L'expédition est déjà en arrivé.");
+        }
+
+        if (expedition.getStatus() != StatusEnum.INPROGRESS) {
+            throw new IllegalStateException("Impossible de confirmer la réception de l'expédition. Elle n'est pas en transit.");
+        }
+
+        expedition.setStatus(StatusEnum.DELIVERED);
+        expedition.setEditedAt(LocalDateTime.now());
+        expeditionRepository.save(expedition);
+    }
+
 }
