@@ -13,6 +13,7 @@ public class ExpeditionDtoMapper {
         expeditions.setCbn(dto.getCbn());
         expeditions.setDestinationCountry(dto.getDestinationCountry());
         expeditions.setStartCountry(dto.getStartCountry());
+        expeditions.setItemQuantity(dto.getItemQuantity());
         expeditions.setStartDate(dto.getStartDate());
         expeditions.setWeight(dto.getWeight());
         expeditions.setRef(dto.getRef());

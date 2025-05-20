@@ -12,6 +12,7 @@ public class ExpeditionDto {
     private String expeditionType;
     private double weight;
     private double cbn;
+    private double itemQuantity;
     private String startCountry;
     private String ref;
     private String destinationCountry;
@@ -19,4 +20,6 @@ public class ExpeditionDto {
     private LocalDateTime startDate;
     private Long clientId;
     private String clientName;
+    private String clientPhone;
+    private String status;
 }

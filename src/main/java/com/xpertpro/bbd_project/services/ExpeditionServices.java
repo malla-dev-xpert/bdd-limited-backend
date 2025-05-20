@@ -49,7 +49,7 @@ public class ExpeditionServices {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
-        Page<Expeditions> expeditions = expeditionRepository.findByStatus(StatusEnum.CREATE, pageable);
+        Page<Expeditions> expeditions = expeditionRepository.findByStatusNot(StatusEnum.DELETE, pageable);
 
         if (query != null && !query.isEmpty()) {
             expeditions = expeditionRepository.findByStatusAndSearchQuery(
@@ -58,7 +58,7 @@ public class ExpeditionServices {
                     pageable
             );
         } else {
-            expeditions = expeditionRepository.findByStatus(StatusEnum.CREATE, pageable);
+            expeditions = expeditionRepository.findByStatusNot(StatusEnum.DELETE, pageable);
         }
 
 
@@ -71,12 +71,15 @@ public class ExpeditionServices {
                     dto.setCbn(exp.getCbn());
                     dto.setRef(exp.getRef());
                     dto.setExpeditionType(exp.getExpeditionType());
+                    dto.setItemQuantity(exp.getItemQuantity());
                     dto.setWeight(exp.getWeight());
                     dto.setArrivalDate(exp.getArrivalDate());
                     dto.setStartDate(exp.getStartDate());
                     dto.setStartCountry(exp.getStartCountry());
                     dto.setDestinationCountry(exp.getDestinationCountry());
+                    dto.setStatus(exp.getStatus().name());
                     dto.setClientId(exp.getClient() != null ? exp.getClient().getId() : null);
+                    dto.setClientPhone(exp.getClient() != null ? exp.getClient().getPhoneNumber() : null);
                     dto.setClientName(exp.getClient() != null ? exp.getClient().getFirstName() + " " + exp.getClient().getLastName() : null);
 
                     return dto;

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ExpeditionRepository extends JpaRepository<Expeditions, Long> {
-    Page<Expeditions> findByStatus(StatusEnum status, Pageable pageable);
+    Page<Expeditions> findByStatusNot(StatusEnum status, Pageable pageable);
     @Query("SELECT e FROM Expeditions e WHERE " +
             "e.status = :status AND " +
             "LOWER(e.ref) LIKE LOWER(CONCAT('%', :query, '%'))")

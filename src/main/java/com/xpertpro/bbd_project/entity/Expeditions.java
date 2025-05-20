@@ -21,6 +21,7 @@ public class Expeditions {
     @Column(nullable = false)
     private String expeditionType;
     private double weight;
+    private double itemQuantity;
     private double cbn;
     private String ref;
 
@@ -33,7 +34,7 @@ public class Expeditions {
     private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
-    private StatusEnum status = StatusEnum.CREATE;
+    private StatusEnum status = StatusEnum.PENDING;
 
     @ManyToOne
     @JoinColumn(name = "client_id")
