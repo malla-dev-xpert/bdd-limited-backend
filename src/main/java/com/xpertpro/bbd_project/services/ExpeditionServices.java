@@ -1,11 +1,9 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.ExpeditionDto;
+import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.dtoMapper.ExpeditionDtoMapper;
-import com.xpertpro.bbd_project.entity.Containers;
-import com.xpertpro.bbd_project.entity.Expeditions;
-import com.xpertpro.bbd_project.entity.Partners;
-import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ExpeditionRepository;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -125,6 +124,86 @@ public class ExpeditionServices {
         expedition.setStatus(StatusEnum.DELIVERED);
         expedition.setEditedAt(LocalDateTime.now());
         expeditionRepository.save(expedition);
+    }
+
+    @Transactional
+    public void deleteExpedition(Long expeditionId) {
+        Expeditions expedition = expeditionRepository.findById(expeditionId)
+                .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+
+        if (expedition.getStatus() == StatusEnum.DELETE) {
+            throw new IllegalStateException("L'expédition est déjà supprimer.");
+        }
+
+        expedition.setStatus(StatusEnum.DELETE);
+        expedition.setEditedAt(LocalDateTime.now());
+        expeditionRepository.save(expedition);
+    }
+
+    public String updateExpedition(Long id, ExpeditionDto newExpedition, Long userId) {
+        Optional<Expeditions> optionalExpedition = expeditionRepository.findById(id);
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
+        if (optionalExpedition.isEmpty()) {
+            throw new RuntimeException("Expedition not found with ID: " + id);
+        }
+
+        if (optionalUser.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        Expeditions expedition = optionalExpedition.get();
+        UserEntity user = optionalUser.get();
+
+        // Mise à jour des champs de base
+        if (newExpedition.getExpeditionType() != null) {
+            expedition.setExpeditionType(newExpedition.getExpeditionType());
+        }
+        if (newExpedition.getWeight() != 0) {
+            expedition.setWeight(newExpedition.getWeight());
+        }
+        if (newExpedition.getItemQuantity() != 0) {
+            expedition.setItemQuantity(newExpedition.getItemQuantity());
+        }
+        if (newExpedition.getCbn() != 0) {
+            expedition.setCbn(newExpedition.getCbn());
+        }
+        if (newExpedition.getRef() != null) {
+            expedition.setRef(newExpedition.getRef());
+        }
+
+        // Mise à jour des informations géographiques
+        if (newExpedition.getStartCountry() != null) {
+            expedition.setStartCountry(newExpedition.getStartCountry());
+        }
+        if (newExpedition.getDestinationCountry() != null) {
+            expedition.setDestinationCountry(newExpedition.getDestinationCountry());
+        }
+
+        // Mise à jour des dates
+        if (newExpedition.getArrivalDate() != null) {
+            expedition.setArrivalDate(newExpedition.getArrivalDate());
+        }
+        if (newExpedition.getStartDate() != null) {
+            expedition.setStartDate(newExpedition.getStartDate());
+        }
+
+        // Mise à jour du client (Partners)
+        if (newExpedition.getClientId() != null) {
+            Optional<Partners> optionalClient = clientRepo.findById(newExpedition.getClientId());
+            if (optionalClient.isPresent()) {
+                expedition.setClient(optionalClient.get());
+            } else {
+                return "CLIENT_NOT_FOUND";
+            }
+        }
+
+        // Mise à jour des métadonnées
+        expedition.setEditedAt(LocalDateTime.now());
+        expedition.setCreatedBy(user);
+
+        expeditionRepository.save(expedition);
+        return "SUCCESS";
     }
 
 }

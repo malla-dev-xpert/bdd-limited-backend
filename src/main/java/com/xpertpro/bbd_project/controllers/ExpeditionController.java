@@ -64,4 +64,42 @@ public class ExpeditionController {
         }
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            expeditionServices.deleteExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition a été supprimé avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateExpedition(
+            @PathVariable Long id,
+            @RequestBody ExpeditionDto expeditionDto,
+            @RequestParam("userId") Long userId) {
+
+        try {
+            String result = expeditionServices.updateExpedition(id, expeditionDto, userId);
+
+            switch (result) {
+                case "SUCCESS":
+                    return ResponseEntity.ok().body("Expedition updated successfully");
+                case "CLIENT_NOT_FOUND":
+                    return ResponseEntity.badRequest().body("Client not found with provided ID");
+                default:
+                    return ResponseEntity.internalServerError().body("Unexpected error occurred");
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("An error occurred while updating the expedition");
+        }
+    }
+
 }
