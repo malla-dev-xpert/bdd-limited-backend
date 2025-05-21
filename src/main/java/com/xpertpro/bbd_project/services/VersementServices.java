@@ -38,16 +38,11 @@ public class VersementServices {
 
     @Transactional
     public String newVersement(Long userId, Long partnerId, VersementDto dto) {
-
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Partners partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
-
-        // Récupérer tous les anciens versements de ce partenaire
-        List<Versements> anciensVersements = versementRepo.findByPartnerId(partnerId);
-
 
         // Créer un nouveau versement
         Versements newVersement = new Versements();
@@ -57,6 +52,11 @@ public class VersementServices {
         newVersement.setUser(user);
         newVersement.setPartner(partner);
         newVersement.setStatus(StatusEnum.CREATE);
+
+        // Mettre à jour le solde du partenaire
+        Double nouveauSolde = partner.getBalance() + dto.getMontantVerser();
+        partner.setBalance(nouveauSolde);
+        partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
 
         versementRepo.save(newVersement);
 

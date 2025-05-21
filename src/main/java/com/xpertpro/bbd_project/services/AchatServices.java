@@ -142,6 +142,12 @@ public class AchatServices {
                 lignesToAdd.add(ligne);
             }
 
+
+            // Mettre à jour le solde du partenaire
+            Double nouveauSolde = partner.getBalance() - totalAchat;
+            partner.setBalance(nouveauSolde);
+            partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
+
             // Sauvegarde en batch
             itemsRepository.saveAll(itemsToSave);
             achat.getLignes().addAll(lignesToAdd);
