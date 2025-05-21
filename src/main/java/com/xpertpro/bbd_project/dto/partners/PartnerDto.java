@@ -14,4 +14,5 @@ public class PartnerDto {
     private String country;
     private String adresse;
     private String accountType;
+    private double balance;
 }

@@ -81,6 +81,7 @@ public class PartnerServices {
                     dto.setFirstName(pkg.getFirstName());
                     dto.setLastName(pkg.getLastName());
                     dto.setPhoneNumber(pkg.getPhoneNumber());
+                    dto.setBalance(pkg.getBalance());
 
                     return dto;
                 })
@@ -98,7 +99,9 @@ public class PartnerServices {
                 partner.getEmail(),
                 partner.getCountry(),
                 partner.getAdresse(),
-                partner.getAccountType())
+                partner.getAccountType(),
+                partner.getBalance())
+
         );
     }
 
