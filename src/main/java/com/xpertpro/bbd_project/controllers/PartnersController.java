@@ -33,9 +33,14 @@ public class PartnersController {
         }
     }
 
-    @GetMapping()
-    public List<PartnerDto> getAllPartners(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+    @GetMapping("/customer")
+    public List<PartnerDto> getAllCustomer(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
         return partnerServices.getAllCustomer(page, query);
+    }
+
+    @GetMapping("/supplier")
+    public List<PartnerDto> getAllSupplier(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return partnerServices.getAllSupplier(page, query);
     }
 
     @GetMapping("/{id}")

@@ -127,6 +127,24 @@ public class ExpeditionServices {
     }
 
     @Transactional
+    public void receivedExpedition(Long expeditionId) {
+        Expeditions expedition = expeditionRepository.findById(expeditionId)
+                .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+
+        if (expedition.getStatus() == StatusEnum.RECEIVED) {
+            throw new IllegalStateException("L'expédition est déjà livrée.");
+        }
+
+        if (expedition.getStatus() != StatusEnum.DELIVERED) {
+            throw new IllegalStateException("Impossible de confirmer la livraison de l'expédition. Elle n'est pas arrivée a destination.");
+        }
+
+        expedition.setStatus(StatusEnum.RECEIVED);
+        expedition.setEditedAt(LocalDateTime.now());
+        expeditionRepository.save(expedition);
+    }
+
+    @Transactional
     public void deleteExpedition(Long expeditionId) {
         Expeditions expedition = expeditionRepository.findById(expeditionId)
                 .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));

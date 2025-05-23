@@ -64,6 +64,20 @@ public class ExpeditionController {
         }
     }
 
+    @DeleteMapping("/received-expedition")
+    public ResponseEntity<String> receivedExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            expeditionServices.receivedExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition est livrée avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
+        }
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
         try {
