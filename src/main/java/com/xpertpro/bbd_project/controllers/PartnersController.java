@@ -35,7 +35,7 @@ public class PartnersController {
 
     @GetMapping()
     public List<PartnerDto> getAllPartners(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
-        return partnerServices.getAllPartner(page, query);
+        return partnerServices.getAllCustomer(page, query);
     }
 
     @GetMapping("/{id}")
@@ -44,8 +44,11 @@ public class PartnersController {
     }
 
     @GetMapping("/account-type")
-    public Page<PartnerDto> getAllPartnersByType(@RequestParam(defaultValue = "0") int page, @RequestParam String type) {
-        return partnerServices.findPartnersByType(page, type);
+    public Page<PartnerDto> getAllPartnersByType(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam String type,
+            @RequestParam(required = false) String query) {
+        return partnerServices.findPartnersByType(page, type, query);
     }
 
     @DeleteMapping("/delete/{id}")

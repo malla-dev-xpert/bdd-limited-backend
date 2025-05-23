@@ -45,5 +45,6 @@ public class Partners {
     @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL)
     private List<Versements> versements = new ArrayList<>();
 
-
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    private List<Expeditions> expeditions = new ArrayList<>();
 }

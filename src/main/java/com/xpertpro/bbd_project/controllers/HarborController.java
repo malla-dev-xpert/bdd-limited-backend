@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
-import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.services.HarborServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -62,7 +61,7 @@ public class HarborController {
     }
 
     @GetMapping("/{id}")
-    public Harbor getHarborById(@PathVariable Long id) {
+    public HarborDto getHarborById(@PathVariable Long id) {
         return harborServices.getHarborById(id);
     }
 }

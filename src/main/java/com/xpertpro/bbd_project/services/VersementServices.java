@@ -5,15 +5,18 @@ import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
+import com.xpertpro.bbd_project.repository.AchatRepository;
 import com.xpertpro.bbd_project.repository.PartnerRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.repository.VersementRepo;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,32 +33,30 @@ public class VersementServices {
     private UserRepository userRepository;
     @Autowired
     private PartnerRepository partnerRepository;
+    @Autowired
+    private AchatRepository achatRepository;
 
     @Transactional
     public String newVersement(Long userId, Long partnerId, VersementDto dto) {
-
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Partners partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
 
-        // Récupérer tous les anciens versements de ce partenaire
-        List<Versements> anciensVersements = versementRepo.findByPartnerId(partnerId);
-
-        // Calculer montant restant actuel
-        double montantRestantGlobal = anciensVersements.stream()
-                .mapToDouble(Versements::getMontantRestant)
-                .sum();
-
         // Créer un nouveau versement
         Versements newVersement = new Versements();
         newVersement.setMontantVerser(dto.getMontantVerser());
-        newVersement.setMontantRestant(dto.getMontantVerser() + montantRestantGlobal);
+        newVersement.setMontantRestant(dto.getMontantVerser());
         newVersement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         newVersement.setUser(user);
         newVersement.setPartner(partner);
         newVersement.setStatus(StatusEnum.CREATE);
+
+        // Mettre à jour le solde du partenaire
+        Double nouveauSolde = partner.getBalance() + dto.getMontantVerser();
+        partner.setBalance(nouveauSolde);
+        partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
 
         versementRepo.save(newVersement);
 
@@ -81,8 +82,8 @@ public class VersementServices {
                     VersementDto dto = new VersementDto();
                     dto.setId(pkg.getId());
                     dto.setReference(pkg.getReference());
-                    dto.setMontantRestant(pkg.getMontantVerser());
                     dto.setMontantVerser(pkg.getMontantVerser());
+                    dto.setMontantRestant(pkg.getMontantRestant()); // Récupération directe depuis le versement
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
                     dto.setCliendId(pkg.getPartner() != null
@@ -112,15 +113,10 @@ public class VersementServices {
                                 achatDto.setFournisseurPhone(item.getFournisseur() != null
                                         ? item.getFournisseur().getPhoneNumber()
                                         : null);
-                                achatDto.setMontantRestant(item.getVersement() != null
-                                        ? item.getVersement().getMontantRestant()
-                                        : null);
-                                achatDto.setMontantVerser(item.getVersement() != null
-                                        ? item.getVersement().getMontantVerser()
-                                        : null);
-                                achatDto.setReferenceVersement(item.getVersement() != null
-                                        ? item.getVersement().getReference()
-                                        : null);
+                                // Utilisation des montants du versement parent
+                                achatDto.setMontantRestant(pkg.getMontantRestant());
+                                achatDto.setMontantVerser(pkg.getMontantVerser());
+                                achatDto.setReferenceVersement(pkg.getReference());
 
                                 List<LigneAchatDto> ligneDtos = item.getLignes().stream()
                                         .map(ligne -> {
@@ -152,7 +148,6 @@ public class VersementServices {
                     return dto;
                 })
                 .collect(Collectors.toList());
-
     }
 
     public List<VersementDto> getByClientId(Long clientId, int page) {
@@ -230,5 +225,69 @@ public class VersementServices {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public boolean updateVersement(Long id, Long userId, Long clientId, VersementDto dto) {
+        Versements versement = versementRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Versement non trouvé"));
+
+        Partners client = partnerRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client non trouvé"));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+        Double ancienMontantVerser = versement.getMontantVerser();
+        Double nouveauMontantVerser = dto.getMontantVerser();
+
+        if(nouveauMontantVerser != null) {
+            versement.setMontantVerser(nouveauMontantVerser);
+        }
+
+        versement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
+        versement.setPartner(client);
+        versement.setUser(user);
+
+        if (nouveauMontantVerser != null) {
+            if (versement.getMontantRestant() == null) {
+                versement.setMontantRestant(nouveauMontantVerser);
+            } else {
+                if (ancienMontantVerser.equals(versement.getMontantRestant())) {
+                    versement.setMontantRestant(nouveauMontantVerser);
+                } else {
+                    double difference = nouveauMontantVerser - ancienMontantVerser;
+                    versement.setMontantRestant(versement.getMontantRestant() + difference);
+                }
+            }
+        }
+
+        versementRepo.save(versement);
+
+        return true;
+    }
+
+    public String deleteVersement(Long id, Long userId) {
+        try {
+            Versements versement = versementRepo.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Versement non trouvé"));
+
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+            boolean hasAchat = achatRepository.existsByVersementId(id);
+            if (hasAchat) {
+                return "IMPOSSIBLE";
+            }
+
+            versement.setStatus(StatusEnum.DELETE);
+            versement.setEditedAt(LocalDateTime.now());
+            versement.setUser(user);
+            versementRepo.save(versement);
+
+            return "DELETED";
+
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 }

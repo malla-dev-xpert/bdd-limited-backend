@@ -1,13 +1,12 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
-import com.xpertpro.bbd_project.entity.Containers;
-import com.xpertpro.bbd_project.entity.EmbarquementRequest;
+import com.xpertpro.bbd_project.entityMapper.EmbarquementRequest;
+import com.xpertpro.bbd_project.entityMapper.HarborEmbarquementRequest;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
 import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.ContainerServices;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,16 +55,41 @@ public class ContainersController {
     @PostMapping("/embarquer")
     public ResponseEntity<String> embarquerColis(
             @RequestBody EmbarquementRequest request) {
-        String result = containerPackageService.embarquerColis(request);
 
-        switch (result) {
-            case "CONTAINER_NOT_AVAILABLE":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas disponible pour l'embarquement.");
-            case "CONTAINER_NOT_IN_PENDING":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas dans le bon statut pour l'embarquement.");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Colis embarquer avec succès !");
+        try{
+            String result = containerPackageService.embarquerColis(request);
+
+            switch (result) {
+                case "CONTAINER_NOT_AVAILABLE":
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas disponible pour l'embarquement.");
+                case "CONTAINER_NOT_IN_PENDING":
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le conteneur n'est pas dans le bon statut pour l'embarquement.");
+                default:
+                    return ResponseEntity.status(HttpStatus.CREATED).body("Colis embarquer avec succès !");
+            }
+        }catch (ContainerPackageService.OperationNotAllowedException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+
+    }
+
+    @PostMapping("/embarquer/in-harbor")
+    public ResponseEntity<String> embarquerContainerInHarbor(
+            @RequestBody HarborEmbarquementRequest request) {
+
+        try{
+            String result = containerPackageService.embarquerConteneursDansPort(request);
+
+            switch (result) {
+                case "HARBOR_NOT_AVAILABLE":
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le port n'est pas disponible pour l'embarquement.");
+                default:
+                    return ResponseEntity.status(HttpStatus.CREATED).body("Conteneurs embarquer avec succès !");
+            }
+        }catch (ContainerPackageService.OperationNotAllowedException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
+
     }
 
     @GetMapping()
@@ -93,10 +117,15 @@ public class ContainersController {
         }
     }
 
-    @DeleteMapping("/retrieve/{id}/harbor/{harborId}")
-    public String retrieveContainerToHarbor(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @PathVariable("harborId") Long harborId){
-        containerServices.retrieveContainerToHArbor(id, userId, harborId);
-        return "Le Conteneur avec  l'id " + id + " a été retirer avec succès.";
+    @DeleteMapping("/retrieve/harbor")
+    public ResponseEntity<String> retrieveContainerToHarbor(@RequestParam(name = "containerId") Long containerId, @RequestParam(name = "userId") Long userId, @RequestParam(name = "harborId") Long harborId){
+        try{
+            containerServices.retrieveContainerToHarbor(containerId, userId, harborId);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Le Conteneur avec  l'id \" + containerId + \" a été retirer avec succès.");
+
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @GetMapping("/delivery/{id}")

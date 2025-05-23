@@ -7,6 +7,7 @@ import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
 import com.xpertpro.bbd_project.repository.HarborRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -149,19 +150,42 @@ public class ContainerServices {
 
     }
 
-    public String retrieveContainerToHArbor(Long id, Long userId, Long harborId) {
-        Containers containers = containersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-        Harbor harbor = harborRepository.findById(harborId)
-                .orElseThrow(() -> new RuntimeException("harbor not found with ID: " + id));
+    public String retrieveContainerToHarbor(Long containerId, Long userId, Long harborId) {
 
-        containers.setStatus(StatusEnum.RETRIEVE);
-        containers.setUser(user);
-        containers.setHarbor(harbor);
-        containersRepository.save(containers);
-        return "Container deleted successfully";
+        // Récupération des entités avec gestion d'erreur améliorée
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new EntityNotFoundException("Conteneur non trouvé avec ID: " + containerId));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec ID: " + userId));
+
+        Harbor harbor = harborRepository.findById(harborId)
+                .orElseThrow(() -> new EntityNotFoundException("Port non trouvé avec ID: " + harborId));
+
+        // Vérification si le conteneur contient des colis non supprimés
+        if (hasActivePackages(container)) {
+            throw new IllegalStateException("Impossible de retirer le conteneur: il contient encore des colis actifs");
+        }
+
+        // Vérification du statut actuel
+        if (container.getStatus() == StatusEnum.RETRIEVE) {
+            throw new IllegalStateException("Le conteneur a déjà été retiré");
+        }
+
+        // Mise à jour du conteneur
+        container.setStatus(StatusEnum.RETRIEVE);
+        container.setUser(user);
+        container.setHarbor(harbor);
+        container.setEditedAt(LocalDateTime.now());
+
+        containersRepository.save(container);
+
+        return "Conteneur retiré avec succès";
+    }
+
+    private boolean hasActivePackages(Containers container) {
+        return container.getPackages().stream()
+                .anyMatch(p -> p.getStatus() != StatusEnum.DELETE && p.getStatus() != StatusEnum.DELETE_ON_CONTAINER);
     }
 
     @Transactional()
