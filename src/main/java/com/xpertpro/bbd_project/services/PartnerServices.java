@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.ExpeditionDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
@@ -150,30 +150,30 @@ public class PartnerServices {
 
                             }).collect(Collectors.toList());
 
-                    List<ExpeditionDto> expeditionDtoList = partner.getExpeditions().stream()
+                    List<PackageDto> packageDtoList = partner.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(e -> {
-                                ExpeditionDto newExpeditionDto = new ExpeditionDto();
-                                newExpeditionDto.setItemQuantity(e.getItemQuantity());
-                                newExpeditionDto.setWeight(e.getWeight());
-                                newExpeditionDto.setClientName(e.getClient() != null ? e.getClient().getFirstName() + " " + e.getClient().getLastName() : null);
-                                newExpeditionDto.setClientPhone(e.getClient() != null ? e.getClient().getPhoneNumber() : null);
-                                newExpeditionDto.setExpeditionType(e.getExpeditionType());
-                                newExpeditionDto.setRef(e.getRef());
-                                newExpeditionDto.setCbn(e.getCbn());
-                                newExpeditionDto.setDestinationCountry(e.getDestinationCountry());
-                                newExpeditionDto.setStartCountry(e.getStartCountry());
-                                newExpeditionDto.setStartDate(e.getStartDate());
-                                newExpeditionDto.setArrivalDate(e.getArrivalDate());
-                                newExpeditionDto.setId(e.getId());
-                                newExpeditionDto.setStatus(e.getStatus().name());
+                                PackageDto newPackageDto = new PackageDto();
+                                newPackageDto.setItemQuantity(e.getItemQuantity());
+                                newPackageDto.setWeight(e.getWeight());
+                                newPackageDto.setClientName(e.getClient() != null ? e.getClient().getFirstName() + " " + e.getClient().getLastName() : null);
+                                newPackageDto.setClientPhone(e.getClient() != null ? e.getClient().getPhoneNumber() : null);
+                                newPackageDto.setExpeditionType(e.getExpeditionType());
+                                newPackageDto.setRef(e.getRef());
+                                newPackageDto.setCbn(e.getCbn());
+                                newPackageDto.setDestinationCountry(e.getDestinationCountry());
+                                newPackageDto.setStartCountry(e.getStartCountry());
+                                newPackageDto.setStartDate(e.getStartDate());
+                                newPackageDto.setArrivalDate(e.getArrivalDate());
+                                newPackageDto.setId(e.getId());
+                                newPackageDto.setStatus(e.getStatus().name());
 
-                                return newExpeditionDto;
+                                return newPackageDto;
 
                             }).collect(Collectors.toList());
 
                     dto.setVersements(versementDtoList);
-                    dto.setExpeditions(expeditionDtoList);
+                    dto.setPackages(packageDtoList);
 
                     return dto;
                 })
@@ -276,30 +276,30 @@ public class PartnerServices {
 
                             }).collect(Collectors.toList());
 
-                    List<ExpeditionDto> expeditionDtoList = partner.getExpeditions().stream()
+                    List<PackageDto> packageDtoList = partner.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(e -> {
-                                ExpeditionDto newExpeditionDto = new ExpeditionDto();
-                                newExpeditionDto.setItemQuantity(e.getItemQuantity());
-                                newExpeditionDto.setWeight(e.getWeight());
-                                newExpeditionDto.setClientName(e.getClient() != null ? e.getClient().getFirstName() + " " + e.getClient().getLastName() : null);
-                                newExpeditionDto.setClientPhone(e.getClient() != null ? e.getClient().getPhoneNumber() : null);
-                                newExpeditionDto.setExpeditionType(e.getExpeditionType());
-                                newExpeditionDto.setRef(e.getRef());
-                                newExpeditionDto.setCbn(e.getCbn());
-                                newExpeditionDto.setDestinationCountry(e.getDestinationCountry());
-                                newExpeditionDto.setStartCountry(e.getStartCountry());
-                                newExpeditionDto.setStartDate(e.getStartDate());
-                                newExpeditionDto.setArrivalDate(e.getArrivalDate());
-                                newExpeditionDto.setId(e.getId());
-                                newExpeditionDto.setStatus(e.getStatus().name());
+                                PackageDto newPackageDto = new PackageDto();
+                                newPackageDto.setItemQuantity(e.getItemQuantity());
+                                newPackageDto.setWeight(e.getWeight());
+                                newPackageDto.setClientName(e.getClient() != null ? e.getClient().getFirstName() + " " + e.getClient().getLastName() : null);
+                                newPackageDto.setClientPhone(e.getClient() != null ? e.getClient().getPhoneNumber() : null);
+                                newPackageDto.setExpeditionType(e.getExpeditionType());
+                                newPackageDto.setRef(e.getRef());
+                                newPackageDto.setCbn(e.getCbn());
+                                newPackageDto.setDestinationCountry(e.getDestinationCountry());
+                                newPackageDto.setStartCountry(e.getStartCountry());
+                                newPackageDto.setStartDate(e.getStartDate());
+                                newPackageDto.setArrivalDate(e.getArrivalDate());
+                                newPackageDto.setId(e.getId());
+                                newPackageDto.setStatus(e.getStatus().name());
 
-                                return newExpeditionDto;
+                                return newPackageDto;
 
                             }).collect(Collectors.toList());
 
                     dto.setVersements(versementDtoList);
-                    dto.setExpeditions(expeditionDtoList);
+                    dto.setPackages(packageDtoList);
 
                     return dto;
                 })
@@ -338,8 +338,8 @@ public class PartnerServices {
                     newDto.setId(versements.getId());
                     return newDto;
                 }).collect(Collectors.toList()),
-                partner.getExpeditions().stream().map(expeditions -> {
-                    ExpeditionDto newDto = new ExpeditionDto();
+                partner.getPackages().stream().map(expeditions -> {
+                    PackageDto newDto = new PackageDto();
                     newDto.setId(expeditions.getId());
                     return newDto;
                 }).collect(Collectors.toList())
@@ -347,8 +347,8 @@ public class PartnerServices {
         );
     }
 
-    public String deletePartner(Long partnerId, Long userId) {
-        Optional<Partners> optionalPartner = partnerRepository.findById(partnerId);
+    public String deletePartner(Long clientId, Long userId) {
+        Optional<Partners> optionalPartner = partnerRepository.findById(clientId);
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         if (optionalPartner.isEmpty()) {
             return "PARTNER_NOT_FOUND";
@@ -356,7 +356,7 @@ public class PartnerServices {
 
         Partners partner = optionalPartner.get();
 
-        boolean hasPackages = packageRepository.existsByPartnerId(partnerId);
+        boolean hasPackages = packageRepository.existsByClientId(clientId);
         if (hasPackages) {
             return "PACKAGE_FOUND";
         }

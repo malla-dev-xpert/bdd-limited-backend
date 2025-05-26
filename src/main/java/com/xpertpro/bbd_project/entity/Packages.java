@@ -5,49 +5,51 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "packages")
+@Table(name = "expeditions")
 public class Packages {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true)
-    private String reference;
+    @Column(nullable = false)
+    private String expeditionType;
+    private double weight;
+    private double itemQuantity;
+    private double cbn;
+    private String ref;
 
-    private Double weight;
-    private String dimensions;
+    private String startCountry;
+    private String destinationCountry;
 
+    private LocalDateTime arrivalDate;
+    private LocalDateTime startDate;
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 30)
     private StatusEnum status = StatusEnum.PENDING;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id")
-    private Warehouse warehouse;
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private Partners client;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @CreatedBy
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private UserEntity createdBy;
+
+    @ManyToOne
     @JoinColumn(name = "container_id")
     private Containers container;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
-    private UserEntity user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "partner_id")
-    private Partners partner;
-
-    @OneToMany(mappedBy = "packages", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Items> items = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
 }

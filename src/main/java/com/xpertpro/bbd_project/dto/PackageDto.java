@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data @AllArgsConstructor @NoArgsConstructor
-public class ExpeditionDto {
+public class PackageDto {
     private Long id;
     private String expeditionType;
     private double weight;
@@ -22,4 +22,6 @@ public class ExpeditionDto {
     private String clientName;
     private String clientPhone;
     private String status;
+    private String warehouseName;
+    private String warehouseAddress;
 }

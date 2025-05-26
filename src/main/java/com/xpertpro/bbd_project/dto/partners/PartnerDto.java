@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.dto.partners;
 
-import com.xpertpro.bbd_project.dto.ExpeditionDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,5 +20,5 @@ public class PartnerDto {
     private String accountType;
     private double balance;
     private List<VersementDto> versements;
-    private List<ExpeditionDto> expeditions;
+    private List<PackageDto> packages;
 }

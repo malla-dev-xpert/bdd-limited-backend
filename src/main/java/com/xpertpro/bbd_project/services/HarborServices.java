@@ -1,10 +1,9 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.dto.harbor.HarborDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
-import com.xpertpro.bbd_project.entity.Containers;
 import com.xpertpro.bbd_project.entity.Harbor;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -136,27 +135,14 @@ public class HarborServices {
                         containersDto.setIsAvailable(item.getIsAvailable());
                         containersDto.setStatus(item.getStatus().name());
 
-                        List<PackageResponseDto> packageResponseDtos = item.getPackages().stream()
+                        List<PackageDto> packageResponseDtos = item.getPackages().stream()
                                 .filter(pkgItem -> pkgItem.getStatus() != StatusEnum.DELETE)
                                 .map(pkgItem -> {
-                                    PackageResponseDto pkgDto = new PackageResponseDto();
+                                    PackageDto pkgDto = new PackageDto();
                                     pkgDto.setId(pkgItem.getId() != null ? pkgItem.getId() : null);
-                                    pkgDto.setPartnerName(pkgItem.getPartner() != null ? pkgItem.getPartner().getFirstName() + " " + pkgItem.getPartner().getLastName() : null);
-                                    pkgDto.setPartnerPhoneNumber(pkgItem.getPartner() != null ? pkgItem.getPartner().getPhoneNumber() : null);
-                                    pkgDto.setReference(pkgItem.getReference());
-
-                                    List<ItemDto> itemDtos = pkgItem.getItems().stream()
-                                            .filter(itemData -> itemData.getStatus() != StatusEnum.DELETE)
-                                            .map(itemData -> {
-                                                ItemDto itemDto = new ItemDto();
-                                                itemDto.setId(itemData.getId() != null ? itemData.getId() : null);
-                                                itemDto.setDescription(itemData.getDescription());
-                                                itemDto.setQuantity(itemData.getQuantity());
-                                                itemDto.setUnitPrice(itemData.getUnitPrice());
-                                                return itemDto;
-                                            }).collect(Collectors.toList());
-
-                                    pkgDto.setItems(itemDtos);
+                                    pkgDto.setClientName(pkgItem.getClient() != null ? pkgItem.getClient().getFirstName() + " " + pkgItem.getClient().getLastName() : null);
+                                    pkgDto.setClientPhone(pkgItem.getClient() != null ? pkgItem.getClient().getPhoneNumber() : null);
+                                    pkgDto.setRef(pkgItem.getRef());
 
                                     return pkgDto;
                                 }).collect(Collectors.toList());
@@ -200,13 +186,13 @@ public class HarborServices {
                     containersDto.setIsAvailable(item.getIsAvailable());
                     containersDto.setStatus(item.getStatus().name());
 
-                    List<PackageResponseDto> packageResponseDtos = item.getPackages().stream()
+                    List<PackageDto> packageResponseDtos = item.getPackages().stream()
                             .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
                             .map(pkg -> {
-                                PackageResponseDto pkgDto = new PackageResponseDto();
+                                PackageDto pkgDto = new PackageDto();
                                 pkgDto.setId(pkg.getId() != null ? pkg.getId() : null);
-                                pkgDto.setPartnerName(pkg.getPartner() != null ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName() : null);
-                                pkgDto.setPartnerPhoneNumber(pkg.getPartner() != null ? pkg.getPartner().getPhoneNumber() : null);
+                                pkgDto.setClientName(pkg.getClient() != null ? pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName() : null);
+                                pkgDto.setClientPhone(pkg.getClient() != null ? pkg.getClient().getPhoneNumber() : null);
                                 return pkgDto;
                             }).collect(Collectors.toList());
 
