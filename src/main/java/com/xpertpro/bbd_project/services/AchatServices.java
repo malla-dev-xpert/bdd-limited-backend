@@ -1,7 +1,5 @@
 package com.xpertpro.bbd_project.services;
 
-import ch.qos.logback.classic.Logger;
-import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateLigneDto;
 import com.xpertpro.bbd_project.entity.*;
@@ -10,11 +8,15 @@ import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class AchatServices {
@@ -35,91 +37,60 @@ public class AchatServices {
     UserRepository userRepository;
 
     @Autowired
-    PackageRepository packageRepository;
-
-    @Autowired
-    ContainersRepository containersRepository;
-
-    @Autowired
-    WarehouseRepository warehouseRepository;
+    LigneAchatRepository ligneAchatRepository;
 
     @Transactional
-    public String createAchatForClient(Long clientId, Long supplierId, Long userId, Long warehouseId,
-                                       Long containerId, CreateAchatDto dto) {
+    public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
         try {
-            // Validation des IDs
-            if (clientId == null || supplierId == null || userId == null ||
-                    warehouseId == null || containerId == null || dto == null) {
-                throw new IllegalArgumentException("Les paramètres ne peuvent pas être null");
-            }
+//            log.info("Tentative de création d'achat - client: {}, fournisseur: {}, user: {}", clientId, supplierId, userId);
 
-            // Récupération des entités
+            // 1. Validation des entités
             UserEntity user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("Utilisateur avec ID " + userId + " introuvable"));
-            Partners partner = partnerRepository.findById(clientId)
-                    .orElseThrow(() -> new EntityNotFoundException("Client introuvable"));
-            Partners supplier = partnerRepository.findById(supplierId)
-                    .orElseThrow(() -> new EntityNotFoundException("Fournisseur introuvable"));
-            Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                    .orElseThrow(() -> new EntityNotFoundException("Entrepot introuvable"));
-            Containers containers = containersRepository.findById(containerId)
-                    .orElseThrow(() -> new EntityNotFoundException("Conteneur introuvable"));
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-            // Validation du versement
+            Partners client = partnerRepository.findById(clientId)
+                    .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+
+            Partners supplier = partnerRepository.findById(supplierId)
+                    .orElseThrow(() -> new EntityNotFoundException("Supplier not found with id: " + supplierId));
+
+            // 2. Validation du versement
             if (dto.getVersementId() == null) {
-                return "VERSEMENT_REQUIS";
+                throw new BusinessException("VERSEMENT_ID_REQUIRED");
             }
 
             Versements versement = versementRepo.findById(dto.getVersementId())
-                    .orElseThrow(() -> new EntityNotFoundException("Versement avec ID " + dto.getVersementId() + " introuvable"));
+                    .orElseThrow(() -> new EntityNotFoundException("Versement not found with id: " + dto.getVersementId()));
 
-            // Vérification que le versement appartient bien au client
             if (!versement.getPartner().getId().equals(clientId)) {
-                return "INVALID_VERSEMENT";
+                throw new BusinessException("VERSEMENT_CLIENT_MISMATCH");
             }
 
-            // Vérification du statut du versement
-            if (versement.getStatus() != StatusEnum.CREATE) {
-                return "INACTIF_VERSEMENT";
-            }
-
-            // Calcul du montant total de l'achat
-            double totalAchat = dto.getLignes().stream()
-                    .mapToDouble(l -> l.getPrixUnitaire() * l.getQuantityItem())
-                    .sum();
-
-            // Vérification du solde disponible (décommenté et amélioré)
-//            if (versement.getMontantRestant() < totalAchat) {
-//                return "SOLDE_INSUFFISANT";
-//            }
-
-            // Création du colis
-            PackageCreateDto packDto = dto.getPackageDto();
-            Packages pack = new Packages();
-            pack.setReference(packDto.getReference());
-            pack.setWeight(packDto.getWeight());
-            pack.setDimensions(packDto.getDimensions());
-            pack.setCreatedAt(packDto.getCreatedAt() != null ? packDto.getCreatedAt() : LocalDateTime.now());
-            pack.setPartner(partner);
-            pack.setWarehouse(warehouse);
-            pack.setContainer(containers);
-            pack.setUser(user);
-            packageRepository.save(pack);
-
-            // Création de l'achat
+            // 3. Création de l'achat
             Achats achat = new Achats();
+            achat.setClient(client);
+            achat.setFournisseur(supplier);
+            achat.setVersement(versement);
             achat.setCreatedAt(LocalDateTime.now());
             achat.setStatus(StatusEnum.CREATE);
-            achat.setFournisseur(supplier);
-            achat.setClient(partner);
-            achat.setVersement(versement);
-            achat.setMontantTotal(totalAchat);
-            achatRepository.save(achat);
 
-            // Création des items et lignes d'achat
-            List<Items> itemsToSave = new ArrayList<>();
-            List<LigneAchat> lignesToAdd = new ArrayList<>();
-            LocalDateTime creationDate = packDto.getCreatedAt() != null ? packDto.getCreatedAt() : LocalDateTime.now();
+            // 4. Calcul du montant total
+            double total = dto.getLignes().stream()
+                    .mapToDouble(l -> {
+                        if (l.getQuantityItem() <= 0 || l.getPrixUnitaire() <= 0) {
+                            throw new BusinessException("INVALID_ITEM_VALUES");
+                        }
+                        return l.getQuantityItem() * l.getPrixUnitaire();
+                    })
+                    .sum();
+            achat.setMontantTotal(total);
+
+            // 5. Sauvegarde de l'achat (pour obtenir l'ID)
+            Achats savedAchat = achatRepository.save(achat);
+
+            // 6. Création des items et lignes
+            List<Items> items = new ArrayList<>();
+            List<LigneAchat> lignes = new ArrayList<>();
 
             for (CreateLigneDto ligneDto : dto.getLignes()) {
                 Items item = new Items();
@@ -127,44 +98,54 @@ public class AchatServices {
                 item.setQuantity(ligneDto.getQuantityItem());
                 item.setUnitPrice(ligneDto.getPrixUnitaire());
                 item.setUser(user);
-                item.setAchats(achat);
-                item.setPackages(pack);
+                item.setAchats(savedAchat);
                 item.setStatus(StatusEnum.CREATE);
-                item.setCreatedAt(creationDate);
-                itemsToSave.add(item);
+                item.setCreatedAt(LocalDateTime.now());
+                items.add(item);
 
                 LigneAchat ligne = new LigneAchat();
-                ligne.setAchats(achat);
+                ligne.setAchats(savedAchat);
                 ligne.setItem(item);
                 ligne.setQuantite(ligneDto.getQuantityItem());
                 ligne.setPrixTotal(ligneDto.getQuantityItem() * ligneDto.getPrixUnitaire());
                 ligne.setStatus(StatusEnum.CREATE);
-                lignesToAdd.add(ligne);
+                lignes.add(ligne);
             }
 
+            // 7. Sauvegarde en cascade
+            itemsRepository.saveAll(items);
+            ligneAchatRepository.saveAll(lignes);
 
-            // Mettre à jour le solde du partenaire
-            Double nouveauSolde = partner.getBalance() - totalAchat;
-            partner.setBalance(nouveauSolde);
-            partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
+            // 8. Mise à jour des soldes
+            updateBalances(client, versement, total);
 
-            // Sauvegarde en batch
-            itemsRepository.saveAll(itemsToSave);
-            achat.getLignes().addAll(lignesToAdd);
-            achatRepository.save(achat);
+            return "ACHAT_CREATED";
 
-            // Mise à jour du montant restant du versement (APRES la création de l'achat)
-            versement.setMontantRestant(versement.getMontantRestant() - totalAchat);
+        } catch (Exception e) {
+//            log.error("Erreur lors de la création de l'achat", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la création de l'achat", e);
+        }
+    }
+
+    private void updateBalances(Partners client, Versements versement, double montant) {
+        try {
+            // Mise à jour client
+            client.setBalance(client.getBalance() - montant);
+            partnerRepository.save(client);
+
+            // Mise à jour versement
+            versement.setMontantRestant(versement.getMontantRestant() - montant);
             versement.setEditedAt(LocalDateTime.now());
             versementRepo.save(versement);
-
-            return "SUCCESS";
-        } catch (EntityNotFoundException e) {
-            return "ENTITE_INTROUVABLE";
-        } catch (IllegalArgumentException e) {
-            return "PARAMETRE_INVALIDE";
         } catch (Exception e) {
-            return "ERREUR_INATTENDUE";
+//            log.error("Erreur lors de la mise à jour des soldes", e);
+            throw new BusinessException("BALANCE_UPDATE_FAILED");
+        }
+    }
+
+    public class BusinessException extends RuntimeException {
+        public BusinessException(String message) {
+            super(message);
         }
     }
 

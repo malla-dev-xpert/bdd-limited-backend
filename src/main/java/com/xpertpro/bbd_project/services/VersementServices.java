@@ -76,33 +76,33 @@ public class VersementServices {
         Page<Versements> versements = versementRepo.findByStatusNot(StatusEnum.DELETE, pageable);
 
         return versements.stream()
-                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .filter(versement -> versement.getStatus() != StatusEnum.DELETE)
                 .sorted(Comparator.comparing(Versements::getCreatedAt).reversed())
-                .map(pkg -> {
+                .map(versement -> {
                     VersementDto dto = new VersementDto();
-                    dto.setId(pkg.getId());
-                    dto.setReference(pkg.getReference());
-                    dto.setMontantVerser(pkg.getMontantVerser());
-                    dto.setMontantRestant(pkg.getMontantRestant()); // Récupération directe depuis le versement
-                    dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setEditedAt(pkg.getEditedAt());
-                    dto.setCliendId(pkg.getPartner() != null
-                            ? pkg.getPartner().getId()
+                    dto.setId(versement.getId());
+                    dto.setReference(versement.getReference());
+                    dto.setMontantVerser(versement.getMontantVerser());
+                    dto.setMontantRestant(versement.getMontantRestant()); // Récupération directe depuis le versement
+                    dto.setCreatedAt(versement.getCreatedAt());
+                    dto.setEditedAt(versement.getEditedAt());
+                    dto.setPartnerId(versement.getPartner() != null
+                            ? versement.getPartner().getId()
                             : null);
-                    dto.setPartnerName(pkg.getPartner() != null
-                            ? pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName()
+                    dto.setPartnerName(versement.getPartner() != null
+                            ? versement.getPartner().getFirstName() + " " + versement.getPartner().getLastName()
                             : null);
-                    dto.setPartnerAccountType(pkg.getPartner() != null
-                            ? pkg.getPartner().getAccountType()
+                    dto.setPartnerAccountType(versement.getPartner() != null
+                            ? versement.getPartner().getAccountType()
                             : null);
-                    dto.setPartnerPhone(pkg.getPartner() != null
-                            ? pkg.getPartner().getPhoneNumber()
+                    dto.setPartnerPhone(versement.getPartner() != null
+                            ? versement.getPartner().getPhoneNumber()
                             : null);
-                    dto.setPartnerCountry(pkg.getPartner() != null
-                            ? pkg.getPartner().getCountry()
+                    dto.setPartnerCountry(versement.getPartner() != null
+                            ? versement.getPartner().getCountry()
                             : null);
 
-                    List<AchatDto> achatDtos = pkg.getAchats().stream()
+                    List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
@@ -114,9 +114,9 @@ public class VersementServices {
                                         ? item.getFournisseur().getPhoneNumber()
                                         : null);
                                 // Utilisation des montants du versement parent
-                                achatDto.setMontantRestant(pkg.getMontantRestant());
-                                achatDto.setMontantVerser(pkg.getMontantVerser());
-                                achatDto.setReferenceVersement(pkg.getReference());
+                                achatDto.setMontantRestant(versement.getMontantRestant());
+                                achatDto.setMontantVerser(versement.getMontantVerser());
+                                achatDto.setReferenceVersement(versement.getReference());
 
                                 List<LigneAchatDto> ligneDtos = item.getLignes().stream()
                                         .map(ligne -> {
@@ -158,26 +158,27 @@ public class VersementServices {
         Page<Versements> versements = versementRepo.findByPartnerIdAndStatusNot(clientId, StatusEnum.DELETE, pageable);
 
         return versements.stream()
-                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .filter(versement -> versement.getStatus() != StatusEnum.DELETE)
                 .sorted(Comparator.comparing(Versements::getCreatedAt).reversed())
-                .map(pkg -> {
+                .map(versement -> {
                     VersementDto dto = new VersementDto();
-                    dto.setId(pkg.getId());
-                    dto.setReference(pkg.getReference());
-                    dto.setMontantRestant(pkg.getMontantRestant());
-                    dto.setMontantVerser(pkg.getMontantVerser());
-                    dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setEditedAt(pkg.getEditedAt());
+                    dto.setId(versement.getId());
+                    dto.setReference(versement.getReference());
+                    dto.setMontantRestant(versement.getMontantRestant());
+                    dto.setMontantVerser(versement.getMontantVerser());
+                    dto.setCreatedAt(versement.getCreatedAt());
+                    dto.setEditedAt(versement.getEditedAt());
 
                     // Info partenaire (client)
-                    if (pkg.getPartner() != null) {
-                        dto.setPartnerName(pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName());
-                        dto.setPartnerPhone(pkg.getPartner().getPhoneNumber());
-                        dto.setPartnerCountry(pkg.getPartner().getCountry());
+                    if (versement.getPartner() != null) {
+                        dto.setPartnerName(versement.getPartner().getFirstName() + " " + versement.getPartner().getLastName());
+                        dto.setPartnerPhone(versement.getPartner().getPhoneNumber());
+                        dto.setPartnerCountry(versement.getPartner().getCountry());
+                        dto.setPartnerId(versement.getPartner().getId());
                     }
 
                     // Liste des achats associés
-                    List<AchatDto> achatDtos = pkg.getAchats().stream()
+                    List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();

@@ -16,21 +16,20 @@ public class AchatController {
 
     @PostMapping("/create")
     public ResponseEntity<String> createAchat(
-            @RequestParam(name = "clientId")Long clientId,
-            @RequestParam(name = "supplierId")Long supplierId,
-            @RequestParam(name = "userId") Long userId,
-            @RequestParam(name = "warehouseId") Long warehouseId,
-            @RequestParam(name = "containerId") Long containerId,
-            @RequestBody CreateAchatDto dto
-    ) {
-        String result = achatServices.createAchatForClient(clientId,supplierId, userId, warehouseId, containerId, dto);
-        switch (result){
-            case "INVALID_VERSEMENT":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Invalid versement.");
-            case "INACTIF_VERSEMENT":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Inactif versement.");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("ACHAT_CREATED");
+            @RequestParam Long clientId,
+            @RequestParam Long supplierId,
+            @RequestParam Long userId,
+            @RequestBody CreateAchatDto dto) {
+        try {
+            System.out.println("Creating achat for client: {}, supplier: {}, user: {}"+ clientId + supplierId + userId);
+            System.out.println("DTO received: {} "+ dto);
+
+            String result = achatServices.createAchatForClient(clientId, supplierId, userId, dto);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.out.println("Error creating achat"+ e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("SERVER_ERROR: " + e.getMessage());
         }
     }
 }

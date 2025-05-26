@@ -17,14 +17,10 @@ public class Items {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String description;
-    private double quantity;
+    private int quantity;
     private double unitPrice;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
-
-    @ManyToOne
-    @JoinColumn(name = "achat_id")
-    private Achats achats;
 
     private LocalDateTime createdAt;
 
@@ -32,7 +28,12 @@ public class Items {
     @JoinColumn(name = "package_id")
     private Packages packages;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "achat_id", nullable = false)
+    private Achats achats;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
 }

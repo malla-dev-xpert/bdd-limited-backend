@@ -92,9 +92,11 @@ public class PartnerServices {
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(v -> {
                                 VersementDto newVersemtDto = new VersementDto();
+                                newVersemtDto.setId(v.getId());
                                 newVersemtDto.setMontantVerser(v.getMontantVerser());
                                 newVersemtDto.setMontantRestant(v.getMontantRestant());
                                 newVersemtDto.setPartnerPhone(v.getPartner() != null ? v.getPartner().getPhoneNumber() : null);
+                                newVersemtDto.setPartnerId(v.getPartner() != null ? v.getPartner().getId() : null);
                                 newVersemtDto.setPartnerCountry(v.getPartner() != null ? v.getPartner().getCountry() : null);
                                 newVersemtDto.setPartnerName(v.getPartner() != null ? v.getPartner().getFirstName()  + " " + v.getPartner().getLastName() : null);
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
@@ -216,9 +218,11 @@ public class PartnerServices {
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(v -> {
                                 VersementDto newVersemtDto = new VersementDto();
+                                newVersemtDto.setId(v.getId());
                                 newVersemtDto.setMontantVerser(v.getMontantVerser());
                                 newVersemtDto.setMontantRestant(v.getMontantRestant());
                                 newVersemtDto.setPartnerPhone(v.getPartner() != null ? v.getPartner().getPhoneNumber() : null);
+                                newVersemtDto.setPartnerId(v.getPartner() != null ? v.getPartner().getId() : null);
                                 newVersemtDto.setPartnerCountry(v.getPartner() != null ? v.getPartner().getCountry() : null);
                                 newVersemtDto.setPartnerName(v.getPartner() != null ? v.getPartner().getFirstName()  + " " + v.getPartner().getLastName() : null);
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
