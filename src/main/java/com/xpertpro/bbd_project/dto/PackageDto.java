@@ -19,6 +19,7 @@ public class PackageDto {
     private LocalDateTime arrivalDate;
     private LocalDateTime startDate;
     private Long clientId;
+    private Long warehouseId;
     private String clientName;
     private String clientPhone;
     private String status;

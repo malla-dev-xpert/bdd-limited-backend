@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.entity.Packages;
 import com.xpertpro.bbd_project.services.PackageServices;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,12 @@ public class PackageController {
     public ResponseEntity<String> newExpedition(
             @RequestBody PackageDto dto,
             @RequestParam(name = "clientId") Long clientId,
-            @RequestParam(name = "userId") Long userId)
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "containerId") Long containerId,
+            @RequestParam(name = "warehouseId") Long warehouseId)
     {
         try{
-            packageServices.create(dto, clientId, userId);
+            packageServices.create(dto, clientId, userId, containerId, warehouseId);
             return ResponseEntity.status(HttpStatus.CREATED).body("Expedition ajouter avec succès.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -114,6 +117,11 @@ public class PackageController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("An error occurred while updating the expedition");
         }
+    }
+
+    @GetMapping("/warehouse")
+    public List<PackageDto> getPackageByWarehouse(@RequestParam(name = "warehouseId") Long warehouseId) {
+        return packageServices.getPackagesByWarehouse(warehouseId);
     }
 
 }

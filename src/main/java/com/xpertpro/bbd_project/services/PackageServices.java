@@ -4,9 +4,7 @@ import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.repository.PackageRepository;
-import com.xpertpro.bbd_project.repository.PartnerRepository;
-import com.xpertpro.bbd_project.repository.UserRepository;
+import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +30,35 @@ public class PackageServices {
     PartnerRepository clientRepo;
     @Autowired
     PackageDtoMapper packageDtoMapper;
+    @Autowired
+    LogServices logServices;
+    @Autowired
+    ContainersRepository containersRepository;
+    @Autowired
+    WarehouseRepository warehouseRepository;
 
-    public String create(PackageDto dto, Long clientId, Long userId) {
+    public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         Partners client = clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
+        Containers container = containersRepository.findById(containerId).orElseThrow(() -> new RuntimeException("Container not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId).orElseThrow(() -> new RuntimeException("Warehouse not found"));
 
         Packages packages = packageDtoMapper.toEntity(dto);
 
         packages.setCreatedAt(LocalDateTime.now());
         packages.setClient(client);
         packages.setCreatedBy(user);
-        packageRepository.save(packages);
+        packages.setContainer(container);
+        packages.setWarehouse(warehouse);
+        Packages newPackage = packageRepository.save(packages);
+
+        logServices.logAction(
+                user,
+                "AJOUT_COLIS",
+                "Packages",
+                newPackage.getId()
+        );
+
         return "SUCCESS";
     }
 
@@ -64,24 +80,32 @@ public class PackageServices {
 
 
         return expeditions.stream()
-                .filter(exp -> exp.getStatus() != StatusEnum.DELETE)
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
                 .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
-                .map(exp -> {
+                .map(pkg -> {
                     PackageDto dto = new PackageDto();
-                    dto.setId(exp.getId());
-                    dto.setCbn(exp.getCbn());
-                    dto.setRef(exp.getRef());
-                    dto.setExpeditionType(exp.getExpeditionType());
-                    dto.setItemQuantity(exp.getItemQuantity());
-                    dto.setWeight(exp.getWeight());
-                    dto.setArrivalDate(exp.getArrivalDate());
-                    dto.setStartDate(exp.getStartDate());
-                    dto.setStartCountry(exp.getStartCountry());
-                    dto.setDestinationCountry(exp.getDestinationCountry());
-                    dto.setStatus(exp.getStatus().name());
-                    dto.setClientId(exp.getClient() != null ? exp.getClient().getId() : null);
-                    dto.setClientPhone(exp.getClient() != null ? exp.getClient().getPhoneNumber() : null);
-                    dto.setClientName(exp.getClient() != null ? exp.getClient().getFirstName() + " " + exp.getClient().getLastName() : null);
+                    dto.setId(pkg.getId());
+                    dto.setRef(pkg.getRef());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setCbn(pkg.getCbn());
+                    dto.setStartDate(pkg.getStartDate());
+                    dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setStatus(pkg.getStatus().name());
+                    dto.setDestinationCountry(pkg.getDestinationCountry());
+                    dto.setExpeditionType(pkg.getExpeditionType());
+                    dto.setItemQuantity(pkg.getItemQuantity());
+                    dto.setStartCountry(pkg.getStartCountry());
+                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                    dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
+                    dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
+                    dto.setClientId(pkg.getClient() != null ? pkg.getClient().getId() : null);
+                    dto.setClientName(pkg.getClient() != null
+                            ? pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName()
+                            : null);
+                    dto.setClientPhone(pkg.getClient() != null
+                            ? pkg.getClient().getPhoneNumber()
+                            : null);
 
                     return dto;
                 })
@@ -221,6 +245,44 @@ public class PackageServices {
 
         packageRepository.save(expedition);
         return "SUCCESS";
+    }
+
+
+    public List<PackageDto> getPackagesByWarehouse(Long warehouseId) {
+        List<Packages> packages = packageRepository.findByWarehouseId(warehouseId);
+
+        return packages.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
+                .map(pkg -> {
+                    PackageDto dto = new PackageDto();
+                    dto.setId(pkg.getId());
+                    dto.setRef(pkg.getRef());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setCbn(pkg.getCbn());
+                    dto.setStartDate(pkg.getStartDate());
+                    dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setStatus(pkg.getStatus().name());
+                    dto.setDestinationCountry(pkg.getDestinationCountry());
+                    dto.setExpeditionType(pkg.getExpeditionType());
+                    dto.setItemQuantity(pkg.getItemQuantity());
+                    dto.setStartCountry(pkg.getStartCountry());
+                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                    dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
+                    dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
+                    dto.setClientId(pkg.getClient() != null ? pkg.getClient().getId() : null);
+                    dto.setClientName(pkg.getClient() != null
+                            ? pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName()
+                            : null);
+                    dto.setClientPhone(pkg.getClient() != null
+                            ? pkg.getClient().getPhoneNumber()
+                            : null);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
     }
 
 }
