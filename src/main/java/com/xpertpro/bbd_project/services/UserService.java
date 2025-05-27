@@ -159,23 +159,49 @@ public class UserService {
     }
 
     public UpdateUserDto updateUser(Long userId, UpdateUserDto updateUserDto) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-
-            if (updateUserDto.getFirstName() != null) user.setFirstName(updateUserDto.getFirstName());
-            if (updateUserDto.getLastName() != null) user.setLastName(updateUserDto.getLastName());
-            if (updateUserDto.getPhoneNumber() != null) user.setPhoneNumber(updateUserDto.getPhoneNumber());
-            if (updateUserDto.getEmail() != null) user.setEmail(updateUserDto.getEmail());
-            if (updateUserDto.getUsername() != null) user.setUsername(updateUserDto.getUsername());
-            user.setEditedAt(updateUserDto.getEditedAt());
-
-            userRepository.save(user);
-            return updateUserDto;
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
+        // Vérifier que les données requises sont présentes
+        if (userId == null) {
+            throw new RuntimeException("L'ID de l'utilisateur est requis");
         }
+        if (updateUserDto == null) {
+            throw new RuntimeException("Les données de mise à jour sont requises");
+        }
+
+        // Récupérer l'utilisateur existant
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + userId));
+
+        // Mettre à jour les champs un par un
+        if (updateUserDto.getFirstName() != null && !updateUserDto.getFirstName().isEmpty()) {
+            user.setFirstName(updateUserDto.getFirstName());
+        }
+
+        if (updateUserDto.getLastName() != null && !updateUserDto.getLastName().isEmpty()) {
+            user.setLastName(updateUserDto.getLastName());
+        }
+
+        if (updateUserDto.getEmail() != null && !updateUserDto.getEmail().isEmpty()) {
+            if (!updateUserDto.getEmail().equals(user.getEmail())) {
+                if (userRepository.existsByEmail(updateUserDto.getEmail())) {
+                    throw new RuntimeException("Cet email est déjà utilisé par un autre utilisateur");
+                }
+                user.setEmail(updateUserDto.getEmail());
+            }
+        }
+
+        if (updateUserDto.getPhoneNumber() != null && !updateUserDto.getPhoneNumber().isEmpty()) {
+            user.setPhoneNumber(updateUserDto.getPhoneNumber());
+        }
+
+        if (updateUserDto.getUsername() != null && !updateUserDto.getUsername().isEmpty()) {
+            user.setUsername(updateUserDto.getUsername());
+        }
+
+        // Sauvegarder les modifications
+        userRepository.save(user);
+
+        // Retourner les données mises à jour
+        return updateUserDto;
     }
 
     public String editPassword(Long userId, EditPasswordDto editPasswordDto) {

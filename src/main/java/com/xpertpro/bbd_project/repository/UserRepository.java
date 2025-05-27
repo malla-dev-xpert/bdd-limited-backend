@@ -28,4 +28,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             @Param("query") String query,
             Pageable pageable
     );
+
+    boolean existsByEmail(String email);
 }
