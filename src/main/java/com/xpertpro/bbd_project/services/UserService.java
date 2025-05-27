@@ -13,13 +13,17 @@ import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.enums.PermissionsEnum;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.logs.SessionLog;
 import com.xpertpro.bbd_project.dtoMapper.UserDtoMapper;
 import com.xpertpro.bbd_project.repository.RoleRepository;
 import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -59,6 +63,8 @@ public class UserService {
     private JavaMailSender mailSender;
     @Autowired
     SessionLogRepository sessionLogRepository;
+    @Autowired
+    private LogServices logServices;
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -265,41 +271,92 @@ public class UserService {
         throw new RuntimeException("User not found with ID: " + userId);
     }
 
-    public String deleteUser(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            user.setStatusEnum(StatusEnum.DELETE);
-            userRepository.save(user);
+    @Transactional
+    public String deleteUser(Long userIdToDelete, UserEntity currentUser) {
+        // 1. Validation de base
+        validateUsers(userIdToDelete, currentUser);
 
-            if(user.getStatusEnum() == StatusEnum.DELETE){
-                // déconnecter un utilisateur après la suppression de son compte
-                SecurityContextHolder.getContext().setAuthentication(null);
-                SecurityContextHolder.clearContext();
+        // 2. Récupération et vérification
+        UserEntity userToDelete = userRepository.findById(userIdToDelete)
+                .orElseThrow(() -> new EntityNotFoundException("Compte utilisateur introuvable"));
 
-                try {
-                    Context context = new Context();
-                    context.setVariable("firstName", user.getFirstName());
-                    context.setVariable("lastName", user.getLastName());
-                    context.setVariable("username", user.getUsername());
-                    context.setVariable("editedAt", user.getEditedAt());
+        checkPermissions(currentUser, userToDelete);
 
-                    String htmlContent = templateEngine.process("delete-user", context);
+        // 3. Mise à jour du statut
+        markUserAsDeleted(userToDelete, currentUser);
 
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setTo(user.getEmail());
-                    helper.setSubject("Compte Supprimé – BBD LIMITED");
-                    helper.setText(htmlContent, true);
+        // 4. Gestion de session
+        handleUserSession(currentUser, userToDelete);
 
-                    mailSender.send(mimeMessage);
-                    return "user deleted.";
-                } catch (Exception e) {
-                    throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage(), e);
-                }
-            }
+        // 5. Notification par email
+        sendDeletionEmail(userToDelete, currentUser);
+
+        return String.format("Le compte %s a été supprimé avec succès. Une notification a été envoyée à %s",
+                userToDelete.getUsername(),
+                userToDelete.getEmail());
+    }
+
+    private void validateUsers(Long userIdToDelete, UserEntity currentUser) {
+        if (userIdToDelete == null || currentUser == null) {
+            throw new IllegalArgumentException("Données utilisateur invalides");
         }
-        throw new RuntimeException("User not found with ID: " + userId);
+        if (userIdToDelete.equals(currentUser.getId())) {
+            System.out.println("Tentative d'auto-suppression par {}"+ currentUser.getUsername());
+        }
+    }
+
+    private void checkPermissions(UserEntity currentUser, UserEntity userToDelete) {
+        if (!currentUser.getRole().getPermissions().contains(PermissionsEnum.IS_ADMIN)) {
+            throw new SecurityException("Privilèges insuffisants pour effectuer cette action");
+        }
+    }
+
+    private void markUserAsDeleted(UserEntity userToDelete, UserEntity deletedBy) {
+        userToDelete.setStatusEnum(StatusEnum.DELETE);
+        userToDelete.setEditedAt(LocalDateTime.now());
+        logServices.logAction(
+                deletedBy,
+                "DELETE_USER",
+                "Users",
+                userToDelete.getId()
+        );
+        userRepository.save(userToDelete);
+    }
+
+    private void handleUserSession(UserEntity currentUser, UserEntity userToDelete) {
+        if (currentUser.getId().equals(userToDelete.getId())) {
+            SecurityContextHolder.clearContext();
+            System.out.println("Utilisateur {} s'est auto-désactivé"+ userToDelete.getUsername());
+        }
+    }
+
+    private void sendDeletionEmail(UserEntity deletedUser, UserEntity deletedBy) {
+        try {
+            MimeMessage message = buildDeletionEmail(deletedUser, deletedBy);
+            mailSender.send(message);
+            System.out.println("Email de notification envoyé à {}"+ deletedUser.getEmail());
+        } catch (Exception e) {
+            System.out.println("Échec d'envoi de l'email à {}"+ deletedUser.getEmail()+ e);
+        }
+    }
+
+    private MimeMessage buildDeletionEmail(UserEntity deletedUser, UserEntity deletedBy) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("firstName", deletedUser.getFirstName());
+        context.setVariable("lastName", deletedUser.getLastName());
+        context.setVariable("username", deletedUser.getUsername());
+        context.setVariable("editedAt", LocalDateTime.now());
+
+        String htmlContent = templateEngine.process("delete-user", context);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(deletedUser.getEmail()); // Email envoyé uniquement à l'utilisateur supprimé
+        helper.setSubject("Compte Supprimé – BBD LIMITED");
+        helper.setText(htmlContent, true);
+
+        return message;
     }
 
     public ResponseEntity<String> forceLogout(String username) {
