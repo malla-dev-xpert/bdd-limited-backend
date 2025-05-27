@@ -13,7 +13,6 @@ import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -183,8 +183,8 @@ public class UserController {
     }
 
     @GetMapping()
-    public Page<UserEntity> getAllUsers(@RequestParam(defaultValue = "0") int page) {
-        return userService.findAllUsers(page);
+    public List<CreateUserDto> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return userService.getAllUsers(page, query);
     }
 
 }

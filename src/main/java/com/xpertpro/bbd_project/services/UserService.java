@@ -1,10 +1,16 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
+import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
+import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
+import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -31,8 +37,10 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -297,9 +305,40 @@ public class UserService {
 
     }
 
-    public Page<UserEntity> findAllUsers(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
-        return userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+    public List<CreateUserDto> getAllUsers(int page, String query) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<UserEntity> users = userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+
+        if (query != null && !query.isEmpty()) {
+            users = userRepository.findByStatusEnumAndSearchQuery(
+                    StatusEnum.CREATE,
+                    "%" + query.toLowerCase() + "%",
+                    pageable
+            );
+        } else {
+            users = userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+        }
+
+
+        return users.stream()
+                .filter(user -> user.getStatusEnum() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(UserEntity::getCreatedAt).reversed())
+                .map(user -> {
+                    CreateUserDto dto = new CreateUserDto();
+                    dto.setId(user.getId());
+                    dto.setUsername(user.getUsername());
+                    dto.setEmail(user.getEmail());
+                    dto.setFirstName(user.getFirstName());
+                    dto.setLastName(user.getLastName());
+                    dto.setPhoneNumber(user.getPhoneNumber());
+                    dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
     }
 
 }
