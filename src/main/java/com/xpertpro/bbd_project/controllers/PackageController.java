@@ -23,7 +23,7 @@ public class PackageController {
             @RequestBody PackageDto dto,
             @RequestParam(name = "clientId") Long clientId,
             @RequestParam(name = "userId") Long userId,
-            @RequestParam(name = "containerId") Long containerId,
+            @RequestParam(name = "containerId", required = false) Long containerId,
             @RequestParam(name = "warehouseId") Long warehouseId)
     {
         try{

@@ -46,7 +46,7 @@ public class Packages {
     private UserEntity createdBy;
 
     @ManyToOne
-    @JoinColumn(name = "container_id")
+    @JoinColumn(name = "container_id", nullable = true)
     private Containers container;
 
     @ManyToOne
