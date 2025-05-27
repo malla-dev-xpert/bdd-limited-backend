@@ -1,126 +1,127 @@
 package com.xpertpro.bbd_project.controllers;
 
-import com.xpertpro.bbd_project.dto.items.ItemDto;
-import com.xpertpro.bbd_project.dto.Package.PackageCreateDto;
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.entity.Packages;
 import com.xpertpro.bbd_project.services.PackageServices;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/packages")
 @CrossOrigin("*")
 public class PackageController {
-
     @Autowired
     PackageServices packageServices;
 
     @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createPackage(
-            @RequestParam(name = "warehouseId") Long warehouseId,
+    public ResponseEntity<String> newExpedition(
+            @RequestBody PackageDto dto,
+            @RequestParam(name = "clientId") Long clientId,
             @RequestParam(name = "userId") Long userId,
-            @RequestParam(name = "partnerId") Long clientId,
-            @RequestBody PackageCreateDto pkg) {
-
-        Packages newPackages = packageServices.createPackageWithItems(warehouseId, userId, clientId, pkg);
-
-        Long createdId = newPackages.getId();
-
-        if (createdId == -1L) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    Map.of("message", "Ce colis existe déjà !")
-            );
+            @RequestParam(name = "containerId", required = false) Long containerId,
+            @RequestParam(name = "warehouseId") Long warehouseId)
+    {
+        try{
+            packageServices.create(dto, clientId, userId, containerId, warehouseId);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Expedition ajouter avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                Map.of("id", createdId, "message", "Colis ajouté avec succès !")
-        );
-    }
-
-
-    @GetMapping("/unassigned")
-    public List<PackageResponseDto> getUnassignedPackages(@RequestParam(name = "warehouseId") Long warehouseId) {
-        return packageServices.listUnassignedPackages(warehouseId);
-    }
-
-    @GetMapping("/warehouse")
-    public List<PackageResponseDto> getPackageByWarehouse(@RequestParam(name = "warehouseId") Long warehouseId) {
-        return packageServices.getPackagesByWarehouse(warehouseId);
     }
 
     @GetMapping()
-    public List<PackageResponseDto> findAll(@RequestParam(defaultValue = "0") int page) {
-        return packageServices.getAllPackages(page);
+    public List<PackageDto> findAll(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return packageServices.getAll(page, query);
     }
 
-    @GetMapping("/received")
-    public List<PackageResponseDto> findAllPackagesReceived(@RequestParam(defaultValue = "0") int page) {
-        return packageServices.getAllPackagesReceived(page);
-    }
-
-    @DeleteMapping("/receive/{id}")
-    public String receivePackage(
-            @PathVariable Long id,
-            @RequestParam(name = "userId") Long userId,
-            @RequestParam(name = "warehouseId") Long warehouseId) {
-        packageServices.receivePackages(id, userId, warehouseId);
-        return "Colis recu avec succès !";
-    }
-
-    @DeleteMapping("/{id}/container/{containerId}/delete")
-    public String deleteOnContainer(
-            @PathVariable(name = "id") Long id,
-            @RequestParam(name = "userId") Long userId,
-            @PathVariable(name = "containerId") Long containerId) {
-        String result = packageServices.removePackageFromContainer(id, userId, containerId);
-        switch (result){
-            case "PACKAGE_NOT_IN_SPECIFIED_CONTAINER":
-                return "Le colis n'appartient pas à ce conteneur";
-            case "CONTAINER_NOT_EDITABLE":
-                return "Impossible de retirer un colis d'un conteneur en cours de livraison";
-            default:
-                return "Colis retiré du conteneur" + containerId + " avec succès !";
-
+    @DeleteMapping("/start-expedition")
+    public ResponseEntity<String> startExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            packageServices.startExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition a démarré avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
         }
     }
 
-    @DeleteMapping("/delete/{id}")
-    public String deletePackage(
-            @PathVariable Long id,
-            @RequestParam(name = "userId") Long userId) {
-        packageServices.deletePackages(id, userId);
-        return "Colis supprimer avec succès !";
+    @DeleteMapping("/deliver-expedition")
+    public ResponseEntity<String> confirmExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            packageServices.confirmExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition est arrivé avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
+        }
     }
 
-    @PostMapping("/{packageId}/add-items")
-    public ResponseEntity<String> addItems(
-            @PathVariable Long packageId,
-            @RequestBody List<ItemDto> items,
-            @RequestParam(name = "userId") Long userId
-    ) {
-        packageServices.addItemsToPackage(packageId, items, userId);
-        return ResponseEntity.ok("Articles ajoutés au colis");
+    @DeleteMapping("/received-expedition")
+    public ResponseEntity<String> receivedExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            packageServices.receivedExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition est livrée avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+        try {
+            packageServices.deleteExpedition(expeditionId);
+            return ResponseEntity.status(HttpStatus.OK).body("L'expédition a été supprimé avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur : " + e.getMessage());
+        }
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updatePackage(
+    public ResponseEntity<String> updateExpedition(
             @PathVariable Long id,
-            @RequestParam(name = "userId")Long userId,
-            @RequestBody PackageResponseDto dto
-    ) {
-        String result = packageServices.updatePackage(id, userId, dto);
-        switch (result) {
-            case "DUPLICATE_REFERENCE":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de colis déjà utilisé !");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Colis modifier avec succès !");
+            @RequestBody PackageDto packageDto,
+            @RequestParam("userId") Long userId) {
+
+        try {
+            String result = packageServices.updateExpedition(id, packageDto, userId);
+
+            switch (result) {
+                case "SUCCESS":
+                    return ResponseEntity.ok().body("Expedition updated successfully");
+                case "CLIENT_NOT_FOUND":
+                    return ResponseEntity.badRequest().body("Client not found with provided ID");
+                default:
+                    return ResponseEntity.internalServerError().body("Unexpected error occurred");
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("An error occurred while updating the expedition");
         }
+    }
+
+    @GetMapping("/warehouse")
+    public List<PackageDto> getPackageByWarehouse(@RequestParam(name = "warehouseId") Long warehouseId) {
+        return packageServices.getPackagesByWarehouse(warehouseId);
     }
 
 }

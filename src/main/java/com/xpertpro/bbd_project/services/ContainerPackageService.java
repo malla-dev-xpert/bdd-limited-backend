@@ -2,8 +2,8 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.entity.Containers;
 import com.xpertpro.bbd_project.entity.Harbor;
-import com.xpertpro.bbd_project.entityMapper.EmbarquementRequest;
 import com.xpertpro.bbd_project.entity.Packages;
+import com.xpertpro.bbd_project.entityMapper.EmbarquementRequest;
 import com.xpertpro.bbd_project.entityMapper.HarborEmbarquementRequest;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
@@ -44,14 +44,14 @@ public class ContainerPackageService {
         packages.forEach(pkg -> {
             if (pkg.getContainer() != null && !pkg.getContainer().getId().equals(container.getId())) {
                 throw new OperationNotAllowedException(
-                        "Le colis " + pkg.getReference() + " est déjà dans le conteneur " + pkg.getContainer().getId());
+                        "Le colis " + pkg.getRef() + " est déjà dans le conteneur " + pkg.getContainer().getId());
             }
         });
 
         packages.forEach(pkg -> {
             if (pkg.getStatus() != StatusEnum.RECEIVED) {
                 throw new OperationNotAllowedException(
-                        "Le colis " + pkg.getReference() + " n'est pas en statut RECEIVED");
+                        "Le colis " + pkg.getRef() + " n'est pas en statut RECEIVED");
             }
         });
 

@@ -14,4 +14,5 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
     Optional<Warehouse> findByName(String name);
     Optional<Warehouse> findByAdresse(String adresse);
     Page<Warehouse> findByStatus(StatusEnum status, Pageable pageable);
+    boolean existsByNameAndIdNot(String name, Long id);
 }

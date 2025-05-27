@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.containers.ContainersDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -128,15 +128,15 @@ public class ContainerServices {
 //                    dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
 //                    dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
 
-                    List<PackageResponseDto> packageResponseDtos = pkg.getPackages().stream()
+                    List<PackageDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .filter(item -> item.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
                             .map(packages -> {
-                                PackageResponseDto packageDto = new PackageResponseDto();
+                                PackageDto packageDto = new PackageDto();
                                 packageDto.setId(packages.getId());
-                                packageDto.setReference(packages.getReference());
-                                packageDto.setPartnerName(packages.getPartner().getFirstName() + " " + packages.getPartner().getLastName());
-                                packageDto.setPartnerPhoneNumber(packages.getPartner().getPhoneNumber());
+                                packageDto.setRef(packages.getRef());
+                                packageDto.setClientName(packages.getClient().getFirstName() + " " + packages.getClient().getLastName());
+                                packageDto.setClientPhone(packages.getClient().getPhoneNumber());
                                 packageDto.setWarehouseName(packages.getWarehouse().getName());
                                 packageDto.setWarehouseAddress(packages.getWarehouse().getAdresse());
                                 return packageDto;
@@ -209,15 +209,15 @@ public class ContainerServices {
                 : null);
         dto.setUserId(container.getUser() != null ? container.getUser().getId() : null);
 
-        List<PackageResponseDto> packageResponseDtos = container.getPackages().stream()
+        List<PackageDto> packageResponseDtos = container.getPackages().stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
                 .map(pkg -> {
-                    PackageResponseDto packageDto = new PackageResponseDto();
+                    PackageDto packageDto = new PackageDto();
                     packageDto.setId(pkg.getId());
-                    packageDto.setReference(pkg.getReference());
-                    packageDto.setPartnerName(pkg.getPartner().getFirstName() + " " + pkg.getPartner().getLastName());
-                    packageDto.setPartnerPhoneNumber(pkg.getPartner().getPhoneNumber());
+                    packageDto.setRef(pkg.getRef());
+                    packageDto.setClientName(pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName());
+                    packageDto.setClientPhone(pkg.getClient().getPhoneNumber());
                     packageDto.setWarehouseName(pkg.getWarehouse().getName());
                     packageDto.setWarehouseAddress(pkg.getWarehouse().getAdresse());
                     return packageDto;

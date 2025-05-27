@@ -1,19 +1,29 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
+import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
+import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
+import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
+import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.enums.PermissionsEnum;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.logs.SessionLog;
 import com.xpertpro.bbd_project.dtoMapper.UserDtoMapper;
 import com.xpertpro.bbd_project.repository.RoleRepository;
 import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +41,10 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -51,6 +63,8 @@ public class UserService {
     private JavaMailSender mailSender;
     @Autowired
     SessionLogRepository sessionLogRepository;
+    @Autowired
+    private LogServices logServices;
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -151,23 +165,49 @@ public class UserService {
     }
 
     public UpdateUserDto updateUser(Long userId, UpdateUserDto updateUserDto) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-
-            if (updateUserDto.getFirstName() != null) user.setFirstName(updateUserDto.getFirstName());
-            if (updateUserDto.getLastName() != null) user.setLastName(updateUserDto.getLastName());
-            if (updateUserDto.getPhoneNumber() != null) user.setPhoneNumber(updateUserDto.getPhoneNumber());
-            if (updateUserDto.getEmail() != null) user.setEmail(updateUserDto.getEmail());
-            if (updateUserDto.getUsername() != null) user.setUsername(updateUserDto.getUsername());
-            user.setEditedAt(updateUserDto.getEditedAt());
-
-            userRepository.save(user);
-            return updateUserDto;
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
+        // Vérifier que les données requises sont présentes
+        if (userId == null) {
+            throw new RuntimeException("L'ID de l'utilisateur est requis");
         }
+        if (updateUserDto == null) {
+            throw new RuntimeException("Les données de mise à jour sont requises");
+        }
+
+        // Récupérer l'utilisateur existant
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + userId));
+
+        // Mettre à jour les champs un par un
+        if (updateUserDto.getFirstName() != null && !updateUserDto.getFirstName().isEmpty()) {
+            user.setFirstName(updateUserDto.getFirstName());
+        }
+
+        if (updateUserDto.getLastName() != null && !updateUserDto.getLastName().isEmpty()) {
+            user.setLastName(updateUserDto.getLastName());
+        }
+
+        if (updateUserDto.getEmail() != null && !updateUserDto.getEmail().isEmpty()) {
+            if (!updateUserDto.getEmail().equals(user.getEmail())) {
+                if (userRepository.existsByEmail(updateUserDto.getEmail())) {
+                    throw new RuntimeException("Cet email est déjà utilisé par un autre utilisateur");
+                }
+                user.setEmail(updateUserDto.getEmail());
+            }
+        }
+
+        if (updateUserDto.getPhoneNumber() != null && !updateUserDto.getPhoneNumber().isEmpty()) {
+            user.setPhoneNumber(updateUserDto.getPhoneNumber());
+        }
+
+        if (updateUserDto.getUsername() != null && !updateUserDto.getUsername().isEmpty()) {
+            user.setUsername(updateUserDto.getUsername());
+        }
+
+        // Sauvegarder les modifications
+        userRepository.save(user);
+
+        // Retourner les données mises à jour
+        return updateUserDto;
     }
 
     public String editPassword(Long userId, EditPasswordDto editPasswordDto) {
@@ -231,41 +271,92 @@ public class UserService {
         throw new RuntimeException("User not found with ID: " + userId);
     }
 
-    public String deleteUser(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            user.setStatusEnum(StatusEnum.DELETE);
-            userRepository.save(user);
+    @Transactional
+    public String deleteUser(Long userIdToDelete, UserEntity currentUser) {
+        // 1. Validation de base
+        validateUsers(userIdToDelete, currentUser);
 
-            if(user.getStatusEnum() == StatusEnum.DELETE){
-                // déconnecter un utilisateur après la suppression de son compte
-                SecurityContextHolder.getContext().setAuthentication(null);
-                SecurityContextHolder.clearContext();
+        // 2. Récupération et vérification
+        UserEntity userToDelete = userRepository.findById(userIdToDelete)
+                .orElseThrow(() -> new EntityNotFoundException("Compte utilisateur introuvable"));
 
-                try {
-                    Context context = new Context();
-                    context.setVariable("firstName", user.getFirstName());
-                    context.setVariable("lastName", user.getLastName());
-                    context.setVariable("username", user.getUsername());
-                    context.setVariable("editedAt", user.getEditedAt());
+        checkPermissions(currentUser, userToDelete);
 
-                    String htmlContent = templateEngine.process("delete-user", context);
+        // 3. Mise à jour du statut
+        markUserAsDeleted(userToDelete, currentUser);
 
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setTo(user.getEmail());
-                    helper.setSubject("Compte Supprimé – BBD LIMITED");
-                    helper.setText(htmlContent, true);
+        // 4. Gestion de session
+        handleUserSession(currentUser, userToDelete);
 
-                    mailSender.send(mimeMessage);
-                    return "user deleted.";
-                } catch (Exception e) {
-                    throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage(), e);
-                }
-            }
+        // 5. Notification par email
+        sendDeletionEmail(userToDelete, currentUser);
+
+        return String.format("Le compte %s a été supprimé avec succès. Une notification a été envoyée à %s",
+                userToDelete.getUsername(),
+                userToDelete.getEmail());
+    }
+
+    private void validateUsers(Long userIdToDelete, UserEntity currentUser) {
+        if (userIdToDelete == null || currentUser == null) {
+            throw new IllegalArgumentException("Données utilisateur invalides");
         }
-        throw new RuntimeException("User not found with ID: " + userId);
+        if (userIdToDelete.equals(currentUser.getId())) {
+            System.out.println("Tentative d'auto-suppression par {}"+ currentUser.getUsername());
+        }
+    }
+
+    private void checkPermissions(UserEntity currentUser, UserEntity userToDelete) {
+        if (!currentUser.getRole().getPermissions().contains(PermissionsEnum.IS_ADMIN)) {
+            throw new SecurityException("Privilèges insuffisants pour effectuer cette action");
+        }
+    }
+
+    private void markUserAsDeleted(UserEntity userToDelete, UserEntity deletedBy) {
+        userToDelete.setStatusEnum(StatusEnum.DELETE);
+        userToDelete.setEditedAt(LocalDateTime.now());
+        logServices.logAction(
+                deletedBy,
+                "DELETE_USER",
+                "Users",
+                userToDelete.getId()
+        );
+        userRepository.save(userToDelete);
+    }
+
+    private void handleUserSession(UserEntity currentUser, UserEntity userToDelete) {
+        if (currentUser.getId().equals(userToDelete.getId())) {
+            SecurityContextHolder.clearContext();
+            System.out.println("Utilisateur {} s'est auto-désactivé"+ userToDelete.getUsername());
+        }
+    }
+
+    private void sendDeletionEmail(UserEntity deletedUser, UserEntity deletedBy) {
+        try {
+            MimeMessage message = buildDeletionEmail(deletedUser, deletedBy);
+            mailSender.send(message);
+            System.out.println("Email de notification envoyé à {}"+ deletedUser.getEmail());
+        } catch (Exception e) {
+            System.out.println("Échec d'envoi de l'email à {}"+ deletedUser.getEmail()+ e);
+        }
+    }
+
+    private MimeMessage buildDeletionEmail(UserEntity deletedUser, UserEntity deletedBy) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("firstName", deletedUser.getFirstName());
+        context.setVariable("lastName", deletedUser.getLastName());
+        context.setVariable("username", deletedUser.getUsername());
+        context.setVariable("editedAt", LocalDateTime.now());
+
+        String htmlContent = templateEngine.process("delete-user", context);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(deletedUser.getEmail()); // Email envoyé uniquement à l'utilisateur supprimé
+        helper.setSubject("Compte Supprimé – BBD LIMITED");
+        helper.setText(htmlContent, true);
+
+        return message;
     }
 
     public ResponseEntity<String> forceLogout(String username) {
@@ -297,9 +388,40 @@ public class UserService {
 
     }
 
-    public Page<UserEntity> findAllUsers(int page) {
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("id").ascending());
-        return userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+    public List<CreateUserDto> getAllUsers(int page, String query) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<UserEntity> users = userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+
+        if (query != null && !query.isEmpty()) {
+            users = userRepository.findByStatusEnumAndSearchQuery(
+                    StatusEnum.CREATE,
+                    "%" + query.toLowerCase() + "%",
+                    pageable
+            );
+        } else {
+            users = userRepository.findByStatusEnum(StatusEnum.CREATE, pageable);
+        }
+
+
+        return users.stream()
+                .filter(user -> user.getStatusEnum() != StatusEnum.DELETE)
+                .sorted(Comparator.comparing(UserEntity::getCreatedAt).reversed())
+                .map(user -> {
+                    CreateUserDto dto = new CreateUserDto();
+                    dto.setId(user.getId());
+                    dto.setUsername(user.getUsername());
+                    dto.setEmail(user.getEmail());
+                    dto.setFirstName(user.getFirstName());
+                    dto.setLastName(user.getLastName());
+                    dto.setPhoneNumber(user.getPhoneNumber());
+                    dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
     }
 
 }

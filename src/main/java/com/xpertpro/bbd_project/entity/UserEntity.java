@@ -39,5 +39,4 @@ public class UserEntity {
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
-
 }

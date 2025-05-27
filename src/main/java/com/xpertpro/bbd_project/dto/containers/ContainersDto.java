@@ -1,6 +1,6 @@
 package com.xpertpro.bbd_project.dto.containers;
 
-import com.xpertpro.bbd_project.dto.Package.PackageResponseDto;
+import com.xpertpro.bbd_project.dto.PackageDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,5 +21,5 @@ public class ContainersDto {
     private String userName;
     private Long harborId;
     private String harborName;
-    private List<PackageResponseDto> packages;
+    private List<PackageDto> packages;
 }

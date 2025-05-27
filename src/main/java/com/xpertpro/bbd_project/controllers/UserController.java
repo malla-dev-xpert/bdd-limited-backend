@@ -6,6 +6,7 @@ import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
 import com.xpertpro.bbd_project.entity.UserEntity;
+import com.xpertpro.bbd_project.enums.PermissionsEnum;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.logs.SessionLog;
 import com.xpertpro.bbd_project.repository.SessionLogRepository;
@@ -13,17 +14,20 @@ import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -176,15 +180,26 @@ public class UserController {
         return "Le compte de l'utilisateur a été désactivé.";
     }
 
-    @DeleteMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id){
-        userService.deleteUser(id);
-        return "Le compte de l'utilisateur a été supprimé.";
+    @DeleteMapping("/delete")
+    public ResponseEntity<Map<String, Object>> deleteUser(
+            @RequestParam("deleteUser") Long userId,
+            @RequestParam("admin") UserEntity currentUser) {
+
+        String result = userService.deleteUser(userId, currentUser);
+
+        return ResponseEntity.ok()
+                .body(Map.of(
+                        "status", "success",
+                        "message", result,
+                        "deletedUserId", userId,
+                        "timestamp", LocalDateTime.now()
+                ));
     }
 
+
     @GetMapping()
-    public Page<UserEntity> getAllUsers(@RequestParam(defaultValue = "0") int page) {
-        return userService.findAllUsers(page);
+    public List<CreateUserDto> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
+        return userService.getAllUsers(page, query);
     }
 
 }
