@@ -54,10 +54,11 @@ public class ContainersController {
 
     @PostMapping("/embarquer")
     public ResponseEntity<String> embarquerColis(
-            @RequestBody EmbarquementRequest request) {
+            @RequestBody EmbarquementRequest request,
+            @RequestParam(name = "userId") Long userId) {
 
         try{
-            String result = containerPackageService.embarquerColis(request);
+            String result = containerPackageService.embarquerColis(request, userId);
 
             switch (result) {
                 case "CONTAINER_NOT_AVAILABLE":

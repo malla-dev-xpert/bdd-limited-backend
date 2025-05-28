@@ -113,6 +113,47 @@ public class PackageServices {
 
     }
 
+    public List<PackageDto> getAllEnAttente(int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Packages> expeditions = packageRepository.findByStatusAndContainerIsNull(StatusEnum.PENDING, pageable);
+
+        return expeditions.stream()
+                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
+                .filter(pkg -> pkg.getContainer() == null)
+                .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
+                .map(pkg -> {
+                    PackageDto dto = new PackageDto();
+                    dto.setId(pkg.getId());
+                    dto.setRef(pkg.getRef());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setWeight(pkg.getWeight());
+                    dto.setCbn(pkg.getCbn());
+                    dto.setStartDate(pkg.getStartDate());
+                    dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setStatus(pkg.getStatus().name());
+                    dto.setDestinationCountry(pkg.getDestinationCountry());
+                    dto.setExpeditionType(pkg.getExpeditionType());
+                    dto.setItemQuantity(pkg.getItemQuantity());
+                    dto.setStartCountry(pkg.getStartCountry());
+                    dto.setWarehouseId(pkg.getWarehouse() != null ? pkg.getWarehouse().getId() : null);
+                    dto.setWarehouseName(pkg.getWarehouse() != null ? pkg.getWarehouse().getName() : null);
+                    dto.setWarehouseAddress(pkg.getWarehouse() != null ? pkg.getWarehouse().getAdresse() : null);
+                    dto.setClientId(pkg.getClient() != null ? pkg.getClient().getId() : null);
+                    dto.setClientName(pkg.getClient() != null
+                            ? pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName()
+                            : null);
+                    dto.setClientPhone(pkg.getClient() != null
+                            ? pkg.getClient().getPhoneNumber()
+                            : null);
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+    }
+
     @Transactional
     public void startExpedition(Long expeditionId) {
         Packages expedition = packageRepository.findById(expeditionId)
