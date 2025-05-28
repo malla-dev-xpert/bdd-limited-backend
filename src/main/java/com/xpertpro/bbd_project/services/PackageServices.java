@@ -117,7 +117,7 @@ public class PackageServices {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
-        Page<Packages> expeditions = packageRepository.findByStatusAndContainerIsNull(StatusEnum.PENDING, pageable);
+        Page<Packages> expeditions = packageRepository.findByContainerIsNull(pageable);
 
         return expeditions.stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)

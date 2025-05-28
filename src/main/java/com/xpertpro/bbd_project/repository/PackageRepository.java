@@ -27,5 +27,5 @@ public interface PackageRepository extends JpaRepository<Packages, Long> {
     boolean existsByClientId(Long partnerId);
     boolean existsByWarehouseId(Long id);
     List<Packages> findByWarehouseId(Long warehouseId);
-    Page<Packages> findByStatusAndContainerIsNull(StatusEnum status, Pageable pageable);
+    Page<Packages> findByContainerIsNull(Pageable pageable);
 }

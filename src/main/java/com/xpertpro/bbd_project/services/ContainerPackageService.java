@@ -55,16 +55,15 @@ public class ContainerPackageService {
             }
         });
 
-        packages.forEach(pkg -> {
-            if (pkg.getStatus() != StatusEnum.PENDING) {
-                throw new OperationNotAllowedException(
-                        "Le colis " + pkg.getRef() + " n'est pas en statut PENDING");
-            }
-        });
+//        packages.forEach(pkg -> {
+//            if (pkg.getStatus() != StatusEnum.PENDING) {
+//                throw new OperationNotAllowedException(
+//                        "Le colis " + pkg.getRef() + " n'est pas en statut PENDING");
+//            }
+//        });
 
         packages.forEach(pkg -> {
             pkg.setContainer(container);
-//            pkg.setStatus(StatusEnum.IN_CONTAINER);
             pkg.setEditedAt(LocalDateTime.now());
         });
 
