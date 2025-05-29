@@ -39,4 +39,8 @@ public class Containers {
     @ManyToOne
     @JoinColumn(name = "harbor_id")
     private Harbor harbor;
+
+    @ManyToOne
+    @JoinColumn(name = "supplier_id", nullable = true)
+    private Partners supplier;
 }

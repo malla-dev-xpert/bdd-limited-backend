@@ -26,9 +26,6 @@ public class Logs {
 
     private Long entityId; // ID de l'entité concernée
 
-    @Column(columnDefinition = "TEXT")
-    private String details; // Détails supplémentaires au format JSON si nécessaire
-
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

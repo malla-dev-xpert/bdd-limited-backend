@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.dto.containers;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
+import jakarta.persistence.JoinColumn;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,8 @@ public class ContainersDto {
     private Long harborId;
     private String harborName;
     private List<PackageDto> packages;
+    private String supplierName;
+    @JoinColumn(nullable = true)
+    private Long supplier_id;
+    private String supplierPhone;
 }

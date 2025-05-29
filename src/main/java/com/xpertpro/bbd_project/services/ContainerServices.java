@@ -6,6 +6,7 @@ import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
 import com.xpertpro.bbd_project.repository.HarborRepository;
+import com.xpertpro.bbd_project.repository.PartnerRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -30,30 +31,51 @@ public class ContainerServices {
     UserRepository userRepository;
     @Autowired
     HarborRepository harborRepository;
+    @Autowired
+    PartnerRepository partnerRepository;
+    @Autowired
+    LogServices logServices;
 
 
-    public String createContainer(ContainersDto containersDto, Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-
+    @Transactional
+    public String createContainer(ContainersDto containersDto, Long userId, Long supplierId) {
+        // Validate reference uniqueness
         if (containersRepository.findByReference(containersDto.getReference()).isPresent()) {
             return "REF_EXIST";
         }
 
-        if(optionalUser.isPresent()){
-            Containers containers = new Containers();
+        // Get user (mandatory)
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec ID: " + userId));
 
-            containers.setReference(containersDto.getReference());
-            containers.setIsAvailable(containersDto.getIsAvailable());
-            containers.setCreatedAt(containersDto.getCreatedAt());
-            containers.setSize(containersDto.getSize());
-            containers.setUser(optionalUser.get());
+        // Create new container
+        Containers container = new Containers();
+        container.setReference(containersDto.getReference());
+        container.setIsAvailable(containersDto.getIsAvailable());
+        container.setCreatedAt(LocalDateTime.now());
+        container.setSize(containersDto.getSize());
+        container.setUser(user);
+        container.setStatus(StatusEnum.PENDING); // Set default status
 
-            containersRepository.save(containers);
-            return "SUCCESS";
-        }else{
-            throw new RuntimeException("User not found with ID: " + userId);
+        // Handle optional supplier
+        if (supplierId != null) {
+            Partners supplier = partnerRepository.findById(supplierId)
+                    .orElseThrow(() -> new EntityNotFoundException("Fournisseur non trouvé avec ID: " + supplierId));
+            container.setSupplier(supplier);
         }
 
+        // Save container
+        Containers savedContainer = containersRepository.save(container);
+
+        // Log action
+        logServices.logAction(
+                user,
+                "AJOUTER_CONTENEUR",
+                "Containers",
+                savedContainer.getId()
+        );
+
+        return "SUCCESS";
     }
 
     public String updateContainer(Long id, ContainersDto containersDto, Long userId) {
@@ -125,6 +147,9 @@ public class ContainerServices {
                     dto.setIsAvailable(pkg.getIsAvailable());
                     dto.setUserName(pkg.getUser() != null ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
                     dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+                    dto.setSupplier_id(pkg.getSupplier() != null ? pkg.getSupplier().getId() : null);
+                    dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
+                    dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " +  pkg.getSupplier().getLastName(): null);
 //                    dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
 //                    dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
 
@@ -179,8 +204,8 @@ public class ContainerServices {
                     ContainersDto dto = new ContainersDto();
                     dto.setId(pkg.getId());
                     dto.setReference(pkg.getReference());
-                    dto.setCreatedAt(pkg.getCreatedAt());
-                    dto.setEditedAt(pkg.getEditedAt());
+                    dto.setCreatedAt(pkg.getCreatedAt() != null ? pkg.getCreatedAt() : null);
+                    dto.setEditedAt(pkg.getEditedAt() != null ? pkg.getCreatedAt() : null);
                     dto.setStatus(pkg.getStatus().name());
                     dto.setSize(pkg.getSize());
                     dto.setStatus(pkg.getStatus().name());
@@ -189,6 +214,9 @@ public class ContainerServices {
                     dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
                     dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
                     dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
+                    dto.setSupplier_id(pkg.getSupplier() != null ? pkg.getSupplier().getId() : null);
+                    dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
+                    dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " +  pkg.getSupplier().getLastName(): null);
 
                     List<PackageDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
@@ -287,6 +315,9 @@ public class ContainerServices {
                 ? container.getUser().getFirstName() + " " + container.getUser().getLastName()
                 : null);
         dto.setUserId(container.getUser() != null ? container.getUser().getId() : null);
+        dto.setSupplier_id(container.getSupplier() != null ? container.getSupplier().getId() : null);
+        dto.setSupplierPhone(container.getSupplier() != null ? container.getSupplier().getPhoneNumber() : null);
+        dto.setSupplierName(container.getSupplier() != null ? container.getSupplier().getFirstName() + " " +  container.getSupplier().getLastName(): null);
 
         List<PackageDto> packageResponseDtos = container.getPackages().stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)

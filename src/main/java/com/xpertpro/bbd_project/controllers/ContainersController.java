@@ -6,12 +6,14 @@ import com.xpertpro.bbd_project.entityMapper.HarborEmbarquementRequest;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
 import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.ContainerServices;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -27,13 +29,28 @@ public class ContainersController {
     ContainerPackageService containerPackageService;
 
     @PostMapping("/create")
-    public ResponseEntity<String> addContainers(@RequestBody ContainersDto containersDto, @RequestParam(name = "userId") Long userId) {
-        String result = containerServices.createContainer(containersDto, userId);
-        switch (result) {
-            case "REF_EXIST":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Numéro d'identification déjà utilisé !");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Le conteneur a été ajouté avec succès!");
+    public ResponseEntity<String> addContainers(
+            @RequestBody ContainersDto containersDto,
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(required = false) Long supplierId) {
+
+        try {
+            String result = containerServices.createContainer(containersDto, userId, supplierId);
+
+            return switch (result) {
+                case "REF_EXIST" -> ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Numéro d'identification déjà utilisé !");
+                case "SUCCESS" -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body("Le conteneur a été ajouté avec succès!");
+                default -> ResponseEntity.internalServerError()
+                        .body("Une erreur inattendue est survenue");
+            };
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Erreur lors de la création du conteneur: " + e.getMessage());
         }
     }
 
