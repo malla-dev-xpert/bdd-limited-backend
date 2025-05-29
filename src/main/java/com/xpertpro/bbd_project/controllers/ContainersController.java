@@ -76,10 +76,11 @@ public class ContainersController {
 
     @PostMapping("/embarquer/in-harbor")
     public ResponseEntity<String> embarquerContainerInHarbor(
-            @RequestBody HarborEmbarquementRequest request) {
+            @RequestBody HarborEmbarquementRequest request,
+            @RequestParam(name = "userId") Long userId) {
 
         try{
-            String result = containerPackageService.embarquerConteneursDansPort(request);
+            String result = containerPackageService.embarquerConteneursDansPort(request, userId);
 
             switch (result) {
                 case "HARBOR_NOT_AVAILABLE":
@@ -96,6 +97,11 @@ public class ContainersController {
     @GetMapping()
     public List<ContainersDto> getAllContainers(@RequestParam(defaultValue = "0") int page) {
         return containerServices.getAllContainers(page);
+    }
+
+    @GetMapping("/not-in-harbor")
+    public List<ContainersDto> getAllContainersNotInHarbor(@RequestParam(defaultValue = "0") int page) {
+        return containerServices.getAllContainersNotInHarbor(page);
     }
 
     @GetMapping("/{id}")

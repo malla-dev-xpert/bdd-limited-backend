@@ -14,4 +14,5 @@ public interface ContainersRepository extends JpaRepository<Containers, Long> {
     Optional<Containers> findByReference(String reference);
     Page<Containers> findByStatus(StatusEnum status, Pageable pageable);
     Page<Containers> findByStatusNot(StatusEnum status, Pageable pageable);
+    Page<Containers> findByHarborIsNull(Pageable pageable);
 }

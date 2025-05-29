@@ -55,13 +55,6 @@ public class ContainerPackageService {
             }
         });
 
-//        packages.forEach(pkg -> {
-//            if (pkg.getStatus() != StatusEnum.PENDING) {
-//                throw new OperationNotAllowedException(
-//                        "Le colis " + pkg.getRef() + " n'est pas en statut PENDING");
-//            }
-//        });
-
         packages.forEach(pkg -> {
             pkg.setContainer(container);
             pkg.setEditedAt(LocalDateTime.now());
@@ -83,10 +76,14 @@ public class ContainerPackageService {
     }
 
     @Transactional
-    public String embarquerConteneursDansPort(HarborEmbarquementRequest request) {
+    public String embarquerConteneursDansPort(HarborEmbarquementRequest request, Long userId) {
         Harbor harbor = harborRepository.findById(request.getHarborId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Port non trouvé avec l'ID: " + request.getHarborId()));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Utilisateur non trouvé avec l'ID: " + userId));
 
         if (harbor.getStatus() != StatusEnum.CREATE) {
             return "HARBOR_NOT_AVAILABLE";
@@ -102,25 +99,24 @@ public class ContainerPackageService {
             }
         });
 
-//        containers.forEach(container -> {
-//            if (container.getStatus() != StatusEnum.PENDING && container.getStatus() != StatusEnum.IN_CONTAINER) {
-//                throw new OperationNotAllowedException(
-//                        "Le conteneur " + container.getReference() + " n'a pas le statut approprié (PENDING ou IN_CONTAINER)");
-//            }
-//        });
-
         containers.forEach(container -> {
             container.setHarbor(harbor);
-//            container.setStatus(StatusEnum.IN_HARBOR);
             container.setEditedAt(LocalDateTime.now());
         });
 
         harbor.getContainers().addAll(containers);
-//        harbor.setStatus(StatusEnum.PENDING);
         harbor.setEditedAt(LocalDateTime.now());
 
         containerRepository.saveAll(containers);
         harborRepository.save(harbor);
+
+        logServices.logAction(
+                user,
+                "EMBARQUER_CONTENEUR_DANS_PORT",
+                "Harbor",
+                request.getHarborId()
+        );
+
         return "SAVED";
     }
 

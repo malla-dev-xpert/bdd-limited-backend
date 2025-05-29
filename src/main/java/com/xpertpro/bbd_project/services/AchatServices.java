@@ -38,11 +38,12 @@ public class AchatServices {
 
     @Autowired
     LigneAchatRepository ligneAchatRepository;
+    @Autowired
+    LogServices logServices;
 
     @Transactional
     public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
         try {
-//            log.info("Tentative de création d'achat - client: {}, fournisseur: {}, user: {}", clientId, supplierId, userId);
 
             // 1. Validation des entités
             UserEntity user = userRepository.findById(userId)
@@ -119,10 +120,16 @@ public class AchatServices {
             // 8. Mise à jour des soldes
             updateBalances(client, versement, total);
 
+            logServices.logAction(
+                    user,
+                    "ACHAT_ARTICLE",
+                    "Achats",
+                    achat.getId()
+            );
+
             return "ACHAT_CREATED";
 
         } catch (Exception e) {
-//            log.error("Erreur lors de la création de l'achat", e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la création de l'achat", e);
         }
     }

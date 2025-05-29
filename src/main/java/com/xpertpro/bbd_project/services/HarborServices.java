@@ -137,14 +137,32 @@ public class HarborServices {
 
                         List<PackageDto> packageResponseDtos = item.getPackages().stream()
                                 .filter(pkgItem -> pkgItem.getStatus() != StatusEnum.DELETE)
-                                .map(pkgItem -> {
-                                    PackageDto pkgDto = new PackageDto();
-                                    pkgDto.setId(pkgItem.getId() != null ? pkgItem.getId() : null);
-                                    pkgDto.setClientName(pkgItem.getClient() != null ? pkgItem.getClient().getFirstName() + " " + pkgItem.getClient().getLastName() : null);
-                                    pkgDto.setClientPhone(pkgItem.getClient() != null ? pkgItem.getClient().getPhoneNumber() : null);
-                                    pkgDto.setRef(pkgItem.getRef());
+                                .map(packages -> {
+                                    PackageDto packageDto = new PackageDto();
+                                    packageDto.setId(packages.getId());
+                                    packageDto.setRef(packages.getRef());
+                                    packageDto.setWeight(packages.getWeight());
+                                    packageDto.setWeight(packages.getWeight());
+                                    packageDto.setCbn(packages.getCbn());
+                                    packageDto.setStartDate(packages.getStartDate());
+                                    packageDto.setArrivalDate(packages.getArrivalDate());
+                                    packageDto.setStatus(packages.getStatus().name());
+                                    packageDto.setDestinationCountry(packages.getDestinationCountry());
+                                    packageDto.setExpeditionType(packages.getExpeditionType());
+                                    packageDto.setItemQuantity(packages.getItemQuantity());
+                                    packageDto.setStartCountry(packages.getStartCountry());
+                                    packageDto.setWarehouseId(packages.getWarehouse() != null ? packages.getWarehouse().getId() : null);
+                                    packageDto.setWarehouseName(packages.getWarehouse() != null ? packages.getWarehouse().getName() : null);
+                                    packageDto.setWarehouseAddress(packages.getWarehouse() != null ? packages.getWarehouse().getAdresse() : null);
+                                    packageDto.setClientId(packages.getClient() != null ? packages.getClient().getId() : null);
+                                    packageDto.setClientName(packages.getClient() != null
+                                            ? packages.getClient().getFirstName() + " " + packages.getClient().getLastName()
+                                            : null);
+                                    packageDto.setClientPhone(packages.getClient() != null
+                                            ? packages.getClient().getPhoneNumber()
+                                            : null);
 
-                                    return pkgDto;
+                                    return packageDto;
                                 }).collect(Collectors.toList());
 
                         containersDto.setPackages(packageResponseDtos);
@@ -184,16 +202,36 @@ public class HarborServices {
                     ContainersDto containersDto = new ContainersDto();
                     containersDto.setReference(item.getReference());
                     containersDto.setIsAvailable(item.getIsAvailable());
+                    containersDto.setSize(item.getSize());
                     containersDto.setStatus(item.getStatus().name());
 
                     List<PackageDto> packageResponseDtos = item.getPackages().stream()
                             .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
-                            .map(pkg -> {
-                                PackageDto pkgDto = new PackageDto();
-                                pkgDto.setId(pkg.getId() != null ? pkg.getId() : null);
-                                pkgDto.setClientName(pkg.getClient() != null ? pkg.getClient().getFirstName() + " " + pkg.getClient().getLastName() : null);
-                                pkgDto.setClientPhone(pkg.getClient() != null ? pkg.getClient().getPhoneNumber() : null);
-                                return pkgDto;
+                            .map(packages -> {
+                                PackageDto packageDto = new PackageDto();
+                                packageDto.setId(packages.getId());
+                                packageDto.setRef(packages.getRef());
+                                packageDto.setWeight(packages.getWeight());
+                                packageDto.setWeight(packages.getWeight());
+                                packageDto.setCbn(packages.getCbn());
+                                packageDto.setStartDate(packages.getStartDate());
+                                packageDto.setArrivalDate(packages.getArrivalDate());
+                                packageDto.setStatus(packages.getStatus().name());
+                                packageDto.setDestinationCountry(packages.getDestinationCountry());
+                                packageDto.setExpeditionType(packages.getExpeditionType());
+                                packageDto.setItemQuantity(packages.getItemQuantity());
+                                packageDto.setStartCountry(packages.getStartCountry());
+                                packageDto.setWarehouseId(packages.getWarehouse() != null ? packages.getWarehouse().getId() : null);
+                                packageDto.setWarehouseName(packages.getWarehouse() != null ? packages.getWarehouse().getName() : null);
+                                packageDto.setWarehouseAddress(packages.getWarehouse() != null ? packages.getWarehouse().getAdresse() : null);
+                                packageDto.setClientId(packages.getClient() != null ? packages.getClient().getId() : null);
+                                packageDto.setClientName(packages.getClient() != null
+                                        ? packages.getClient().getFirstName() + " " + packages.getClient().getLastName()
+                                        : null);
+                                packageDto.setClientPhone(packages.getClient() != null
+                                        ? packages.getClient().getPhoneNumber()
+                                        : null);
+                                return packageDto;
                             }).collect(Collectors.toList());
 
                     containersDto.setPackages(packageResponseDtos);
