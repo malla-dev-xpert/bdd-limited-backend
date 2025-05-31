@@ -162,4 +162,17 @@ public class ContainersController {
                 return "Le Conteneur avec  l'id " + id + " est encours de livraison.";
         }
     }
+
+    @GetMapping("/delivery-received/{id}")
+    public String confirmDelivery(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        String result = containerServices.confirmDelivery(id, userId);
+        switch (result){
+            case "NO_PACKAGE_FOR_DELIVERY":
+                return "Impossible de confirmer la réception, pas de colis dans le conteneur.";
+            case "CONTAINER_NOT_IN_PROGRESS":
+                return "Le conteneur n'est pas en status INPROGRESS.";
+            default:
+                return "Le Conteneur avec  l'id " + id + " a ete receptionner avec succès.";
+        }
+    }
 }

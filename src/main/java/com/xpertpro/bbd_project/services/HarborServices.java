@@ -134,6 +134,10 @@ public class HarborServices {
                         containersDto.setSize(item.getSize());
                         containersDto.setIsAvailable(item.getIsAvailable());
                         containersDto.setStatus(item.getStatus().name());
+                        containersDto.setSupplier_id(item.getSupplier() != null ? item.getSupplier().getId() : null);
+                        containersDto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
+                        containersDto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName()
+                                + " " + item.getSupplier().getLastName(): null);
 
                         List<PackageDto> packageResponseDtos = item.getPackages().stream()
                                 .filter(pkgItem -> pkgItem.getStatus() != StatusEnum.DELETE)
@@ -204,6 +208,10 @@ public class HarborServices {
                     containersDto.setIsAvailable(item.getIsAvailable());
                     containersDto.setSize(item.getSize());
                     containersDto.setStatus(item.getStatus().name());
+                    containersDto.setSupplier_id(item.getSupplier() != null ? item.getSupplier().getId() : null);
+                    containersDto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
+                    containersDto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName()
+                            + " " + item.getSupplier().getLastName(): null);
 
                     List<PackageDto> packageResponseDtos = item.getPackages().stream()
                             .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)

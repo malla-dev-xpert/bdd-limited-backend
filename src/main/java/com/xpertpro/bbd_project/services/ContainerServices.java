@@ -369,6 +369,44 @@ public class ContainerServices {
         containers.setUser(user);
         containers.setEditedAt(LocalDateTime.now());
         containersRepository.save(containers);
+
+        // Log action
+        logServices.logAction(
+                user,
+                "DEMARER_LA_LIVRAISON",
+                "Containers",
+                containers.getId()
+        );
         return "La livraison démarre avec succès.";
+    }
+
+    public String confirmDelivery(Long id, Long userId) {
+        Containers containers = containersRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        if(containers.getPackages().isEmpty()){
+            return "NO_PACKAGE_FOR_DELIVERY";
+        }
+
+        if(containers.getStatus() != StatusEnum.INPROGRESS){
+            return "CONTAINER_NOT_IN_PROGRESS";
+        }
+
+        containers.setStatus(StatusEnum.RECEIVED);
+        containers.setUser(user);
+        containers.setEditedAt(LocalDateTime.now());
+        containersRepository.save(containers);
+
+        // Log action
+        logServices.logAction(
+                user,
+                "CONFIRMER_LA_RECEPTION",
+                "Containers",
+                containers.getId()
+        );
+        return "Le conteneur est arriver avec succès.";
     }
 }
