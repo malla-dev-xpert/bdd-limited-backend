@@ -51,6 +51,8 @@ public class VersementServices {
         newVersement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         newVersement.setUser(user);
         newVersement.setPartner(partner);
+        newVersement.setCommissionnaireName(dto.getCommissionnaireName());
+        newVersement.setCommissionnairePhone(dto.getCommissionnairePhone());
         newVersement.setStatus(StatusEnum.CREATE);
 
         // Mettre à jour le solde du partenaire
@@ -86,6 +88,8 @@ public class VersementServices {
                     dto.setMontantRestant(versement.getMontantRestant()); // Récupération directe depuis le versement
                     dto.setCreatedAt(versement.getCreatedAt());
                     dto.setEditedAt(versement.getEditedAt());
+                    dto.setCommissionnairePhone(versement.getCommissionnairePhone());
+                    dto.setCommissionnaireName(versement.getCommissionnaireName());
                     dto.setPartnerId(versement.getPartner() != null
                             ? versement.getPartner().getId()
                             : null);
@@ -168,6 +172,8 @@ public class VersementServices {
                     dto.setMontantVerser(versement.getMontantVerser());
                     dto.setCreatedAt(versement.getCreatedAt());
                     dto.setEditedAt(versement.getEditedAt());
+                    dto.setCommissionnairePhone(versement.getCommissionnairePhone());
+                    dto.setCommissionnaireName(versement.getCommissionnaireName());
 
                     // Info partenaire (client)
                     if (versement.getPartner() != null) {
@@ -248,6 +254,8 @@ public class VersementServices {
         versement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         versement.setPartner(client);
         versement.setUser(user);
+        Optional.ofNullable(dto.getCommissionnairePhone()).ifPresent(versement::setCommissionnairePhone);
+        Optional.ofNullable(dto.getCommissionnaireName()).ifPresent(versement::setCommissionnaireName);
 
         if (nouveauMontantVerser != null) {
             if (versement.getMontantRestant() == null) {

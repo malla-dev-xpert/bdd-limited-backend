@@ -21,6 +21,9 @@ public class Versements {
     private Double montantVerser;
     private Double montantRestant;
 
+    private String commissionnaireName;
+    private String commissionnairePhone;
+
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 

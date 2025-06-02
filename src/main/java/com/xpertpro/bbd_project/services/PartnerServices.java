@@ -102,6 +102,8 @@ public class PartnerServices {
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
                                 newVersemtDto.setCreatedAt(v.getCreatedAt());
                                 newVersemtDto.setReference(v.getReference());
+                                newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
+                                newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
@@ -228,6 +230,8 @@ public class PartnerServices {
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
                                 newVersemtDto.setCreatedAt(v.getCreatedAt());
                                 newVersemtDto.setReference(v.getReference());
+                                newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
+                                newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)

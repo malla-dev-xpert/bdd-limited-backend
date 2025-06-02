@@ -18,4 +18,6 @@ public class VersementDto {
     private String partnerAccountType;
     private Long partnerId;
     private List<AchatDto> achats;
+    private String commissionnaireName;
+    private String commissionnairePhone;
 }
