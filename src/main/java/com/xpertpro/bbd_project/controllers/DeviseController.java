@@ -18,8 +18,8 @@ public class DeviseController {
     DeviseService deviseService;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createDevise(@RequestBody DeviseDto deviseDto){
-        String result = deviseService.createDevise(deviseDto);
+    public ResponseEntity<String> createDevise(@RequestBody DeviseDto deviseDto, @RequestParam Long userId){
+        String result = deviseService.createDevise(deviseDto, userId);
         switch (result) {
             case "NAME_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de devise déjà utilisé !");

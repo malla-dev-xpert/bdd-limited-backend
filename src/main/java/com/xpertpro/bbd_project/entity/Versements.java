@@ -40,4 +40,11 @@ public class Versements {
 
     @OneToMany(mappedBy = "versement", cascade = CascadeType.ALL)
     private List<Achats> achats = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "devise_id")
+    private Devises devise;
+
+    private Double tauxUtilise;
+
 }

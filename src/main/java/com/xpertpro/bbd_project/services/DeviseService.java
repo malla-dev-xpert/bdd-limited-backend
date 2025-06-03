@@ -2,16 +2,25 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
+import com.xpertpro.bbd_project.entity.ExchangeRate;
+import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
+import com.xpertpro.bbd_project.repository.ExchangeRateRepository;
+import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -21,8 +30,20 @@ public class DeviseService {
     DevisesRepository devisesRepository;
     @Autowired
     DeviseDtoMapper deviseDtoMapper;
+    @Autowired
+    ExchangeRateRepository exchangeRateRepository;
+    @Autowired
+    LogServices logServices;
+    @Autowired
+    UserRepository userRepository;
 
-    public String createDevise(DeviseDto deviseDto) {
+    private final RestTemplate restTemplate;
+    public DeviseService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public String createDevise(DeviseDto deviseDto, Long userId) {
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
             return "NAME_EXIST";
@@ -34,7 +55,11 @@ public class DeviseService {
         Devises devises = deviseDtoMapper.toEntity(deviseDto);
 
         devises.setCreatedAt(deviseDto.getCreatedAt());
-        devisesRepository.save(devises);
+        devises.setUser(user);
+        Devises newDevise = devisesRepository.save(devises);
+
+        logServices.logAction(user,"CREATE_DEVISE","Devises", newDevise.getId());
+
         return "SUCCESS";
     }
 
@@ -46,7 +71,7 @@ public class DeviseService {
 
             if (deviseDto.getCode() != null) devises.setCode(deviseDto.getCode());
             if (deviseDto.getName() != null) devises.setName(deviseDto.getName());
-            if (deviseDto.getRate() != null) devises.setRate(deviseDto.getRate());
+//            if (deviseDto.getRate() != null) devises.setRate(deviseDto.getRate());
             devises.setEditedAt(deviseDto.getEditedAt());
 
             devisesRepository.save(devises);
@@ -79,4 +104,29 @@ public class DeviseService {
             throw new RuntimeException("Devise non trouvé avec l'ID : " + id);
         }
     }
+
+    public Double getRealTimeRate(String fromCode, String toCode) {
+        String url = String.format("https://api.exchangerate.host/convert?from=%s&to=%s", fromCode, toCode);
+        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Map body = response.getBody();
+            return (Double) body.get("result");
+        }
+        throw new RuntimeException("Échec de récupération du taux de change.");
+    }
+
+    public ExchangeRate saveExchangeRate(String fromCode, String toCode) {
+        Double rate = getRealTimeRate(fromCode, toCode);
+        Devises from = devisesRepository.findByCode(fromCode).orElseThrow();
+        Devises to = devisesRepository.findByCode(toCode).orElseThrow();
+
+        ExchangeRate exchangeRate = new ExchangeRate();
+        exchangeRate.setFromDevise(from);
+        exchangeRate.setToDevise(to);
+        exchangeRate.setRate(rate);
+        exchangeRate.setTimestamp(LocalDateTime.now());
+        return exchangeRateRepository.save(exchangeRate);
+    }
+
 }

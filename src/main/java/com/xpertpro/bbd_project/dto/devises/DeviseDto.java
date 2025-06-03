@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data @AllArgsConstructor @NoArgsConstructor
 public class DeviseDto {
     private String name;
-    private Double rate;
+//    private Double rate;
     private String code;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();

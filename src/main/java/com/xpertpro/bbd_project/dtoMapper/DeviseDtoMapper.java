@@ -10,7 +10,7 @@ public class DeviseDtoMapper {
         Devises devises = new Devises();
         devises.setCode(dto.getCode());
         devises.setName(dto.getName());
-        devises.setRate(dto.getRate());
+//        devises.setRate(dto.getRate());
         return devises;
     }
 }
