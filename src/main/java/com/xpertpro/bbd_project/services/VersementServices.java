@@ -5,10 +5,7 @@ import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.repository.AchatRepository;
-import com.xpertpro.bbd_project.repository.PartnerRepository;
-import com.xpertpro.bbd_project.repository.UserRepository;
-import com.xpertpro.bbd_project.repository.VersementRepo;
+import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +13,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,14 +35,37 @@ public class VersementServices {
     private PartnerRepository partnerRepository;
     @Autowired
     private AchatRepository achatRepository;
+    @Autowired
+    private DevisesRepository devisesRepository;
+    private final RestTemplate restTemplate;
+    public VersementServices(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Autowired
+    private LogServices logServices;
+    @Autowired
+    ExchangeRateRepository exchangeRateRepository;
 
     @Transactional
-    public String newVersement(Long userId, Long partnerId, VersementDto dto) {
+    public String newVersement(Long userId, Long partnerId, Long deviseId, VersementDto dto) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Partners partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
+
+        Devises devise = devisesRepository.findById(deviseId)
+                .orElseThrow(() -> new RuntimeException("Devise introuvable"));
+
+        // Récupérer le taux de change actuel si la devise n'est pas la devise par défaut
+        Double tauxUtilise = 1.0; // Taux par défaut pour la devise de référence
+        ExchangeRate exchangeRate = null;
+        if (!devise.getCode().equals("USD")) { // USD devise de référence
+            tauxUtilise = getRealTimeRate("USD", devise.getCode());
+            // Sauvegarder le taux de change utilisé
+            exchangeRate = saveExchangeRate("USD", devise.getCode());
+        }
 
         // Créer un nouveau versement
         Versements newVersement = new Versements();
@@ -54,11 +77,16 @@ public class VersementServices {
         newVersement.setCommissionnaireName(dto.getCommissionnaireName());
         newVersement.setCommissionnairePhone(dto.getCommissionnairePhone());
         newVersement.setStatus(StatusEnum.CREATE);
+        newVersement.setDevise(devise);
+        newVersement.setTauxUtilise(tauxUtilise);
 
-        // Mettre à jour le solde du partenaire
-        Double nouveauSolde = partner.getBalance() + dto.getMontantVerser();
+        // Convertir le montant versé en devise de référence pour le solde du partenaire
+        Double montantEnDeviseReference = dto.getMontantVerser() / tauxUtilise;
+
+        // Mettre à jour le solde du partenaire (toujours dans la devise de référence)
+        Double nouveauSolde = partner.getBalance() + montantEnDeviseReference;
         partner.setBalance(nouveauSolde);
-        partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
+        partnerRepository.save(partner);
 
         versementRepo.save(newVersement);
 
@@ -66,9 +94,38 @@ public class VersementServices {
         String ref = String.format("BBDPAY-%02d", newVersement.getId());
         newVersement.setReference(ref);
 
-        versementRepo.save(newVersement);
+        Versements v = versementRepo.save(newVersement);
+
+        logServices.logAction(user, "NEW_VERSEMENT", "Versement", v.getId());
 
         return ref;
+    }
+
+    public Double getRealTimeRate(String fromCode, String toCode) {
+        String url = String.format("https://open.er-api.com/v6/latest/%s", fromCode);
+        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Map body = response.getBody();
+            if ("success".equals(body.get("result"))) {
+                Map<String, Double> rates = (Map<String, Double>) body.get("rates");
+                return rates.get(toCode);
+            }
+        }
+        throw new RuntimeException("Échec de récupération du taux de change.");
+    }
+
+    public ExchangeRate saveExchangeRate(String fromCode, String toCode) {
+        Double rate = getRealTimeRate(fromCode, toCode);
+        Devises from = devisesRepository.findByCode(fromCode).orElseThrow();
+        Devises to = devisesRepository.findByCode(toCode).orElseThrow();
+
+        ExchangeRate exchangeRate = new ExchangeRate();
+        exchangeRate.setFromDevise(from);
+        exchangeRate.setToDevise(to);
+        exchangeRate.setRate(rate);
+        exchangeRate.setTimestamp(LocalDateTime.now());
+        return exchangeRateRepository.save(exchangeRate);
     }
 
     public List<VersementDto> getAll(int page) {

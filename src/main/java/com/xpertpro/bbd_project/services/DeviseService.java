@@ -2,25 +2,19 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
-import com.xpertpro.bbd_project.entity.ExchangeRate;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
-import com.xpertpro.bbd_project.repository.ExchangeRateRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -30,8 +24,7 @@ public class DeviseService {
     DevisesRepository devisesRepository;
     @Autowired
     DeviseDtoMapper deviseDtoMapper;
-    @Autowired
-    ExchangeRateRepository exchangeRateRepository;
+
     @Autowired
     LogServices logServices;
     @Autowired
@@ -103,30 +96,6 @@ public class DeviseService {
         } else {
             throw new RuntimeException("Devise non trouvé avec l'ID : " + id);
         }
-    }
-
-    public Double getRealTimeRate(String fromCode, String toCode) {
-        String url = String.format("https://api.exchangerate.host/convert?from=%s&to=%s", fromCode, toCode);
-        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            Map body = response.getBody();
-            return (Double) body.get("result");
-        }
-        throw new RuntimeException("Échec de récupération du taux de change.");
-    }
-
-    public ExchangeRate saveExchangeRate(String fromCode, String toCode) {
-        Double rate = getRealTimeRate(fromCode, toCode);
-        Devises from = devisesRepository.findByCode(fromCode).orElseThrow();
-        Devises to = devisesRepository.findByCode(toCode).orElseThrow();
-
-        ExchangeRate exchangeRate = new ExchangeRate();
-        exchangeRate.setFromDevise(from);
-        exchangeRate.setToDevise(to);
-        exchangeRate.setRate(rate);
-        exchangeRate.setTimestamp(LocalDateTime.now());
-        return exchangeRateRepository.save(exchangeRate);
     }
 
 }
