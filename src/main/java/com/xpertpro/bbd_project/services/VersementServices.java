@@ -162,6 +162,12 @@ public class VersementServices {
                     dto.setPartnerCountry(versement.getPartner() != null
                             ? versement.getPartner().getCountry()
                             : null);
+                    dto.setDeviseId(versement.getDevise() != null
+                            ? versement.getDevise().getId()
+                            : null);
+                    dto.setDeviseCode(versement.getDevise() != null
+                            ? versement.getDevise().getCode()
+                            : null);
 
                     List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
@@ -231,6 +237,12 @@ public class VersementServices {
                     dto.setEditedAt(versement.getEditedAt());
                     dto.setCommissionnairePhone(versement.getCommissionnairePhone());
                     dto.setCommissionnaireName(versement.getCommissionnaireName());
+                    dto.setDeviseId(versement.getDevise() != null
+                            ? versement.getDevise().getId()
+                            : null);
+                    dto.setDeviseCode(versement.getDevise() != null
+                            ? versement.getDevise().getCode()
+                            : null);
 
                     // Info partenaire (client)
                     if (versement.getPartner() != null) {

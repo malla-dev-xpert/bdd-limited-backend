@@ -104,6 +104,12 @@ public class PartnerServices {
                                 newVersemtDto.setReference(v.getReference());
                                 newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
                                 newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
+                                newVersemtDto.setDeviseId(v.getDevise() != null
+                                        ? v.getDevise().getId()
+                                        : null);
+                                newVersemtDto.setDeviseCode(v.getDevise() != null
+                                        ? v.getDevise().getCode()
+                                        : null);
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
@@ -232,6 +238,12 @@ public class PartnerServices {
                                 newVersemtDto.setReference(v.getReference());
                                 newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
                                 newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
+                                newVersemtDto.setDeviseId(v.getDevise() != null
+                                        ? v.getDevise().getId()
+                                        : null);
+                                newVersemtDto.setDeviseCode(v.getDevise() != null
+                                        ? v.getDevise().getCode()
+                                        : null);
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
