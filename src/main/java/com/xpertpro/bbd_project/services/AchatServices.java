@@ -1,7 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
-import com.xpertpro.bbd_project.dto.achats.CreateLigneDto;
+import com.xpertpro.bbd_project.dto.achats.CreateItemsDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
@@ -14,38 +14,32 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Map;
 
 @Service
 public class AchatServices {
 
     @Autowired
     VersementRepo versementRepo;
-
     @Autowired
     PartnerRepository partnerRepository;
-
     @Autowired
     ItemsRepository itemsRepository;
-
     @Autowired
     AchatRepository achatRepository;
-
     @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    LigneAchatRepository ligneAchatRepository;
     @Autowired
     LogServices logServices;
+    @Autowired
+    VersementServices versementServices;
 
     @Transactional
     public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
         try {
-
-            // 1. Validation des entités
+            //  Validation des entités
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
@@ -55,7 +49,7 @@ public class AchatServices {
             Partners supplier = partnerRepository.findById(supplierId)
                     .orElseThrow(() -> new EntityNotFoundException("Supplier not found with id: " + supplierId));
 
-            // 2. Validation du versement
+            // Validation du versement
             if (dto.getVersementId() == null) {
                 throw new BusinessException("VERSEMENT_ID_REQUIRED");
             }
@@ -67,58 +61,57 @@ public class AchatServices {
                 throw new BusinessException("VERSEMENT_CLIENT_MISMATCH");
             }
 
-            // 3. Création de l'achat
+            // Création de l'achat
             Achats achat = new Achats();
             achat.setClient(client);
             achat.setFournisseur(supplier);
             achat.setVersement(versement);
             achat.setCreatedAt(LocalDateTime.now());
-            achat.setStatus(StatusEnum.CREATE);
+            achat.setInvoiceNumber(dto.getInvoiceNumber());
+            achat.setStatus(StatusEnum.PENDING);
 
-            // 4. Calcul du montant total
-            double total = dto.getLignes().stream()
+            // Calcul du montant total
+            double total = dto.getItems().stream()
                     .mapToDouble(l -> {
-                        if (l.getQuantityItem() <= 0 || l.getPrixUnitaire() <= 0) {
+                        if (l.getQuantity() <= 0 || l.getUnitPrice() <= 0) {
                             throw new BusinessException("INVALID_ITEM_VALUES");
                         }
-                        return l.getQuantityItem() * l.getPrixUnitaire();
+                        return l.getQuantity() * l.getUnitPrice();
                     })
                     .sum();
-            achat.setMontantTotal(total);
 
-            // 5. Sauvegarde de l'achat (pour obtenir l'ID)
-            Achats savedAchat = achatRepository.save(achat);
-
-            // 6. Création des items et lignes
-            List<Items> items = new ArrayList<>();
-            List<LigneAchat> lignes = new ArrayList<>();
-
-            for (CreateLigneDto ligneDto : dto.getLignes()) {
-                Items item = new Items();
-                item.setDescription(ligneDto.getDescriptionItem());
-                item.setQuantity(ligneDto.getQuantityItem());
-                item.setUnitPrice(ligneDto.getPrixUnitaire());
-                item.setUser(user);
-                item.setAchats(savedAchat);
-                item.setStatus(StatusEnum.CREATE);
-                item.setCreatedAt(LocalDateTime.now());
-                items.add(item);
-
-                LigneAchat ligne = new LigneAchat();
-                ligne.setAchats(savedAchat);
-                ligne.setItem(item);
-                ligne.setQuantite(ligneDto.getQuantityItem());
-                ligne.setPrixTotal(ligneDto.getQuantityItem() * ligneDto.getPrixUnitaire());
-                ligne.setStatus(StatusEnum.CREATE);
-                lignes.add(ligne);
+            // Conversion en USD
+            Double montantEnUSD = total;
+            if (versement.getDevise() != null && !"USD".equals(versement.getDevise().getCode())) {
+                Double taux = versementServices.getRealTimeRate(versement.getDevise().getCode(), "USD");
+                montantEnUSD = total * taux;
+                achat.setDevise(versement.getDevise());
+                achat.setTauxUtilise(taux);
             }
 
-            // 7. Sauvegarde en cascade
-            itemsRepository.saveAll(items);
-            ligneAchatRepository.saveAll(lignes);
+            achat.setMontantTotal(montantEnUSD);
 
-            // 8. Mise à jour des soldes
-            updateBalances(client, versement, total);
+            // Sauvegarde de l'achat (pour obtenir l'ID)
+            Achats savedAchat = achatRepository.save(achat);
+
+            // Création des items et lignes
+            List<Items> items = new ArrayList<>();
+
+            for (CreateItemsDto ligneDto : dto.getItems()) {
+                Items item = new Items();
+                item.setDescription(ligneDto.getDescription());
+                item.setQuantity(ligneDto.getQuantity());
+                item.setUnitPrice(ligneDto.getUnitPrice());
+                item.setUser(user);
+                item.setAchats(savedAchat);
+                item.setStatus(StatusEnum.PENDING);
+                item.setCreatedAt(LocalDateTime.now());
+                item.setTotalPrice(ligneDto.getQuantity() * ligneDto.getUnitPrice());
+                items.add(item);
+            }
+
+            // Sauvegarde en cascade
+            itemsRepository.saveAll(items);
 
             logServices.logAction(
                     user,
@@ -134,6 +127,67 @@ public class AchatServices {
         }
     }
 
+    @Transactional
+    public void confirmItemDelivery(List<Long> itemIds, Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Map<Achats, Double> montantsParAchat = new HashMap<>(); // Pour regrouper par achat
+
+        for (Long itemId : itemIds) {
+            Items item = itemsRepository.findById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("Item not found"));
+
+            if (item.getStatus() == StatusEnum.RECEIVED) {
+                throw new BusinessException("ITEM_ALREADY_RECEIVED");
+            }
+
+            Achats achat = item.getAchats();
+            Versements versement = achat.getVersement();
+            Partners client = achat.getClient();
+
+            // Calcul du montant de l'item en USD
+            double montantItem = item.getQuantity() * item.getUnitPrice();
+            if (achat.getDevise() != null && !"USD".equals(achat.getDevise().getCode())) {
+                montantItem *= achat.getTauxUtilise();
+            }
+
+            // Mise à jour du statut
+            item.setStatus(StatusEnum.RECEIVED);
+            itemsRepository.save(item);
+
+            // Accumuler les montants par achat
+            montantsParAchat.merge(achat, montantItem, Double::sum);
+        }
+
+        // Mettre à jour les soldes par achat
+        for (Map.Entry<Achats, Double> entry : montantsParAchat.entrySet()) {
+            Achats achat = entry.getKey();
+            Versements versement = achat.getVersement();
+            Partners client = achat.getClient();
+            double montantTotal = entry.getValue();
+
+            // Mise à jour des soldes
+            client.setBalance(client.getBalance() - montantTotal);
+            versement.setMontantRestant(versement.getMontantRestant() - montantTotal);
+
+            partnerRepository.save(client);
+            versementRepo.save(versement);
+
+            // Vérifier si tous les items sont livrés
+            boolean allDelivered = achat.getItems().stream()
+                    .allMatch(i -> i.getStatus() == StatusEnum.RECEIVED);
+
+            if (allDelivered) {
+                achat.setStatus(StatusEnum.COMPLETED);
+                achatRepository.save(achat);
+            }
+        }
+
+        // Logging
+//        logServices.logAction(user, "ITEMS_CONFIRMED", "Achat", itemIds);
+    }
+
     private void updateBalances(Partners client, Versements versement, double montant) {
         try {
             // Mise à jour client
@@ -145,7 +199,6 @@ public class AchatServices {
             versement.setEditedAt(LocalDateTime.now());
             versementRepo.save(versement);
         } catch (Exception e) {
-//            log.error("Erreur lors de la mise à jour des soldes", e);
             throw new BusinessException("BALANCE_UPDATE_FAILED");
         }
     }
@@ -155,5 +208,4 @@ public class AchatServices {
             super(message);
         }
     }
-
 }

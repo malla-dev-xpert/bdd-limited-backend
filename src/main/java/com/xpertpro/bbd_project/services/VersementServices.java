@@ -3,6 +3,7 @@ package com.xpertpro.bbd_project.services;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
@@ -49,25 +50,48 @@ public class VersementServices {
 
     @Transactional
     public String newVersement(Long userId, Long partnerId, Long deviseId, VersementDto dto) {
+        // Vérification des entités existantes
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Partners partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
 
-        Devises devise = devisesRepository.findById(deviseId)
+        Devises deviseOrigine = devisesRepository.findById(deviseId)
                 .orElseThrow(() -> new RuntimeException("Devise introuvable"));
 
-        // Récupérer le taux de change actuel si la devise n'est pas la devise par défaut
-        Double tauxUtilise = 1.0; // Taux par défaut pour la devise de référence
-        ExchangeRate exchangeRate = null;
-        if (!devise.getCode().equals("USD")) { // USD devise de référence
-            tauxUtilise = getRealTimeRate("USD", devise.getCode());
-            // Sauvegarder le taux de change utilisé
-            exchangeRate = saveExchangeRate("USD", devise.getCode());
+        // 1. Vérifier si la devise USD existe, sinon la créer automatiquement
+        Devises deviseReference = devisesRepository.findByCode("USD")
+                .orElseGet(() -> {
+                    Devises newDevise = new Devises();
+                    newDevise.setCode("USD");
+                    newDevise.setName("Dollar américain");
+                    newDevise.setUser(user);
+                    newDevise.setCreatedAt(LocalDateTime.now());
+                    return devisesRepository.save(newDevise);
+                });
+
+        // 2. Calcul du taux de change
+        Double tauxVersement = 1.0; // Taux par défaut si même devise
+
+        if (!deviseOrigine.getCode().equals("USD")) {
+            try {
+                // Inversez le taux pour obtenir deviseOrigine->USD
+                tauxVersement = 1 / getRealTimeRate("USD", deviseOrigine.getCode());
+
+                // Sauvegarder le taux utilisé
+                ExchangeRate exchangeRate = new ExchangeRate();
+                exchangeRate.setFromDevise(deviseOrigine);
+                exchangeRate.setToDevise(deviseReference);
+                exchangeRate.setRate(tauxVersement);
+                exchangeRate.setTimestamp(LocalDateTime.now());
+                exchangeRateRepository.save(exchangeRate);
+            } catch (Exception e) {
+                throw new RuntimeException("Erreur lors de la récupération du taux de change", e);
+            }
         }
 
-        // Créer un nouveau versement
+        // 3. Création du versement
         Versements newVersement = new Versements();
         newVersement.setMontantVerser(dto.getMontantVerser());
         newVersement.setMontantRestant(dto.getMontantVerser());
@@ -77,23 +101,20 @@ public class VersementServices {
         newVersement.setCommissionnaireName(dto.getCommissionnaireName());
         newVersement.setCommissionnairePhone(dto.getCommissionnairePhone());
         newVersement.setStatus(StatusEnum.CREATE);
-        newVersement.setDevise(devise);
-        newVersement.setTauxUtilise(tauxUtilise);
+        newVersement.setDevise(deviseOrigine);
+        newVersement.setTauxUtilise(tauxVersement);
 
-        // Convertir le montant versé en devise de référence pour le solde du partenaire
-        Double montantEnDeviseReference = dto.getMontantVerser() / tauxUtilise;
+        // 4. Conversion en USD pour le solde du partenaire
+        Double montantEnUSD = dto.getMontantVerser() * tauxVersement;
 
-        // Mettre à jour le solde du partenaire (toujours dans la devise de référence)
-        Double nouveauSolde = partner.getBalance() + montantEnDeviseReference;
-        partner.setBalance(nouveauSolde);
+        // 5. Mise à jour du solde du partenaire (toujours en USD)
+        partner.setBalance(partner.getBalance() + montantEnUSD);
         partnerRepository.save(partner);
 
+        // 6. Sauvegarde et génération de référence
         versementRepo.save(newVersement);
-
-        // Générer une référence
         String ref = String.format("BBDPAY-%02d", newVersement.getId());
         newVersement.setReference(ref);
-
         Versements v = versementRepo.save(newVersement);
 
         logServices.logAction(user, "NEW_VERSEMENT", "Versement", v.getId());
@@ -116,16 +137,22 @@ public class VersementServices {
     }
 
     public ExchangeRate saveExchangeRate(String fromCode, String toCode) {
-        Double rate = getRealTimeRate(fromCode, toCode);
-        Devises from = devisesRepository.findByCode(fromCode).orElseThrow();
-        Devises to = devisesRepository.findByCode(toCode).orElseThrow();
+        try {
+            Double rate = getRealTimeRate(fromCode, toCode);
+            Devises from = devisesRepository.findByCode(fromCode)
+                    .orElseThrow(() -> new RuntimeException("Devise source '"+fromCode+"' introuvable"));
+            Devises to = devisesRepository.findByCode(toCode)
+                    .orElseThrow(() -> new RuntimeException("Devise cible '"+toCode+"' introuvable"));
 
-        ExchangeRate exchangeRate = new ExchangeRate();
-        exchangeRate.setFromDevise(from);
-        exchangeRate.setToDevise(to);
-        exchangeRate.setRate(rate);
-        exchangeRate.setTimestamp(LocalDateTime.now());
-        return exchangeRateRepository.save(exchangeRate);
+            ExchangeRate exchangeRate = new ExchangeRate();
+            exchangeRate.setFromDevise(from);
+            exchangeRate.setToDevise(to);
+            exchangeRate.setRate(rate);
+            exchangeRate.setTimestamp(LocalDateTime.now());
+            return exchangeRateRepository.save(exchangeRate);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la sauvegarde du taux de change: " + e.getMessage(), e);
+        }
     }
 
     public List<VersementDto> getAll(int page) {
@@ -185,27 +212,17 @@ public class VersementServices {
                                 achatDto.setMontantVerser(versement.getMontantVerser());
                                 achatDto.setReferenceVersement(versement.getReference());
 
-                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                        .map(ligne -> {
-                                            LigneAchatDto ligneDto = new LigneAchatDto();
-                                            ligneDto.setId(ligne.getId());
-                                            ligneDto.setAchatId(ligne.getAchats() != null
-                                                    ? ligne.getAchats().getId()
-                                                    : null);
-                                            ligneDto.setQuantity(ligne.getQuantite());
-                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                            ligneDto.setItemId(ligne.getItem() != null
-                                                    ? ligne.getItem().getId()
-                                                    : null);
-                                            ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                    ? ligne.getItem().getDescription()
-                                                    : null);
-                                            ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                            ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                            return ligneDto;
+                                List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            return itemDto;
                                         }).collect(Collectors.toList());
 
-                                achatDto.setLignes(ligneDtos);
+                                achatDto.setItems(itemsDtos);
 
                                 return achatDto;
                             }).collect(Collectors.toList());
@@ -275,25 +292,17 @@ public class VersementServices {
                                 }
 
                                 // Lignes d'achat
-                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                        .map(ligne -> {
-                                            LigneAchatDto ligneDto = new LigneAchatDto();
-                                            ligneDto.setId(ligne.getId());
-                                            ligneDto.setAchatId(ligne.getAchats() != null ? ligne.getAchats().getId() : null);
-                                            ligneDto.setQuantity(ligne.getQuantite());
-                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
-
-                                            if (ligne.getItem() != null) {
-                                                ligneDto.setItemId(ligne.getItem().getId());
-                                                ligneDto.setDescriptionItem(ligne.getItem().getDescription());
-                                                ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                            }
-
-                                            return ligneDto;
+                                List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            return itemDto;
                                         }).collect(Collectors.toList());
 
-                                achatDto.setLignes(ligneDtos);
+                                achatDto.setItems(itemsDtos);
                                 return achatDto;
                             }).collect(Collectors.toList());
 

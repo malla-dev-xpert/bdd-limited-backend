@@ -7,5 +7,6 @@ import java.util.List;
 @Data
 public class CreateAchatDto {
     private Long versementId;
-    private List<CreateLigneDto> lignes;
+    private String invoiceNumber;
+    private List<CreateItemsDto> items;
 }

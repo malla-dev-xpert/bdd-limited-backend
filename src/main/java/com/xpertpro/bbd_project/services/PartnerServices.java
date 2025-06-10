@@ -4,6 +4,7 @@ import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
@@ -127,27 +128,17 @@ public class PartnerServices {
                                             achatDto.setMontantVerser(v.getMontantVerser());
                                             achatDto.setReferenceVersement(v.getReference());
 
-                                            List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                                    .map(ligne -> {
-                                                        LigneAchatDto ligneDto = new LigneAchatDto();
-                                                        ligneDto.setId(ligne.getId());
-                                                        ligneDto.setAchatId(ligne.getAchats() != null
-                                                                ? ligne.getAchats().getId()
-                                                                : null);
-                                                        ligneDto.setQuantity(ligne.getQuantite());
-                                                        ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                                        ligneDto.setItemId(ligne.getItem() != null
-                                                                ? ligne.getItem().getId()
-                                                                : null);
-                                                        ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                                ? ligne.getItem().getDescription()
-                                                                : null);
-                                                        ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                        ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                                        return ligneDto;
+                                            List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .map(i -> {
+                                                        ItemDto itemDto = new ItemDto();
+                                                        itemDto.setId(i.getId());
+                                                        itemDto.setDescription(i.getDescription());
+                                                        itemDto.setQuantity(i.getQuantity());
+                                                        itemDto.setUnitPrice(i.getUnitPrice());
+                                                        return itemDto;
                                                     }).collect(Collectors.toList());
 
-                                            achatDto.setLignes(ligneDtos);
+                                            achatDto.setItems(itemsDtos);
 
                                             return achatDto;
                                         }).collect(Collectors.toList());
@@ -261,27 +252,17 @@ public class PartnerServices {
                                             achatDto.setMontantVerser(v.getMontantVerser());
                                             achatDto.setReferenceVersement(v.getReference());
 
-                                            List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                                    .map(ligne -> {
-                                                        LigneAchatDto ligneDto = new LigneAchatDto();
-                                                        ligneDto.setId(ligne.getId());
-                                                        ligneDto.setAchatId(ligne.getAchats() != null
-                                                                ? ligne.getAchats().getId()
-                                                                : null);
-                                                        ligneDto.setQuantity(ligne.getQuantite());
-                                                        ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                                        ligneDto.setItemId(ligne.getItem() != null
-                                                                ? ligne.getItem().getId()
-                                                                : null);
-                                                        ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                                ? ligne.getItem().getDescription()
-                                                                : null);
-                                                        ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                        ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                                        return ligneDto;
+                                            List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .map(i -> {
+                                                        ItemDto itemDto = new ItemDto();
+                                                        itemDto.setId(i.getId());
+                                                        itemDto.setDescription(i.getDescription());
+                                                        itemDto.setQuantity(i.getQuantity());
+                                                        itemDto.setUnitPrice(i.getUnitPrice());
+                                                        return itemDto;
                                                     }).collect(Collectors.toList());
 
-                                            achatDto.setLignes(ligneDtos);
+                                            achatDto.setItems(itemsDtos);
 
                                             return achatDto;
                                         }).collect(Collectors.toList());

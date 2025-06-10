@@ -19,6 +19,7 @@ public class Items {
     private String description;
     private int quantity;
     private double unitPrice;
+    private double totalPrice;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 

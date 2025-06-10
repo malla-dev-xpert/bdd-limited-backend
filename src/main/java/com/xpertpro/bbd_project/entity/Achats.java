@@ -20,29 +20,24 @@ public class Achats {
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
     private Double montantTotal;
+    private String invoiceNumber;
+    private Double tauxUtilise;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
+    @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
+    private List<Items> items = new ArrayList<>();
     @ManyToOne
     @JoinColumn(name = "versement_id", nullable = false)
     private Versements versement;
-
     @ManyToOne
     @JoinColumn(name = "fournisseur_id")
     private Partners fournisseur;
-
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Partners client;
-
-    @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
-    private List<LigneAchat> lignes = new ArrayList<>();
-
     @ManyToOne
     @JoinColumn(name = "devise_id")
     private Devises devise;
-
-    private Double tauxUtilise;
-
 }
