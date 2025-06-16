@@ -22,4 +22,6 @@ public class VersementDto {
     private List<AchatDto> achats;
     private String commissionnaireName;
     private String commissionnairePhone;
+    private String type;
+    private String note;
 }

@@ -58,11 +58,11 @@ public class VersementServices {
         Devises deviseOrigine = devisesRepository.findById(deviseId)
                 .orElseThrow(() -> new RuntimeException("Devise introuvable"));
 
-        // 1. Vérifier si la devise USD existe, sinon la créer automatiquement
-        Devises deviseReference = devisesRepository.findByCode("USD")
+        // 1. Vérifier si la devise CNY existe, sinon la créer automatiquement
+        Devises deviseReference = devisesRepository.findByCode("CNY")
                 .orElseGet(() -> {
                     Devises newDevise = new Devises();
-                    newDevise.setCode("USD");
+                    newDevise.setCode("CNY");
                     newDevise.setName("Dollar américain");
                     newDevise.setUser(user);
                     newDevise.setCreatedAt(LocalDateTime.now());
@@ -72,10 +72,10 @@ public class VersementServices {
         // 2. Calcul du taux de change
         Double tauxVersement = 1.0; // Taux par défaut si même devise
 
-        if (!deviseOrigine.getCode().equals("USD")) {
+        if (!deviseOrigine.getCode().equals("CNY")) {
             try {
-                // Inversez le taux pour obtenir deviseOrigine->USD
-                tauxVersement = 1 / exchangeRateServices.getRealTimeRate("USD", deviseOrigine.getCode());
+                // Inversez le taux pour obtenir deviseOrigine->CNY
+                tauxVersement = 1 / exchangeRateServices.getRealTimeRate("CNY", deviseOrigine.getCode());
 
                 // Sauvegarder le taux utilisé
                 ExchangeRate exchangeRate = new ExchangeRate();
@@ -101,6 +101,8 @@ public class VersementServices {
         newVersement.setStatus(StatusEnum.CREATE);
         newVersement.setDevise(deviseOrigine);
         newVersement.setTauxUtilise(tauxVersement);
+        newVersement.setType(dto.getType());
+        newVersement.setNote(dto.getNote());
 
         // 4. Conversion en USD pour le solde du partenaire
         Double montantEnUSD = dto.getMontantVerser() * tauxVersement;
@@ -139,6 +141,8 @@ public class VersementServices {
                     dto.setEditedAt(versement.getEditedAt());
                     dto.setCommissionnairePhone(versement.getCommissionnairePhone());
                     dto.setCommissionnaireName(versement.getCommissionnaireName());
+                    dto.setType(versement.getType());
+                    dto.setNote(versement.getNote());
                     dto.setPartnerId(versement.getPartner() != null
                             ? versement.getPartner().getId()
                             : null);
@@ -219,6 +223,8 @@ public class VersementServices {
                     dto.setEditedAt(versement.getEditedAt());
                     dto.setCommissionnairePhone(versement.getCommissionnairePhone());
                     dto.setCommissionnaireName(versement.getCommissionnaireName());
+                    dto.setType(versement.getType());
+                    dto.setNote(versement.getNote());
                     dto.setDeviseId(versement.getDevise() != null
                             ? versement.getDevise().getId()
                             : null);

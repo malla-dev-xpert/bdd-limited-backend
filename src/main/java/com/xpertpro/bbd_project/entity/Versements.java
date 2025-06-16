@@ -46,5 +46,7 @@ public class Versements {
     private Devises devise;
 
     private Double tauxUtilise;
+    private String type;
+    private String note;
 
 }

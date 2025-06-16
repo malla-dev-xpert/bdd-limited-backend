@@ -105,6 +105,8 @@ public class PartnerServices {
                                 newVersemtDto.setReference(v.getReference());
                                 newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
                                 newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
+                                newVersemtDto.setType(v.getType());
+                                newVersemtDto.setNote(v.getNote());
                                 newVersemtDto.setDeviseId(v.getDevise() != null
                                         ? v.getDevise().getId()
                                         : null);
@@ -227,6 +229,8 @@ public class PartnerServices {
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
                                 newVersemtDto.setCreatedAt(v.getCreatedAt());
                                 newVersemtDto.setReference(v.getReference());
+                                newVersemtDto.setType(v.getType());
+                                newVersemtDto.setNote(v.getNote());
                                 newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
                                 newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
                                 newVersemtDto.setDeviseId(v.getDevise() != null
