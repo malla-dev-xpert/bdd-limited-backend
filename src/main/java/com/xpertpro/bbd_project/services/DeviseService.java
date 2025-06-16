@@ -24,11 +24,12 @@ public class DeviseService {
     DevisesRepository devisesRepository;
     @Autowired
     DeviseDtoMapper deviseDtoMapper;
-
     @Autowired
     LogServices logServices;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    ExchangeRateServices exchangeRateServices;
 
     private final RestTemplate restTemplate;
     public DeviseService(RestTemplate restTemplate) {
@@ -36,24 +37,48 @@ public class DeviseService {
     }
 
     public String createDevise(DeviseDto deviseDto, Long userId) {
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
 
-        if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
-            return "NAME_EXIST";
+            if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
+                return "NAME_EXIST";
+            }
+            if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
+                return "CODE_EXIST";
+            }
+
+            Devises devises = deviseDtoMapper.toEntity(deviseDto);
+
+            // Gestion du taux de change
+            if (deviseDto.getRate() == null) {
+                try {
+                    String referenceCurrency = "CNY"; // Monnaie chinoise comme référence
+                    Double realTimeRate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
+                    if (realTimeRate == null) {
+                        return "RATE_NOT_FOUND";
+                    }
+                    devises.setRate(realTimeRate);
+                } catch (Exception e) {
+                    System.out.println("Failed to fetch real-time rate for currency: " + deviseDto.getCode()+ e);
+                    return "RATE_SERVICE_ERROR";
+                }
+            } else {
+                // Utiliser le taux fourni par l'utilisateur
+                devises.setRate(deviseDto.getRate());
+            }
+
+            devises.setCreatedAt(deviseDto.getCreatedAt());
+            devises.setUser(user);
+            Devises newDevise = devisesRepository.save(devises);
+
+            logServices.logAction(user, "CREATE_DEVISE", "Devises", newDevise.getId());
+
+            return "SUCCESS";
+        } catch (Exception e) {
+            System.out.println("Error creating devise"+ e);
+            return "GENERAL_ERROR";
         }
-        if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
-            return "CODE_EXIST";
-        }
-
-        Devises devises = deviseDtoMapper.toEntity(deviseDto);
-
-        devises.setCreatedAt(deviseDto.getCreatedAt());
-        devises.setUser(user);
-        Devises newDevise = devisesRepository.save(devises);
-
-        logServices.logAction(user,"CREATE_DEVISE","Devises", newDevise.getId());
-
-        return "SUCCESS";
     }
 
     public DeviseDto updateDevise(Long id, DeviseDto deviseDto) {
@@ -64,7 +89,7 @@ public class DeviseService {
 
             if (deviseDto.getCode() != null) devises.setCode(deviseDto.getCode());
             if (deviseDto.getName() != null) devises.setName(deviseDto.getName());
-//            if (deviseDto.getRate() != null) devises.setRate(deviseDto.getRate());
+            if (deviseDto.getRate() != null) devises.setRate(deviseDto.getRate());
             devises.setEditedAt(deviseDto.getEditedAt());
 
             devisesRepository.save(devises);

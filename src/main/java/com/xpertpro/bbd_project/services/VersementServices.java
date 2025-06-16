@@ -38,13 +38,11 @@ public class VersementServices {
     private AchatRepository achatRepository;
     @Autowired
     private DevisesRepository devisesRepository;
-    private final RestTemplate restTemplate;
-    public VersementServices(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
     @Autowired
     private LogServices logServices;
+    @Autowired
+    private ExchangeRateServices exchangeRateServices;
     @Autowired
     ExchangeRateRepository exchangeRateRepository;
 
@@ -77,7 +75,7 @@ public class VersementServices {
         if (!deviseOrigine.getCode().equals("USD")) {
             try {
                 // Inversez le taux pour obtenir deviseOrigine->USD
-                tauxVersement = 1 / getRealTimeRate("USD", deviseOrigine.getCode());
+                tauxVersement = 1 / exchangeRateServices.getRealTimeRate("USD", deviseOrigine.getCode());
 
                 // Sauvegarder le taux utilisé
                 ExchangeRate exchangeRate = new ExchangeRate();
@@ -120,39 +118,6 @@ public class VersementServices {
         logServices.logAction(user, "NEW_VERSEMENT", "Versement", v.getId());
 
         return ref;
-    }
-
-    public Double getRealTimeRate(String fromCode, String toCode) {
-        String url = String.format("https://open.er-api.com/v6/latest/%s", fromCode);
-        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            Map body = response.getBody();
-            if ("success".equals(body.get("result"))) {
-                Map<String, Double> rates = (Map<String, Double>) body.get("rates");
-                return rates.get(toCode);
-            }
-        }
-        throw new RuntimeException("Échec de récupération du taux de change.");
-    }
-
-    public ExchangeRate saveExchangeRate(String fromCode, String toCode) {
-        try {
-            Double rate = getRealTimeRate(fromCode, toCode);
-            Devises from = devisesRepository.findByCode(fromCode)
-                    .orElseThrow(() -> new RuntimeException("Devise source '"+fromCode+"' introuvable"));
-            Devises to = devisesRepository.findByCode(toCode)
-                    .orElseThrow(() -> new RuntimeException("Devise cible '"+toCode+"' introuvable"));
-
-            ExchangeRate exchangeRate = new ExchangeRate();
-            exchangeRate.setFromDevise(from);
-            exchangeRate.setToDevise(to);
-            exchangeRate.setRate(rate);
-            exchangeRate.setTimestamp(LocalDateTime.now());
-            return exchangeRateRepository.save(exchangeRate);
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la sauvegarde du taux de change: " + e.getMessage(), e);
-        }
     }
 
     public List<VersementDto> getAll(int page) {

@@ -34,7 +34,7 @@ public class AchatServices {
     @Autowired
     LogServices logServices;
     @Autowired
-    VersementServices versementServices;
+    ExchangeRateServices exchangeRateServices;
 
     @Transactional
     public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
@@ -83,7 +83,7 @@ public class AchatServices {
             // Conversion en USD
             Double montantEnUSD = total;
             if (versement.getDevise() != null && !"USD".equals(versement.getDevise().getCode())) {
-                Double taux = versementServices.getRealTimeRate(versement.getDevise().getCode(), "USD");
+                Double taux = exchangeRateServices.getRealTimeRate(versement.getDevise().getCode(), "USD");
                 montantEnUSD = total * taux;
                 achat.setDevise(versement.getDevise());
                 achat.setTauxUtilise(taux);

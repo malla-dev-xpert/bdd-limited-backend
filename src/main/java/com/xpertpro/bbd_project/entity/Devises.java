@@ -15,7 +15,7 @@ public class Devises {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name; // Ex: Dollar, Euro
-//    private Double rate; // Le taux de change
+    private Double rate; // Le taux de change
 
     @Column(unique = true)
     private String code; // Ex: USD, EUR
