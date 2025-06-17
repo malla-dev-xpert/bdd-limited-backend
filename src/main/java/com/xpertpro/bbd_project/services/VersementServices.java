@@ -1,7 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
-import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.entity.*;
@@ -14,15 +13,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -170,12 +165,6 @@ public class VersementServices {
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
-                                achatDto.setFournisseur(item.getFournisseur() != null
-                                        ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                        : null);
-                                achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                        ? item.getFournisseur().getPhoneNumber()
-                                        : null);
                                 // Utilisation des montants du versement parent
                                 achatDto.setMontantRestant(versement.getMontantRestant());
                                 achatDto.setMontantVerser(versement.getMontantVerser());
@@ -246,14 +235,6 @@ public class VersementServices {
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
-
-                                // Info fournisseur
-                                if (item.getFournisseur() != null) {
-                                    achatDto.setFournisseur(
-                                            item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                    );
-                                    achatDto.setFournisseurPhone(item.getFournisseur().getPhoneNumber());
-                                }
 
                                 // Info versement
                                 if (item.getVersement() != null) {

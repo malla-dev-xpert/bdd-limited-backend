@@ -100,8 +100,7 @@ public class WarehouseServices {
                 user,
                 "MODIFIER_ENTREPOT",
                 "Warehouse",
-                id
-        );
+                id);
 
         return "SUCCESS";
     }

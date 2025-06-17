@@ -70,8 +70,7 @@ public class ContainerPackageService {
                 user,
                 "EMBARQUER_COLIS_DANS_CONTENEUR",
                 "Container",
-                request.getContainerId()
-        );
+                request.getContainerId());
         return "SAVED";
     }
 
@@ -114,8 +113,7 @@ public class ContainerPackageService {
                 user,
                 "EMBARQUER_CONTENEUR_DANS_PORT",
                 "Harbor",
-                request.getHarborId()
-        );
+                request.getHarborId());
 
         return "SAVED";
     }
@@ -160,8 +158,7 @@ public class ContainerPackageService {
                 user,
                 "RETRAIT_COLIS_DU_CONTENEUR",
                 "Container",
-                containerId
-        );
+                containerId);
 
         return "REMOVED";
     }

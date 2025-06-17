@@ -18,8 +18,7 @@ public class LogServices {
             UserEntity user,
             String action,
             String entityType,
-            Long entityId
-    ) {
+            Long entityId) {
         Logs log = new Logs();
         log.setUser(user);
         log.setAction(action);

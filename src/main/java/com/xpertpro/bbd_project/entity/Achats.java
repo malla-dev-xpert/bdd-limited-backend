@@ -20,7 +20,6 @@ public class Achats {
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
     private Double montantTotal;
-    private String invoiceNumber;
     private Double tauxUtilise;
 
     @Enumerated(EnumType.STRING)
@@ -31,9 +30,9 @@ public class Achats {
     @ManyToOne
     @JoinColumn(name = "versement_id", nullable = false)
     private Versements versement;
-    @ManyToOne
-    @JoinColumn(name = "fournisseur_id")
-    private Partners fournisseur;
+//    @ManyToOne
+//    @JoinColumn(name = "fournisseur_id")
+//    private Partners fournisseur;
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Partners client;

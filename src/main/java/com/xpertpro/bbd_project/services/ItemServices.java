@@ -102,11 +102,9 @@ public class ItemServices {
                     dto.setUnitPrice(item.getUnitPrice());
                     dto.setAchatDate(item.getAchats() != null ? item.getAchats().getCreatedAt() : null);
                     dto.setStatus(item.getStatus().name());
-
-                    Partners client = item.getAchats() != null ? item.getAchats().getFournisseur() : null;
-                    dto.setClientId(client.getId());
-                    dto.setClientName(client.getFirstName() + " " + client.getLastName());
-                    dto.setClientPhone(client.getPhoneNumber());
+                    dto.setSupplierId(item.getSupplier() != null ? item.getSupplier().getId() : null);
+                    dto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName() : null);
+                    dto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
 
                     return dto;
                 })

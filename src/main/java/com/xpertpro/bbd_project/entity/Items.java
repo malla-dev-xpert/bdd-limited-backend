@@ -20,6 +20,7 @@ public class Items {
     private int quantity;
     private double unitPrice;
     private double totalPrice;
+    private String invoiceNumber;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
@@ -36,5 +37,9 @@ public class Items {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
+    @ManyToOne
+    @JoinColumn(name = "supplier_id")
+    private Partners supplier;
 
 }

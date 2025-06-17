@@ -56,8 +56,7 @@ public class PackageServices {
                 user,
                 "AJOUT_COLIS",
                 "Packages",
-                newPackage.getId()
-        );
+                newPackage.getId());
 
         return "SUCCESS";
     }

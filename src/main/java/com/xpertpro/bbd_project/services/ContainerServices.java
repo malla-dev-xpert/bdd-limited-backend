@@ -72,8 +72,7 @@ public class ContainerServices {
                 user,
                 "AJOUTER_CONTENEUR",
                 "Containers",
-                savedContainer.getId()
-        );
+                savedContainer.getId());
 
         return "SUCCESS";
     }
@@ -375,8 +374,7 @@ public class ContainerServices {
                 user,
                 "DEMARER_LA_LIVRAISON",
                 "Containers",
-                containers.getId()
-        );
+                containers.getId());
         return "La livraison démarre avec succès.";
     }
 
@@ -405,8 +403,7 @@ public class ContainerServices {
                 user,
                 "CONFIRMER_LA_RECEPTION",
                 "Containers",
-                containers.getId()
-        );
+                containers.getId());
         return "Le conteneur est arriver avec succès.";
     }
 }

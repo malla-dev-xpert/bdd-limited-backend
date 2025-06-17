@@ -119,12 +119,6 @@ public class PartnerServices {
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
-                                            achatDto.setFournisseur(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                                    : null);
-                                            achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getPhoneNumber()
-                                                    : null);
                                             // Utilisation des montants du versement parent
                                             achatDto.setMontantRestant(v.getMontantRestant());
                                             achatDto.setMontantVerser(v.getMontantVerser());
@@ -245,12 +239,6 @@ public class PartnerServices {
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
-                                            achatDto.setFournisseur(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                                    : null);
-                                            achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getPhoneNumber()
-                                                    : null);
                                             // Utilisation des montants du versement parent
                                             achatDto.setMontantRestant(v.getMontantRestant());
                                             achatDto.setMontantVerser(v.getMontantVerser());
