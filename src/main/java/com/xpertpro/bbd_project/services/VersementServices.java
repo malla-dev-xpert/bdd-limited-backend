@@ -177,6 +177,8 @@ public class VersementServices {
                                             itemDto.setDescription(i.getDescription());
                                             itemDto.setQuantity(i.getQuantity());
                                             itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             return itemDto;
                                         }).collect(Collectors.toList());
 
@@ -251,6 +253,8 @@ public class VersementServices {
                                             itemDto.setDescription(i.getDescription());
                                             itemDto.setQuantity(i.getQuantity());
                                             itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             return itemDto;
                                         }).collect(Collectors.toList());
 

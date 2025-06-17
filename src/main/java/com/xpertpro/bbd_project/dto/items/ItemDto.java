@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 public class ItemDto {
     private Long id;
     private String description;
+    private String supplierName;
+    private String supplierPhone;
     private int quantity;
     private double unitPrice;
 }

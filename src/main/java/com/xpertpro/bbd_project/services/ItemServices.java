@@ -39,6 +39,8 @@ public class ItemServices {
                     dto.setQuantity(pkg.getQuantity());
                     dto.setDescription(pkg.getDescription());
                     dto.setUnitPrice(pkg.getUnitPrice());
+                    dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
+                    dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
 
                     return dto;
                 })
