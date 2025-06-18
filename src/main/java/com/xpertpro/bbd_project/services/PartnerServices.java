@@ -2,7 +2,6 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
-import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.partners.PartnerDto;
@@ -133,6 +132,7 @@ public class PartnerServices {
                                                         itemDto.setUnitPrice(i.getUnitPrice());
                                                         itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                                         itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                                        itemDto.setStatus(i.getStatus().name());
                                                         itemDto.setUnitPrice(i.getUnitPrice());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
@@ -256,6 +256,7 @@ public class PartnerServices {
                                                         itemDto.setUnitPrice(i.getUnitPrice());
                                                         itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                                         itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                                        itemDto.setStatus(i.getStatus().name());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 

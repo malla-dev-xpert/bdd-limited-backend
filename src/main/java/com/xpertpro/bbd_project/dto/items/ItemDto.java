@@ -12,4 +12,5 @@ public class ItemDto {
     private String supplierPhone;
     private int quantity;
     private double unitPrice;
+    private String status;
 }

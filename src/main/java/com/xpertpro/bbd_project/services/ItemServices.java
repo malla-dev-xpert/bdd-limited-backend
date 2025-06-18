@@ -41,6 +41,7 @@ public class ItemServices {
                     dto.setUnitPrice(pkg.getUnitPrice());
                     dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
                     dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
+                    dto.setStatus(pkg.getStatus().name());
 
                     return dto;
                 })

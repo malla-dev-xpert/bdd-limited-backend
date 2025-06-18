@@ -197,9 +197,9 @@ public class AchatServices {
             Versements versement = achat.getVersement();
             Partners client = achat.getClient();
 
-            // Calcul du montant de l'item en USD
+            // Calcul du montant de l'item en CNY
             double montantItem = item.getQuantity() * item.getUnitPrice();
-            if (achat.getDevise() != null && !"USD".equals(achat.getDevise().getCode())) {
+            if (achat.getDevise() != null && !"CNY".equals(achat.getDevise().getCode())) {
                 montantItem *= achat.getTauxUtilise();
             }
 
@@ -236,7 +236,7 @@ public class AchatServices {
         }
 
         // Logging
-//        logServices.logAction(user, "ITEMS_CONFIRMED", "Achat", itemIds);
+//        logServices.logAction(user, "CONFIRMER_RECEPTION_COLIS", "ACHAT_ITEMS", itemIds);
     }
 
     private void updateBalances(Partners client, Versements versement, double montant) {
@@ -254,7 +254,7 @@ public class AchatServices {
         }
     }
 
-    public class BusinessException extends RuntimeException {
+    public static class BusinessException extends RuntimeException {
         public BusinessException(String message, String paymentIdIsRequired) {
             super(message);
         }
