@@ -1,22 +1,27 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateItemsDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AchatServices {
@@ -237,6 +242,59 @@ public class AchatServices {
 
         // Logging
 //        logServices.logAction(user, "CONFIRMER_RECEPTION_COLIS", "ACHAT_ITEMS", itemIds);
+    }
+
+    public List<AchatDto> getAll(int page) {
+        int pageSize = 30;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+
+        Page<Achats> achats = achatRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+
+        return achats.getContent().stream()
+                .filter(achat -> achat.getStatus() != StatusEnum.DELETE)
+                .map(achat -> {
+                    AchatDto dto = new AchatDto();
+                    dto.setId(achat.getId());
+
+                    if (achat.getClient() != null) {
+                        dto.setClient(achat.getClient().getFirstName() + " " + achat.getClient().getLastName());
+                        dto.setClientPhone(achat.getClient().getPhoneNumber());
+                    } else {
+                        dto.setClient(null);
+                        dto.setClientPhone(null);
+                    }
+
+                    dto.setReferenceVersement(achat.getVersement() != null
+                            ? achat.getVersement().getReference()
+                            : null);
+                    dto.setMontantTotal(achat.getMontantTotal());
+                    dto.setStatus(achat.getStatus().name());
+
+                    List<ItemDto> itemsDtos = achat.getItems().stream()
+                            .map(i -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(i.getId());
+                                itemDto.setDescription(i.getDescription());
+                                itemDto.setQuantity(i.getQuantity());
+                                itemDto.setUnitPrice(i.getUnitPrice());
+                                itemDto.setTotalPrice(i.getTotalPrice());
+
+                                if (i.getSupplier() != null) {
+                                    itemDto.setSupplierName(i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName());
+                                    itemDto.setSupplierPhone(i.getSupplier().getPhoneNumber());
+                                } else {
+                                    itemDto.setSupplierName(null);
+                                    itemDto.setSupplierPhone(null);
+                                }
+
+                                itemDto.setStatus(i.getStatus().name());
+                                return itemDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setItems(itemsDtos);
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     private void updateBalances(Partners client, Versements versement, double montant) {

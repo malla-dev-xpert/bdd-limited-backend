@@ -11,11 +11,9 @@ public class AchatDto {
     private Long id;
     private LocalDateTime createdAt;
     private String referenceVersement;
-    private Double montantVerser;
-    private Double montantRestant;
-    private String fournisseur;
-    private String fournisseurPhone;
+    private Double montantTotal;
     private String client;
     private String clientPhone;
+    private String status;
     private List<ItemDto> items;
 }

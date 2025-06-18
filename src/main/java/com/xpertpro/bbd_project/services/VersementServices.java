@@ -165,9 +165,8 @@ public class VersementServices {
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
+                                achatDto.setMontantTotal(item.getMontantTotal());
                                 // Utilisation des montants du versement parent
-                                achatDto.setMontantRestant(versement.getMontantRestant());
-                                achatDto.setMontantVerser(versement.getMontantVerser());
                                 achatDto.setReferenceVersement(versement.getReference());
 
                                 List<ItemDto> itemsDtos = item.getItems().stream()
@@ -180,6 +179,7 @@ public class VersementServices {
                                             itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 
@@ -238,11 +238,10 @@ public class VersementServices {
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
+                                achatDto.setMontantTotal(item.getMontantTotal());
 
                                 // Info versement
                                 if (item.getVersement() != null) {
-                                    achatDto.setMontantRestant(item.getVersement().getMontantRestant());
-                                    achatDto.setMontantVerser(item.getVersement().getMontantVerser());
                                     achatDto.setReferenceVersement(item.getVersement().getReference());
                                 }
 
@@ -257,6 +256,7 @@ public class VersementServices {
                                             itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 

@@ -118,10 +118,9 @@ public class PartnerServices {
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
+                                            achatDto.setMontantTotal(item.getMontantTotal());
                                             // Utilisation des montants du versement parent
-                                            achatDto.setMontantRestant(v.getMontantRestant());
-                                            achatDto.setMontantVerser(v.getMontantVerser());
-                                            achatDto.setReferenceVersement(v.getReference());
+                                            achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .map(i -> {
@@ -134,6 +133,7 @@ public class PartnerServices {
                                                         itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                                         itemDto.setStatus(i.getStatus().name());
                                                         itemDto.setUnitPrice(i.getUnitPrice());
+                                                        itemDto.setTotalPrice(i.getTotalPrice());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 
@@ -242,10 +242,8 @@ public class PartnerServices {
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
-                                            // Utilisation des montants du versement parent
-                                            achatDto.setMontantRestant(v.getMontantRestant());
-                                            achatDto.setMontantVerser(v.getMontantVerser());
-                                            achatDto.setReferenceVersement(v.getReference());
+                                            achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
+                                            achatDto.setMontantTotal(item.getMontantTotal());
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .map(i -> {
@@ -257,6 +255,7 @@ public class PartnerServices {
                                                         itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                                         itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                                         itemDto.setStatus(i.getStatus().name());
+                                                        itemDto.setTotalPrice(i.getTotalPrice());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 
