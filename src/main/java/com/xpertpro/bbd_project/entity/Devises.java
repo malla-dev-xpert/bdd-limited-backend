@@ -25,4 +25,8 @@ public class Devises {
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 }

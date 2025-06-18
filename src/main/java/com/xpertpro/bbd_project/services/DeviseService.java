@@ -2,15 +2,18 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.devises.DeviseDto;
 import com.xpertpro.bbd_project.entity.Devises;
+import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
+import com.xpertpro.bbd_project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -21,21 +24,61 @@ public class DeviseService {
     DevisesRepository devisesRepository;
     @Autowired
     DeviseDtoMapper deviseDtoMapper;
+    @Autowired
+    LogServices logServices;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    ExchangeRateServices exchangeRateServices;
 
-    public String createDevise(DeviseDto deviseDto) {
+    private final RestTemplate restTemplate;
+    public DeviseService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
-        if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
-            return "NAME_EXIST";
+    public String createDevise(DeviseDto deviseDto, Long userId) {
+        try {
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+
+            if (devisesRepository.findByName(deviseDto.getName()).isPresent()) {
+                return "NAME_EXIST";
+            }
+            if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
+                return "CODE_EXIST";
+            }
+
+            Devises devises = deviseDtoMapper.toEntity(deviseDto);
+
+            // Gestion du taux de change
+            if (deviseDto.getRate() == null) {
+                try {
+                    String referenceCurrency = "CNY"; // Monnaie chinoise comme référence
+                    Double realTimeRate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
+                    if (realTimeRate == null) {
+                        return "RATE_NOT_FOUND";
+                    }
+                    devises.setRate(realTimeRate);
+                } catch (Exception e) {
+                    System.out.println("Failed to fetch real-time rate for currency: " + deviseDto.getCode()+ e);
+                    return "RATE_SERVICE_ERROR";
+                }
+            } else {
+                // Utiliser le taux fourni par l'utilisateur
+                devises.setRate(deviseDto.getRate());
+            }
+
+            devises.setCreatedAt(deviseDto.getCreatedAt());
+            devises.setUser(user);
+            Devises newDevise = devisesRepository.save(devises);
+
+            logServices.logAction(user, "CREATE_DEVISE", "Devises", newDevise.getId());
+
+            return "SUCCESS";
+        } catch (Exception e) {
+            System.out.println("Error creating devise"+ e);
+            return "GENERAL_ERROR";
         }
-        if (devisesRepository.findByCode(deviseDto.getCode()).isPresent()) {
-            return "CODE_EXIST";
-        }
-
-        Devises devises = deviseDtoMapper.toEntity(deviseDto);
-
-        devises.setCreatedAt(deviseDto.getCreatedAt());
-        devisesRepository.save(devises);
-        return "SUCCESS";
     }
 
     public DeviseDto updateDevise(Long id, DeviseDto deviseDto) {
@@ -79,4 +122,5 @@ public class DeviseService {
             throw new RuntimeException("Devise non trouvé avec l'ID : " + id);
         }
     }
+
 }

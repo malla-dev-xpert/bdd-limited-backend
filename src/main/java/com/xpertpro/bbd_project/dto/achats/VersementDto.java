@@ -17,5 +17,11 @@ public class VersementDto {
     private String partnerCountry;
     private String partnerAccountType;
     private Long partnerId;
+    private Long deviseId;
+    private String deviseCode;
     private List<AchatDto> achats;
+    private String commissionnaireName;
+    private String commissionnairePhone;
+    private String type;
+    private String note;
 }

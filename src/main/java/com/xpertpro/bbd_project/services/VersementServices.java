@@ -1,14 +1,11 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
-import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.repository.AchatRepository;
-import com.xpertpro.bbd_project.repository.PartnerRepository;
-import com.xpertpro.bbd_project.repository.UserRepository;
-import com.xpertpro.bbd_project.repository.VersementRepo;
+import com.xpertpro.bbd_project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,36 +31,88 @@ public class VersementServices {
     private PartnerRepository partnerRepository;
     @Autowired
     private AchatRepository achatRepository;
+    @Autowired
+    private DevisesRepository devisesRepository;
+
+    @Autowired
+    private LogServices logServices;
+    @Autowired
+    private ExchangeRateServices exchangeRateServices;
+    @Autowired
+    ExchangeRateRepository exchangeRateRepository;
 
     @Transactional
-    public String newVersement(Long userId, Long partnerId, VersementDto dto) {
+    public String newVersement(Long userId, Long partnerId, Long deviseId, VersementDto dto) {
+        // Vérification des entités existantes
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Partners partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partenaire introuvable"));
 
-        // Créer un nouveau versement
+        Devises deviseOrigine = devisesRepository.findById(deviseId)
+                .orElseThrow(() -> new RuntimeException("Devise introuvable"));
+
+        // 1. Vérifier si la devise CNY existe, sinon la créer automatiquement
+        Devises deviseReference = devisesRepository.findByCode("CNY")
+                .orElseGet(() -> {
+                    Devises newDevise = new Devises();
+                    newDevise.setCode("CNY");
+                    newDevise.setName("Dollar américain");
+                    newDevise.setUser(user);
+                    newDevise.setCreatedAt(LocalDateTime.now());
+                    return devisesRepository.save(newDevise);
+                });
+
+        // 2. Calcul du taux de change
+        Double tauxVersement = 1.0; // Taux par défaut si même devise
+
+        if (!deviseOrigine.getCode().equals("CNY")) {
+            try {
+                // Inversez le taux pour obtenir deviseOrigine->CNY
+                tauxVersement = 1 / exchangeRateServices.getRealTimeRate("CNY", deviseOrigine.getCode());
+
+                // Sauvegarder le taux utilisé
+                ExchangeRate exchangeRate = new ExchangeRate();
+                exchangeRate.setFromDevise(deviseOrigine);
+                exchangeRate.setToDevise(deviseReference);
+                exchangeRate.setRate(tauxVersement);
+                exchangeRate.setTimestamp(LocalDateTime.now());
+                exchangeRateRepository.save(exchangeRate);
+            } catch (Exception e) {
+                throw new RuntimeException("Erreur lors de la récupération du taux de change", e);
+            }
+        }
+
+        // 3. Création du versement
         Versements newVersement = new Versements();
         newVersement.setMontantVerser(dto.getMontantVerser());
         newVersement.setMontantRestant(dto.getMontantVerser());
         newVersement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         newVersement.setUser(user);
         newVersement.setPartner(partner);
+        newVersement.setCommissionnaireName(dto.getCommissionnaireName());
+        newVersement.setCommissionnairePhone(dto.getCommissionnairePhone());
         newVersement.setStatus(StatusEnum.CREATE);
+        newVersement.setDevise(deviseOrigine);
+        newVersement.setTauxUtilise(tauxVersement);
+        newVersement.setType(dto.getType());
+        newVersement.setNote(dto.getNote());
 
-        // Mettre à jour le solde du partenaire
-        Double nouveauSolde = partner.getBalance() + dto.getMontantVerser();
-        partner.setBalance(nouveauSolde);
-        partnerRepository.save(partner); // Sauvegarder la mise à jour du solde
+        // 4. Conversion en USD pour le solde du partenaire
+        Double montantEnUSD = dto.getMontantVerser() * tauxVersement;
 
+        // 5. Mise à jour du solde du partenaire (toujours en USD)
+        partner.setBalance(partner.getBalance() + montantEnUSD);
+        partnerRepository.save(partner);
+
+        // 6. Sauvegarde et génération de référence
         versementRepo.save(newVersement);
-
-        // Générer une référence
         String ref = String.format("BBDPAY-%02d", newVersement.getId());
         newVersement.setReference(ref);
+        Versements v = versementRepo.save(newVersement);
 
-        versementRepo.save(newVersement);
+        logServices.logAction(user, "NEW_VERSEMENT", "Versement", v.getId());
 
         return ref;
     }
@@ -86,6 +134,10 @@ public class VersementServices {
                     dto.setMontantRestant(versement.getMontantRestant()); // Récupération directe depuis le versement
                     dto.setCreatedAt(versement.getCreatedAt());
                     dto.setEditedAt(versement.getEditedAt());
+                    dto.setCommissionnairePhone(versement.getCommissionnairePhone());
+                    dto.setCommissionnaireName(versement.getCommissionnaireName());
+                    dto.setType(versement.getType());
+                    dto.setNote(versement.getNote());
                     dto.setPartnerId(versement.getPartner() != null
                             ? versement.getPartner().getId()
                             : null);
@@ -101,44 +153,37 @@ public class VersementServices {
                     dto.setPartnerCountry(versement.getPartner() != null
                             ? versement.getPartner().getCountry()
                             : null);
+                    dto.setDeviseId(versement.getDevise() != null
+                            ? versement.getDevise().getId()
+                            : null);
+                    dto.setDeviseCode(versement.getDevise() != null
+                            ? versement.getDevise().getCode()
+                            : null);
 
                     List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
-                                achatDto.setFournisseur(item.getFournisseur() != null
-                                        ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                        : null);
-                                achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                        ? item.getFournisseur().getPhoneNumber()
-                                        : null);
                                 // Utilisation des montants du versement parent
                                 achatDto.setMontantRestant(versement.getMontantRestant());
                                 achatDto.setMontantVerser(versement.getMontantVerser());
                                 achatDto.setReferenceVersement(versement.getReference());
 
-                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                        .map(ligne -> {
-                                            LigneAchatDto ligneDto = new LigneAchatDto();
-                                            ligneDto.setId(ligne.getId());
-                                            ligneDto.setAchatId(ligne.getAchats() != null
-                                                    ? ligne.getAchats().getId()
-                                                    : null);
-                                            ligneDto.setQuantity(ligne.getQuantite());
-                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                            ligneDto.setItemId(ligne.getItem() != null
-                                                    ? ligne.getItem().getId()
-                                                    : null);
-                                            ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                    ? ligne.getItem().getDescription()
-                                                    : null);
-                                            ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                            ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                            return ligneDto;
+                                List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                            itemDto.setStatus(i.getStatus().name());
+                                            return itemDto;
                                         }).collect(Collectors.toList());
 
-                                achatDto.setLignes(ligneDtos);
+                                achatDto.setItems(itemsDtos);
 
                                 return achatDto;
                             }).collect(Collectors.toList());
@@ -168,6 +213,16 @@ public class VersementServices {
                     dto.setMontantVerser(versement.getMontantVerser());
                     dto.setCreatedAt(versement.getCreatedAt());
                     dto.setEditedAt(versement.getEditedAt());
+                    dto.setCommissionnairePhone(versement.getCommissionnairePhone());
+                    dto.setCommissionnaireName(versement.getCommissionnaireName());
+                    dto.setType(versement.getType());
+                    dto.setNote(versement.getNote());
+                    dto.setDeviseId(versement.getDevise() != null
+                            ? versement.getDevise().getId()
+                            : null);
+                    dto.setDeviseCode(versement.getDevise() != null
+                            ? versement.getDevise().getCode()
+                            : null);
 
                     // Info partenaire (client)
                     if (versement.getPartner() != null) {
@@ -184,14 +239,6 @@ public class VersementServices {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
 
-                                // Info fournisseur
-                                if (item.getFournisseur() != null) {
-                                    achatDto.setFournisseur(
-                                            item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                    );
-                                    achatDto.setFournisseurPhone(item.getFournisseur().getPhoneNumber());
-                                }
-
                                 // Info versement
                                 if (item.getVersement() != null) {
                                     achatDto.setMontantRestant(item.getVersement().getMontantRestant());
@@ -200,25 +247,20 @@ public class VersementServices {
                                 }
 
                                 // Lignes d'achat
-                                List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                        .map(ligne -> {
-                                            LigneAchatDto ligneDto = new LigneAchatDto();
-                                            ligneDto.setId(ligne.getId());
-                                            ligneDto.setAchatId(ligne.getAchats() != null ? ligne.getAchats().getId() : null);
-                                            ligneDto.setQuantity(ligne.getQuantite());
-                                            ligneDto.setPrixTotal(ligne.getPrixTotal());
-
-                                            if (ligne.getItem() != null) {
-                                                ligneDto.setItemId(ligne.getItem().getId());
-                                                ligneDto.setDescriptionItem(ligne.getItem().getDescription());
-                                                ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                            }
-
-                                            return ligneDto;
+                                List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                            itemDto.setStatus(i.getStatus().name());
+                                            return itemDto;
                                         }).collect(Collectors.toList());
 
-                                achatDto.setLignes(ligneDtos);
+                                achatDto.setItems(itemsDtos);
                                 return achatDto;
                             }).collect(Collectors.toList());
 
@@ -248,6 +290,8 @@ public class VersementServices {
         versement.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         versement.setPartner(client);
         versement.setUser(user);
+        Optional.ofNullable(dto.getCommissionnairePhone()).ifPresent(versement::setCommissionnairePhone);
+        Optional.ofNullable(dto.getCommissionnaireName()).ifPresent(versement::setCommissionnaireName);
 
         if (nouveauMontantVerser != null) {
             if (versement.getMontantRestant() == null) {

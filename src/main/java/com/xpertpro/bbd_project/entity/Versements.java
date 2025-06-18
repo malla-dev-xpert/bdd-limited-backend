@@ -21,6 +21,9 @@ public class Versements {
     private Double montantVerser;
     private Double montantRestant;
 
+    private String commissionnaireName;
+    private String commissionnairePhone;
+
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 
@@ -37,4 +40,13 @@ public class Versements {
 
     @OneToMany(mappedBy = "versement", cascade = CascadeType.ALL)
     private List<Achats> achats = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "devise_id")
+    private Devises devise;
+
+    private Double tauxUtilise;
+    private String type;
+    private String note;
+
 }

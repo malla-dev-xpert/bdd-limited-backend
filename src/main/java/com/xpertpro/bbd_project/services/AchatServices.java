@@ -1,7 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
-import com.xpertpro.bbd_project.dto.achats.CreateLigneDto;
+import com.xpertpro.bbd_project.dto.achats.CreateItemsDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.repository.*;
@@ -14,117 +14,229 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Map;
 
 @Service
 public class AchatServices {
 
     @Autowired
     VersementRepo versementRepo;
-
     @Autowired
     PartnerRepository partnerRepository;
-
     @Autowired
     ItemsRepository itemsRepository;
-
     @Autowired
     AchatRepository achatRepository;
-
     @Autowired
     UserRepository userRepository;
-
     @Autowired
-    LigneAchatRepository ligneAchatRepository;
+    LogServices logServices;
+    @Autowired
+    ExchangeRateServices exchangeRateServices;
 
     @Transactional
-    public String createAchatForClient(Long clientId, Long supplierId, Long userId, CreateAchatDto dto) {
+    public String createAchatForClient(Long clientId, Long userId, CreateAchatDto dto) {
+        // Validate input parameters
+        if (clientId == null || userId == null || dto == null) {
+            throw new IllegalArgumentException("ID client, ID utilisateur et DTO ne peuvent pas être nuls");
+        }
+
         try {
-//            log.info("Tentative de création d'achat - client: {}, fournisseur: {}, user: {}", clientId, supplierId, userId);
-
-            // 1. Validation des entités
+            // Fetch and validate user
             UserEntity user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+                    .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + userId));
 
+            // Fetch and validate client
             Partners client = partnerRepository.findById(clientId)
-                    .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+                    .orElseThrow(() -> new EntityNotFoundException("Client non trouvé avec id: " + clientId));
 
-            Partners supplier = partnerRepository.findById(supplierId)
-                    .orElseThrow(() -> new EntityNotFoundException("Supplier not found with id: " + supplierId));
-
-            // 2. Validation du versement
+            // Validate payment
             if (dto.getVersementId() == null) {
-                throw new BusinessException("VERSEMENT_ID_REQUIRED");
+                throw new BusinessException("VERSEMENT_ID_REQUIRED", "ID de paiement est requis");
             }
 
             Versements versement = versementRepo.findById(dto.getVersementId())
-                    .orElseThrow(() -> new EntityNotFoundException("Versement not found with id: " + dto.getVersementId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Paiement non trouvé avec id: " + dto.getVersementId()));
 
+            // Verify payment belongs to client
             if (!versement.getPartner().getId().equals(clientId)) {
-                throw new BusinessException("VERSEMENT_CLIENT_MISMATCH");
+                throw new BusinessException("VERSEMENT_CLIENT_MISMATCH",
+                        "Le paiement n’appartient pas au client spécifié");
             }
 
-            // 3. Création de l'achat
+            // Validate items
+            if (dto.getItems() == null || dto.getItems().isEmpty()) {
+                throw new BusinessException("NO_ITEMS_PROVIDED", "Au moins un article est requis");
+            }
+
+            // Create purchase
             Achats achat = new Achats();
             achat.setClient(client);
-            achat.setFournisseur(supplier);
             achat.setVersement(versement);
             achat.setCreatedAt(LocalDateTime.now());
-            achat.setStatus(StatusEnum.CREATE);
+            achat.setStatus(StatusEnum.PENDING);
 
-            // 4. Calcul du montant total
-            double total = dto.getLignes().stream()
-                    .mapToDouble(l -> {
-                        if (l.getQuantityItem() <= 0 || l.getPrixUnitaire() <= 0) {
-                            throw new BusinessException("INVALID_ITEM_VALUES");
-                        }
-                        return l.getQuantityItem() * l.getPrixUnitaire();
-                    })
-                    .sum();
-            achat.setMontantTotal(total);
-
-            // 5. Sauvegarde de l'achat (pour obtenir l'ID)
-            Achats savedAchat = achatRepository.save(achat);
-
-            // 6. Création des items et lignes
+            // Calculate total amount and validate items
+            double total = 0;
             List<Items> items = new ArrayList<>();
-            List<LigneAchat> lignes = new ArrayList<>();
 
-            for (CreateLigneDto ligneDto : dto.getLignes()) {
+            for (CreateItemsDto ligneDto : dto.getItems()) {
+                // Validate item
+                if (ligneDto.getQuantity() == null || ligneDto.getQuantity() <= 0) {
+                    throw new BusinessException("INVALID_QUANTITY",
+                            "La quantité doit être supérieure à 0 pour tous les articles");
+                }
+
+                if (ligneDto.getUnitPrice() <= 0) {
+                    throw new BusinessException("INVALID_UNIT_PRICE",
+                            "Le prix unitaire doit être supérieur à 0 pour tous les articles");
+                }
+
+                if (ligneDto.getDescription() == null || ligneDto.getDescription().trim().isEmpty()) {
+                    throw new BusinessException("MISSING_DESCRIPTION",
+                            "La description est requise pour tous les articles");
+                }
+
+                if (ligneDto.getSupplierId() == null) {
+                    throw new BusinessException("SUPPLIER_ID_REQUIRED",
+                            "ID fournisseur est requis pour tous les articles");
+                }
+
+                double itemTotal = ligneDto.getQuantity() * ligneDto.getUnitPrice();
+                total += itemTotal;
+
+                Partners supplier = partnerRepository.findById(ligneDto.getSupplierId())
+                        .orElseThrow(() -> new EntityNotFoundException("Fournisseur non trouvé avec id: " + ligneDto.getSupplierId()));
+
+                // Create item (we'll save them after the purchase is created)
                 Items item = new Items();
-                item.setDescription(ligneDto.getDescriptionItem());
-                item.setQuantity(ligneDto.getQuantityItem());
-                item.setUnitPrice(ligneDto.getPrixUnitaire());
+                item.setDescription(ligneDto.getDescription().trim());
+                item.setQuantity(ligneDto.getQuantity());
+                item.setUnitPrice(ligneDto.getUnitPrice());
                 item.setUser(user);
-                item.setAchats(savedAchat);
-                item.setStatus(StatusEnum.CREATE);
+                item.setSupplier(supplier);
+                item.setInvoiceNumber(ligneDto.getInvoiceNumber());
+                item.setStatus(StatusEnum.PENDING);
                 item.setCreatedAt(LocalDateTime.now());
-                items.add(item);
+                item.setTotalPrice(itemTotal);
 
-                LigneAchat ligne = new LigneAchat();
-                ligne.setAchats(savedAchat);
-                ligne.setItem(item);
-                ligne.setQuantite(ligneDto.getQuantityItem());
-                ligne.setPrixTotal(ligneDto.getQuantityItem() * ligneDto.getPrixUnitaire());
-                ligne.setStatus(StatusEnum.CREATE);
-                lignes.add(ligne);
+                items.add(item);
             }
 
-            // 7. Sauvegarde en cascade
+            // Handle currency conversion if needed
+            Double montantEnUSD = total;
+            if (versement.getDevise() != null && !"CNY".equals(versement.getDevise().getCode())) {
+                try {
+                    Double taux = exchangeRateServices.getRealTimeRate(versement.getDevise().getCode(), "CNY");
+                    if (taux == null || taux <= 0) {
+                        throw new BusinessException("INVALID_EXCHANGE_RATE",
+                                "Impossible d’obtenir un taux de change valide pour la devise: " + versement.getDevise().getCode());
+                    }
+                    montantEnUSD = total * taux;
+                    achat.setDevise(versement.getDevise());
+                    achat.setTauxUtilise(taux);
+                } catch (Exception e) {
+                    throw new BusinessException("EXCHANGE_RATE_ERROR",
+                            "Erreur lors de la conversion de devise: " + e.getMessage());
+                }
+            }
+
+            achat.setMontantTotal(montantEnUSD);
+
+            // Save purchase first to get ID
+            Achats savedAchat = achatRepository.save(achat);
+
+            // Set purchase reference for all items and save them
+            items.forEach(item -> item.setAchats(savedAchat));
             itemsRepository.saveAll(items);
-            ligneAchatRepository.saveAll(lignes);
 
-            // 8. Mise à jour des soldes
-            updateBalances(client, versement, total);
+            // Log the action
+            logServices.logAction(
+                    user,
+                    "ACHAT_ARTICLE",
+                    "Achats",
+                    savedAchat.getId()
+            );
 
-            return "ACHAT_CREATED";
+            return "ACHAT_CREATED_SUCCESSFULLY";
 
+        } catch (BusinessException e) {
+            // Known business exceptions are rethrown directly
+            throw e;
+        } catch (EntityNotFoundException e) {
+            // Entity not found exceptions are rethrown directly
+            throw e;
         } catch (Exception e) {
-//            log.error("Erreur lors de la création de l'achat", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la création de l'achat", e);
+            // Unexpected exceptions are wrapped
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Une erreur inattendue s’est produite lors de la création de l’achat",
+                    e
+            );
         }
+    }
+
+    @Transactional
+    public void confirmItemDelivery(List<Long> itemIds, Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Map<Achats, Double> montantsParAchat = new HashMap<>(); // Pour regrouper par achat
+
+        for (Long itemId : itemIds) {
+            Items item = itemsRepository.findById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("Item not found"));
+
+            if (item.getStatus() == StatusEnum.RECEIVED) {
+                throw new BusinessException("ITEM_ALREADY_RECEIVED", "Payment ID is required");
+            }
+
+            Achats achat = item.getAchats();
+            Versements versement = achat.getVersement();
+            Partners client = achat.getClient();
+
+            // Calcul du montant de l'item en CNY
+            double montantItem = item.getQuantity() * item.getUnitPrice();
+            if (achat.getDevise() != null && !"CNY".equals(achat.getDevise().getCode())) {
+                montantItem *= achat.getTauxUtilise();
+            }
+
+            // Mise à jour du statut
+            item.setStatus(StatusEnum.RECEIVED);
+            itemsRepository.save(item);
+
+            // Accumuler les montants par achat
+            montantsParAchat.merge(achat, montantItem, Double::sum);
+        }
+
+        // Mettre à jour les soldes par achat
+        for (Map.Entry<Achats, Double> entry : montantsParAchat.entrySet()) {
+            Achats achat = entry.getKey();
+            Versements versement = achat.getVersement();
+            Partners client = achat.getClient();
+            double montantTotal = entry.getValue();
+
+            // Mise à jour des soldes
+            client.setBalance(client.getBalance() - montantTotal);
+            versement.setMontantRestant(versement.getMontantRestant() - montantTotal);
+
+            partnerRepository.save(client);
+            versementRepo.save(versement);
+
+            // Vérifier si tous les items sont livrés
+            boolean allDelivered = achat.getItems().stream()
+                    .allMatch(i -> i.getStatus() == StatusEnum.RECEIVED);
+
+            if (allDelivered) {
+                achat.setStatus(StatusEnum.COMPLETED);
+                achatRepository.save(achat);
+            }
+        }
+
+        // Logging
+//        logServices.logAction(user, "CONFIRMER_RECEPTION_COLIS", "ACHAT_ITEMS", itemIds);
     }
 
     private void updateBalances(Partners client, Versements versement, double montant) {
@@ -138,15 +250,13 @@ public class AchatServices {
             versement.setEditedAt(LocalDateTime.now());
             versementRepo.save(versement);
         } catch (Exception e) {
-//            log.error("Erreur lors de la mise à jour des soldes", e);
-            throw new BusinessException("BALANCE_UPDATE_FAILED");
+            throw new BusinessException("BALANCE_UPDATE_FAILED", "Payment ID is required");
         }
     }
 
-    public class BusinessException extends RuntimeException {
-        public BusinessException(String message) {
+    public static class BusinessException extends RuntimeException {
+        public BusinessException(String message, String paymentIdIsRequired) {
             super(message);
         }
     }
-
 }

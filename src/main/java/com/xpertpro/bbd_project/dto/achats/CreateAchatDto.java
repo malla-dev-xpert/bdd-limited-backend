@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class CreateAchatDto {
     private Long versementId;
-    private List<CreateLigneDto> lignes;
+    private List<CreateItemsDto> items;
 }

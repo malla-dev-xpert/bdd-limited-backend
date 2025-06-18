@@ -1,16 +1,10 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.config.JwtUtil;
-import com.xpertpro.bbd_project.dto.PackageDto;
-import com.xpertpro.bbd_project.dto.achats.AchatDto;
-import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
-import com.xpertpro.bbd_project.dto.achats.VersementDto;
-import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
 import com.xpertpro.bbd_project.dto.user.UpdateUserDto;
 import com.xpertpro.bbd_project.dto.user.findUserDto;
-import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.RolesEntity;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.PermissionsEnum;
@@ -318,8 +312,7 @@ public class UserService {
                 deletedBy,
                 "DELETE_USER",
                 "Users",
-                userToDelete.getId()
-        );
+                userToDelete.getId());
         userRepository.save(userToDelete);
     }
 

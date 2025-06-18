@@ -2,8 +2,8 @@ package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
-import com.xpertpro.bbd_project.dto.achats.LigneAchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
 import com.xpertpro.bbd_project.entity.Partners;
@@ -102,44 +102,42 @@ public class PartnerServices {
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
                                 newVersemtDto.setCreatedAt(v.getCreatedAt());
                                 newVersemtDto.setReference(v.getReference());
+                                newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
+                                newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
+                                newVersemtDto.setType(v.getType());
+                                newVersemtDto.setNote(v.getNote());
+                                newVersemtDto.setDeviseId(v.getDevise() != null
+                                        ? v.getDevise().getId()
+                                        : null);
+                                newVersemtDto.setDeviseCode(v.getDevise() != null
+                                        ? v.getDevise().getCode()
+                                        : null);
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
-                                            achatDto.setFournisseur(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                                    : null);
-                                            achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getPhoneNumber()
-                                                    : null);
                                             // Utilisation des montants du versement parent
                                             achatDto.setMontantRestant(v.getMontantRestant());
                                             achatDto.setMontantVerser(v.getMontantVerser());
                                             achatDto.setReferenceVersement(v.getReference());
 
-                                            List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                                    .map(ligne -> {
-                                                        LigneAchatDto ligneDto = new LigneAchatDto();
-                                                        ligneDto.setId(ligne.getId());
-                                                        ligneDto.setAchatId(ligne.getAchats() != null
-                                                                ? ligne.getAchats().getId()
-                                                                : null);
-                                                        ligneDto.setQuantity(ligne.getQuantite());
-                                                        ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                                        ligneDto.setItemId(ligne.getItem() != null
-                                                                ? ligne.getItem().getId()
-                                                                : null);
-                                                        ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                                ? ligne.getItem().getDescription()
-                                                                : null);
-                                                        ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                        ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                                        return ligneDto;
+                                            List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .map(i -> {
+                                                        ItemDto itemDto = new ItemDto();
+                                                        itemDto.setId(i.getId());
+                                                        itemDto.setDescription(i.getDescription());
+                                                        itemDto.setQuantity(i.getQuantity());
+                                                        itemDto.setUnitPrice(i.getUnitPrice());
+                                                        itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                                        itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                                        itemDto.setStatus(i.getStatus().name());
+                                                        itemDto.setUnitPrice(i.getUnitPrice());
+                                                        return itemDto;
                                                     }).collect(Collectors.toList());
 
-                                            achatDto.setLignes(ligneDtos);
+                                            achatDto.setItems(itemsDtos);
 
                                             return achatDto;
                                         }).collect(Collectors.toList());
@@ -228,44 +226,41 @@ public class PartnerServices {
                                 newVersemtDto.setPartnerAccountType(v.getPartner() != null ? v.getPartner().getAccountType() : null);
                                 newVersemtDto.setCreatedAt(v.getCreatedAt());
                                 newVersemtDto.setReference(v.getReference());
+                                newVersemtDto.setType(v.getType());
+                                newVersemtDto.setNote(v.getNote());
+                                newVersemtDto.setCommissionnairePhone(v.getCommissionnairePhone());
+                                newVersemtDto.setCommissionnaireName(v.getCommissionnaireName());
+                                newVersemtDto.setDeviseId(v.getDevise() != null
+                                        ? v.getDevise().getId()
+                                        : null);
+                                newVersemtDto.setDeviseCode(v.getDevise() != null
+                                        ? v.getDevise().getCode()
+                                        : null);
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
-                                            achatDto.setFournisseur(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getFirstName() + " " + item.getFournisseur().getLastName()
-                                                    : null);
-                                            achatDto.setFournisseurPhone(item.getFournisseur() != null
-                                                    ? item.getFournisseur().getPhoneNumber()
-                                                    : null);
                                             // Utilisation des montants du versement parent
                                             achatDto.setMontantRestant(v.getMontantRestant());
                                             achatDto.setMontantVerser(v.getMontantVerser());
                                             achatDto.setReferenceVersement(v.getReference());
 
-                                            List<LigneAchatDto> ligneDtos = item.getLignes().stream()
-                                                    .map(ligne -> {
-                                                        LigneAchatDto ligneDto = new LigneAchatDto();
-                                                        ligneDto.setId(ligne.getId());
-                                                        ligneDto.setAchatId(ligne.getAchats() != null
-                                                                ? ligne.getAchats().getId()
-                                                                : null);
-                                                        ligneDto.setQuantity(ligne.getQuantite());
-                                                        ligneDto.setPrixTotal(ligne.getPrixTotal());
-                                                        ligneDto.setItemId(ligne.getItem() != null
-                                                                ? ligne.getItem().getId()
-                                                                : null);
-                                                        ligneDto.setDescriptionItem(ligne.getItem() != null
-                                                                ? ligne.getItem().getDescription()
-                                                                : null);
-                                                        ligneDto.setQuantityItem(ligne.getItem().getQuantity());
-                                                        ligneDto.setUnitPriceItem(ligne.getItem().getUnitPrice());
-                                                        return ligneDto;
+                                            List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .map(i -> {
+                                                        ItemDto itemDto = new ItemDto();
+                                                        itemDto.setId(i.getId());
+                                                        itemDto.setDescription(i.getDescription());
+                                                        itemDto.setQuantity(i.getQuantity());
+                                                        itemDto.setUnitPrice(i.getUnitPrice());
+                                                        itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                                        itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                                        itemDto.setStatus(i.getStatus().name());
+                                                        return itemDto;
                                                     }).collect(Collectors.toList());
 
-                                            achatDto.setLignes(ligneDtos);
+                                            achatDto.setItems(itemsDtos);
 
                                             return achatDto;
                                         }).collect(Collectors.toList());

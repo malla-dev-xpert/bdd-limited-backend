@@ -6,12 +6,14 @@ import com.xpertpro.bbd_project.entityMapper.HarborEmbarquementRequest;
 import com.xpertpro.bbd_project.repository.ContainersRepository;
 import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.ContainerServices;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -27,13 +29,28 @@ public class ContainersController {
     ContainerPackageService containerPackageService;
 
     @PostMapping("/create")
-    public ResponseEntity<String> addContainers(@RequestBody ContainersDto containersDto, @RequestParam(name = "userId") Long userId) {
-        String result = containerServices.createContainer(containersDto, userId);
-        switch (result) {
-            case "REF_EXIST":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Numéro d'identification déjà utilisé !");
-            default:
-                return ResponseEntity.status(HttpStatus.CREATED).body("Le conteneur a été ajouté avec succès!");
+    public ResponseEntity<String> addContainers(
+            @RequestBody ContainersDto containersDto,
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(required = false) Long supplierId) {
+
+        try {
+            String result = containerServices.createContainer(containersDto, userId, supplierId);
+
+            return switch (result) {
+                case "REF_EXIST" -> ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Numéro d'identification déjà utilisé !");
+                case "SUCCESS" -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body("Le conteneur a été ajouté avec succès!");
+                default -> ResponseEntity.internalServerError()
+                        .body("Une erreur inattendue est survenue");
+            };
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Erreur lors de la création du conteneur: " + e.getMessage());
         }
     }
 
@@ -54,10 +71,11 @@ public class ContainersController {
 
     @PostMapping("/embarquer")
     public ResponseEntity<String> embarquerColis(
-            @RequestBody EmbarquementRequest request) {
+            @RequestBody EmbarquementRequest request,
+            @RequestParam(name = "userId") Long userId) {
 
         try{
-            String result = containerPackageService.embarquerColis(request);
+            String result = containerPackageService.embarquerColis(request, userId);
 
             switch (result) {
                 case "CONTAINER_NOT_AVAILABLE":
@@ -75,10 +93,11 @@ public class ContainersController {
 
     @PostMapping("/embarquer/in-harbor")
     public ResponseEntity<String> embarquerContainerInHarbor(
-            @RequestBody HarborEmbarquementRequest request) {
+            @RequestBody HarborEmbarquementRequest request,
+            @RequestParam(name = "userId") Long userId) {
 
         try{
-            String result = containerPackageService.embarquerConteneursDansPort(request);
+            String result = containerPackageService.embarquerConteneursDansPort(request, userId);
 
             switch (result) {
                 case "HARBOR_NOT_AVAILABLE":
@@ -95,6 +114,11 @@ public class ContainersController {
     @GetMapping()
     public List<ContainersDto> getAllContainers(@RequestParam(defaultValue = "0") int page) {
         return containerServices.getAllContainers(page);
+    }
+
+    @GetMapping("/not-in-harbor")
+    public List<ContainersDto> getAllContainersNotInHarbor(@RequestParam(defaultValue = "0") int page) {
+        return containerServices.getAllContainersNotInHarbor(page);
     }
 
     @GetMapping("/{id}")
@@ -136,6 +160,19 @@ public class ContainersController {
                 return "Impossible de démarrer la livraison, pas de colis dans le conteneur.";
             default:
                 return "Le Conteneur avec  l'id " + id + " est encours de livraison.";
+        }
+    }
+
+    @GetMapping("/delivery-received/{id}")
+    public String confirmDelivery(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
+        String result = containerServices.confirmDelivery(id, userId);
+        switch (result){
+            case "NO_PACKAGE_FOR_DELIVERY":
+                return "Impossible de confirmer la réception, pas de colis dans le conteneur.";
+            case "CONTAINER_NOT_IN_PROGRESS":
+                return "Le conteneur n'est pas en status INPROGRESS.";
+            default:
+                return "Le Conteneur avec  l'id " + id + " a ete receptionner avec succès.";
         }
     }
 }

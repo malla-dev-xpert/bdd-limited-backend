@@ -1,7 +1,7 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
-import com.xpertpro.bbd_project.entity.Packages;
+import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.PackageServices;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +17,8 @@ import java.util.List;
 public class PackageController {
     @Autowired
     PackageServices packageServices;
+    @Autowired
+    ContainerPackageService containerPackageService;
 
     @PostMapping("/create")
     public ResponseEntity<String> newExpedition(
@@ -37,6 +39,37 @@ public class PackageController {
     @GetMapping()
     public List<PackageDto> findAll(@RequestParam(defaultValue = "0") int page, @RequestParam(required = false) String query) {
         return packageServices.getAll(page, query);
+    }
+
+    @GetMapping("/received")
+    public List<PackageDto> findAllInPending(@RequestParam(defaultValue = "0") int page) {
+        return packageServices.getAllEnAttente(page);
+    }
+
+    @DeleteMapping("/{packageId}/container/{containerId}")
+    public ResponseEntity<String> removePackageFromContainer(
+            @PathVariable Long packageId,
+            @PathVariable Long containerId,
+            @RequestParam Long userId) {
+
+        try {
+            String result = containerPackageService.retirerColis(packageId, containerId, userId);
+
+            return ResponseEntity.ok()
+                    .body(("SUCCESS"+ result));
+
+        } catch (ContainerPackageService.ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(("ERROR"+ ex.getMessage()));
+
+        } catch (ContainerPackageService.OperationNotAllowedException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(("ERROR"+ ex.getMessage()));
+
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError()
+                    .body(("ERROR"+ "Erreur interne du serveur"));
+        }
     }
 
     @DeleteMapping("/start-expedition")

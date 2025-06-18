@@ -18,13 +18,19 @@ public class DeviseController {
     DeviseService deviseService;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createDevise(@RequestBody DeviseDto deviseDto){
-        String result = deviseService.createDevise(deviseDto);
+    public ResponseEntity<String> createDevise(@RequestBody DeviseDto deviseDto, @RequestParam Long userId){
+        String result = deviseService.createDevise(deviseDto, userId);
         switch (result) {
             case "NAME_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom de devise déjà utilisé !");
             case "CODE_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Code déjà utilisé !");
+            case "RATE_NOT_FOUND":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le taux de conversion depuis le Yuan Chinois (CNY) n'a pas pu être récupéré automatiquement.");
+            case "RATE_SERVICE_ERROR":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Le service de taux de change est temporairement indisponible.");
+            case "GENERAL_ERROR":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support.");
             default:
                 return ResponseEntity.status(HttpStatus.CREATED).body("Devise ajouté avec succès !");
         }

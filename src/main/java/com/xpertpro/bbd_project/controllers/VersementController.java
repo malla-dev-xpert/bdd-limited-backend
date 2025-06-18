@@ -22,9 +22,10 @@ public class VersementController {
     public String create(
             @RequestParam(name = "userId") Long userId,
             @RequestParam(name = "partnerId")  Long partnerId,
+            @RequestParam(name = "deviseId")  Long deviseId,
             @RequestBody VersementDto dto
     ){
-        return versementServices.newVersement(userId, partnerId, dto);
+        return versementServices.newVersement(userId, partnerId,deviseId, dto);
     }
 
     @GetMapping()
