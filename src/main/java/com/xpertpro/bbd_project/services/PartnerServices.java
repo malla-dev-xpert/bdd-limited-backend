@@ -119,6 +119,7 @@ public class PartnerServices {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
                                             achatDto.setMontantTotal(item.getMontantTotal());
+                                            achatDto.setStatus(item.getStatus().name());
                                             // Utilisation des montants du versement parent
                                             achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
 
@@ -244,6 +245,7 @@ public class PartnerServices {
                                             achatDto.setId(item.getId());
                                             achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
                                             achatDto.setMontantTotal(item.getMontantTotal());
+                                            achatDto.setStatus(item.getStatus().name());
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .map(i -> {
