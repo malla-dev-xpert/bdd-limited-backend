@@ -6,6 +6,8 @@ import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.partners.PartnerDto;
 import com.xpertpro.bbd_project.dto.partners.UpdatePartnersDto;
+import com.xpertpro.bbd_project.entity.Achats;
+import com.xpertpro.bbd_project.entity.Items;
 import com.xpertpro.bbd_project.entity.Partners;
 import com.xpertpro.bbd_project.entity.UserEntity;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -115,15 +117,18 @@ public class PartnerServices {
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                                        .sorted(Comparator.comparing(Achats::getCreatedAt).reversed())
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
                                             achatDto.setMontantTotal(item.getMontantTotal());
                                             achatDto.setStatus(item.getStatus().name());
+                                            achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                             // Utilisation des montants du versement parent
                                             achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
                                                     .map(i -> {
                                                         ItemDto itemDto = new ItemDto();
                                                         itemDto.setId(i.getId());
@@ -240,14 +245,17 @@ public class PartnerServices {
 
                                 List<AchatDto> achatDtos = v.getAchats().stream()
                                         .filter(item -> item.getStatus() != StatusEnum.DELETE)
+                                        .sorted(Comparator.comparing(Achats::getCreatedAt).reversed())
                                         .map(item -> {
                                             AchatDto achatDto = new AchatDto();
                                             achatDto.setId(item.getId());
                                             achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
                                             achatDto.setMontantTotal(item.getMontantTotal());
                                             achatDto.setStatus(item.getStatus().name());
+                                            achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
+                                                    .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
                                                     .map(i -> {
                                                         ItemDto itemDto = new ItemDto();
                                                         itemDto.setId(i.getId());

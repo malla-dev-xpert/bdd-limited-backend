@@ -1,6 +1,5 @@
 package com.xpertpro.bbd_project.services;
 
-import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
 import com.xpertpro.bbd_project.dto.achats.CreateItemsDto;
@@ -269,6 +268,7 @@ public class AchatServices {
                             : null);
                     dto.setMontantTotal(achat.getMontantTotal());
                     dto.setStatus(achat.getStatus().name());
+                    dto.setCreatedAt(achat.getCreatedAt() != null ? achat.getCreatedAt() : null);
 
                     List<ItemDto> itemsDtos = achat.getItems().stream()
                             .map(i -> {

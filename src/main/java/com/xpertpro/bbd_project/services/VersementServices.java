@@ -166,6 +166,7 @@ public class VersementServices {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
                                 achatDto.setMontantTotal(item.getMontantTotal());
+                                achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                 // Utilisation des montants du versement parent
                                 achatDto.setReferenceVersement(versement.getReference());
 
@@ -239,7 +240,7 @@ public class VersementServices {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
                                 achatDto.setMontantTotal(item.getMontantTotal());
-
+                                achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                 // Info versement
                                 if (item.getVersement() != null) {
                                     achatDto.setReferenceVersement(item.getVersement().getReference());
