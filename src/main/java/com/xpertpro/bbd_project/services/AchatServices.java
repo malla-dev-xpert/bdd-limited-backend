@@ -42,35 +42,21 @@ public class AchatServices {
 
     @Transactional
     public String createAchatForClient(Long clientId, Long userId, CreateAchatDto dto) {
-        // Validate input parameters
+        // Valider les paramètres d’entrée
         if (clientId == null || userId == null || dto == null) {
             throw new IllegalArgumentException("ID client, ID utilisateur et DTO ne peuvent pas être nuls");
         }
 
         try {
-            // Fetch and validate user
+            // Récupérer et valider l’utilisateur
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + userId));
 
-            // Fetch and validate client
+            // Récupérer et valider le client
             Partners client = partnerRepository.findById(clientId)
                     .orElseThrow(() -> new EntityNotFoundException("Client non trouvé avec id: " + clientId));
 
-            // Validate payment
-            if (dto.getVersementId() == null) {
-                throw new BusinessException("VERSEMENT_ID_REQUIRED", "ID de paiement est requis");
-            }
-
-            Versements versement = versementRepo.findById(dto.getVersementId())
-                    .orElseThrow(() -> new EntityNotFoundException("Paiement non trouvé avec id: " + dto.getVersementId()));
-
-            // Verify payment belongs to client
-            if (!versement.getPartner().getId().equals(clientId)) {
-                throw new BusinessException("VERSEMENT_CLIENT_MISMATCH",
-                        "Le paiement n’appartient pas au client spécifié");
-            }
-
-            // Validate items
+            // Valider les éléments
             if (dto.getItems() == null || dto.getItems().isEmpty()) {
                 throw new BusinessException("NO_ITEMS_PROVIDED", "Au moins un article est requis");
             }
@@ -78,11 +64,27 @@ public class AchatServices {
             // Create purchase
             Achats achat = new Achats();
             achat.setClient(client);
-            achat.setVersement(versement);
             achat.setCreatedAt(LocalDateTime.now());
             achat.setStatus(StatusEnum.PENDING);
 
-            // Calculate total amount and validate items
+            // Gérer le paiement si fourni
+            if (dto.getVersementId() != null) {
+                Versements versement = versementRepo.findById(dto.getVersementId())
+                        .orElseThrow(() -> new EntityNotFoundException("Paiement non trouvé avec id: " + dto.getVersementId()));
+
+                // Vérifier que le paiement appartient au client
+                if (!versement.getPartner().getId().equals(clientId)) {
+                    throw new BusinessException("VERSEMENT_CLIENT_MISMATCH",
+                            "Le paiement n'appartient pas au client spécifié");
+                }
+
+                achat.setVersement(versement);
+            } else {
+                // Aucun paiement fourni - marquer comme dette
+                achat.setIsDebt(true);
+            }
+
+            // Calculer le montant total et valider les éléments
             double total = 0;
             List<Items> items = new ArrayList<>();
 
@@ -114,7 +116,7 @@ public class AchatServices {
                 Partners supplier = partnerRepository.findById(ligneDto.getSupplierId())
                         .orElseThrow(() -> new EntityNotFoundException("Fournisseur non trouvé avec id: " + ligneDto.getSupplierId()));
 
-                // Create item (we'll save them after the purchase is created)
+                // Créer l’article
                 Items item = new Items();
                 item.setDescription(ligneDto.getDescription().trim());
                 item.setQuantity(ligneDto.getQuantity());
@@ -125,21 +127,22 @@ public class AchatServices {
                 item.setStatus(StatusEnum.PENDING);
                 item.setCreatedAt(LocalDateTime.now());
                 item.setTotalPrice(itemTotal);
+                item.setSalesRate(ligneDto.getSalesRate());
 
                 items.add(item);
             }
 
-            // Handle currency conversion if needed
-            Double montantEnUSD = total;
-            if (versement.getDevise() != null && !"CNY".equals(versement.getDevise().getCode())) {
+            // Gérer la conversion de devise si le paiement existe et a une devise différente
+            Double montantEnCNY = total;
+            if (achat.getVersement() != null && achat.getVersement().getDevise() != null && !"CNY".equals(achat.getVersement().getDevise().getCode())) {
                 try {
-                    Double taux = exchangeRateServices.getRealTimeRate(versement.getDevise().getCode(), "CNY");
+                    Double taux = exchangeRateServices.getRealTimeRate(achat.getVersement().getDevise().getCode(), "CNY");
                     if (taux == null || taux <= 0) {
                         throw new BusinessException("INVALID_EXCHANGE_RATE",
-                                "Impossible d’obtenir un taux de change valide pour la devise: " + versement.getDevise().getCode());
+                                "Impossible d'obtenir un taux de change valide pour la devise: " + achat.getVersement().getDevise().getCode());
                     }
-                    montantEnUSD = total * taux;
-                    achat.setDevise(versement.getDevise());
+                    montantEnCNY = total * taux;
+                    achat.setDevise(achat.getVersement().getDevise());
                     achat.setTauxUtilise(taux);
                 } catch (Exception e) {
                     throw new BusinessException("EXCHANGE_RATE_ERROR",
@@ -147,14 +150,20 @@ public class AchatServices {
                 }
             }
 
-            achat.setMontantTotal(montantEnUSD);
+            achat.setMontantTotal(montantEnCNY);
 
-            // Save purchase first to get ID
+            // Enregistrer l’achat d’abord pour obtenir l’ID
             Achats savedAchat = achatRepository.save(achat);
 
-            // Set purchase reference for all items and save them
+            // Définir la référence d’achat pour tous les articles et les enregistrer
             items.forEach(item -> item.setAchats(savedAchat));
             itemsRepository.saveAll(items);
+
+            // Si c’est une dette, mettre à jour le montant de la dette du client
+            if (achat.getIsDebt()) {
+                client.setTotalDebt(client.getTotalDebt() != null ? client.getTotalDebt() + montantEnCNY : montantEnCNY);
+                partnerRepository.save(client);
+            }
 
             // Log the action
             logServices.logAction(
@@ -164,19 +173,16 @@ public class AchatServices {
                     savedAchat.getId()
             );
 
-            return "ACHAT_CREATED_SUCCESSFULLY";
+            return achat.getIsDebt() ? "ACHAT_CREATED_AS_DEBT_SUCCESSFULLY" : "ACHAT_CREATED_SUCCESSFULLY";
 
         } catch (BusinessException e) {
-            // Known business exceptions are rethrown directly
             throw e;
         } catch (EntityNotFoundException e) {
-            // Entity not found exceptions are rethrown directly
             throw e;
         } catch (Exception e) {
-            // Unexpected exceptions are wrapped
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Une erreur inattendue s’est produite lors de la création de l’achat",
+                    "Une erreur inattendue s'est produite lors de la création de l'achat",
                     e
             );
         }
@@ -268,6 +274,7 @@ public class AchatServices {
                             : null);
                     dto.setMontantTotal(achat.getMontantTotal());
                     dto.setStatus(achat.getStatus().name());
+                    dto.setIsDebt(achat.getIsDebt());
                     dto.setCreatedAt(achat.getCreatedAt() != null ? achat.getCreatedAt() : null);
 
                     List<ItemDto> itemsDtos = achat.getItems().stream()

@@ -31,6 +31,7 @@ public class Partners {
 
     private String accountType;
     private Double balance = 0.0; //solde du client
+    private Double totalDebt;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;

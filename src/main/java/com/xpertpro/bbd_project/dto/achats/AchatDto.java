@@ -18,4 +18,5 @@ public class AchatDto {
     private String clientPhone;
     private String status;
     private List<ItemDto> items;
+    private Boolean isDebt;
 }

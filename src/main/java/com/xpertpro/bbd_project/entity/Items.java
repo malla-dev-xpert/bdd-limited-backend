@@ -20,6 +20,7 @@ public class Items {
     private int quantity;
     private double unitPrice;
     private double totalPrice;
+    private double salesRate;
     private String invoiceNumber;
     @Enumerated(EnumType.STRING)
     private StatusEnum status;

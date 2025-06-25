@@ -168,7 +168,8 @@ public class VersementServices {
                                 achatDto.setMontantTotal(item.getMontantTotal());
                                 achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                 // Utilisation des montants du versement parent
-                                achatDto.setReferenceVersement(versement.getReference());
+                                achatDto.setReferenceVersement(item.getVersement().getReference());
+                                achatDto.setIsDebt(item.getIsDebt());
 
                                 List<ItemDto> itemsDtos = item.getItems().stream()
                                         .map(i -> {
@@ -245,6 +246,7 @@ public class VersementServices {
                                 if (item.getVersement() != null) {
                                     achatDto.setReferenceVersement(item.getVersement().getReference());
                                 }
+                                achatDto.setIsDebt(item.getIsDebt());
 
                                 // Lignes d'achat
                                 List<ItemDto> itemsDtos = item.getItems().stream()
