@@ -39,6 +39,8 @@ public class AchatServices {
     LogServices logServices;
     @Autowired
     ExchangeRateServices exchangeRateServices;
+    @Autowired
+    DevisesRepository deviseRepository;
 
     @Transactional
     public String createAchatForClient(Long clientId, Long userId, CreateAchatDto dto) {
@@ -47,7 +49,9 @@ public class AchatServices {
             throw new IllegalArgumentException("ID client, ID utilisateur et DTO ne peuvent pas être nuls");
         }
 
+
         try {
+            System.out.println("Début création achat pour client {}"+ clientId);
             // Récupérer et valider l’utilisateur
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + userId));
@@ -113,6 +117,8 @@ public class AchatServices {
                 double itemTotal = ligneDto.getQuantity() * ligneDto.getUnitPrice();
                 total += itemTotal;
 
+                System.out.println("Montant total avant conversion: {}"+ total);
+
                 Partners supplier = partnerRepository.findById(ligneDto.getSupplierId())
                         .orElseThrow(() -> new EntityNotFoundException("Fournisseur non trouvé avec id: " + ligneDto.getSupplierId()));
 
@@ -134,30 +140,49 @@ public class AchatServices {
 
             // Gérer la conversion de devise si le paiement existe et a une devise différente
             Double montantEnCNY = total;
-            if (achat.getVersement() != null && achat.getVersement().getDevise() != null && !"CNY".equals(achat.getVersement().getDevise().getCode())) {
-                try {
-                    Double taux = exchangeRateServices.getRealTimeRate(achat.getVersement().getDevise().getCode(), "CNY");
-                    if (taux == null || taux <= 0) {
-                        throw new BusinessException("INVALID_EXCHANGE_RATE",
-                                "Impossible d'obtenir un taux de change valide pour la devise: " + achat.getVersement().getDevise().getCode());
+
+            if (achat.getVersement() != null) {
+                Devises deviseVersement = achat.getVersement().getDevise();
+
+                if (deviseVersement != null && !"CNY".equals(deviseVersement.getCode())) {
+                    try {
+                        Double taux = exchangeRateServices.getRealTimeRate(deviseVersement.getCode(), "CNY");
+                        if (taux == null || taux <= 0) {
+                            throw new BusinessException("INVALID_EXCHANGE_RATE",
+                                    "Impossible d'obtenir un taux de change valide pour la devise: " + deviseVersement.getCode());
+                        }
+                        montantEnCNY = total * taux;
+                        achat.setDevise(deviseVersement);
+                        achat.setTauxUtilise(taux);
+                    } catch (Exception e) {
+                        throw new BusinessException("EXCHANGE_RATE_ERROR",
+                                "Erreur lors de la conversion de devise: " + e.getMessage());
                     }
-                    montantEnCNY = total * taux;
-                    achat.setDevise(achat.getVersement().getDevise());
-                    achat.setTauxUtilise(taux);
-                } catch (Exception e) {
-                    throw new BusinessException("EXCHANGE_RATE_ERROR",
-                            "Erreur lors de la conversion de devise: " + e.getMessage());
+                } else {
+                    // Même devise ou devise non définie : pas de conversion
+                    achat.setDevise(deviseVersement);
+                    achat.setTauxUtilise(1.0); // On considère que le taux est 1
                 }
+            } else {
+                Devises deviseCNY = deviseRepository.findByCode("CNY").orElse(null);
+                // Pas de versement : dette => on considère que le montant est en CNY
+                achat.setDevise(deviseCNY); // Ou set une devise par défaut (ex: CNY)
+                achat.setTauxUtilise(1.0);
             }
 
             achat.setMontantTotal(montantEnCNY);
+            System.out.println("Montant total apres conversion: {}"+ montantEnCNY);
 
+            System.out.println("Avant sauvegarde de l'achat");
             // Enregistrer l’achat d’abord pour obtenir l’ID
             Achats savedAchat = achatRepository.save(achat);
+            System.out.println("Achat sauvegardé avec ID: {}"+ savedAchat.getId());
 
+            System.out.println("Avant sauvegarde des articles");
             // Définir la référence d’achat pour tous les articles et les enregistrer
             items.forEach(item -> item.setAchats(savedAchat));
             itemsRepository.saveAll(items);
+            System.out.println("Articles sauvegardés");
 
             // Si c’est une dette, mettre à jour le montant de la dette du client
             if (achat.getIsDebt()) {
@@ -200,11 +225,10 @@ public class AchatServices {
                     .orElseThrow(() -> new EntityNotFoundException("Item not found"));
 
             if (item.getStatus() == StatusEnum.RECEIVED) {
-                throw new BusinessException("ITEM_ALREADY_RECEIVED", "Payment ID is required");
+                throw new BusinessException("ITEM_ALREADY_RECEIVED", "Item already received");
             }
 
             Achats achat = item.getAchats();
-            Versements versement = achat.getVersement();
             Partners client = achat.getClient();
 
             // Calcul du montant de l'item en CNY
@@ -228,12 +252,19 @@ public class AchatServices {
             Partners client = achat.getClient();
             double montantTotal = entry.getValue();
 
-            // Mise à jour des soldes
-            client.setBalance(client.getBalance() - montantTotal);
-            versement.setMontantRestant(versement.getMontantRestant() - montantTotal);
+            if (achat.getIsDebt()) {
+                // Cas d'un achat en crédit (sans versement initial)
+                // On réduit la balance du client (la balance devient négative)
+                client.setBalance(client.getBalance() - montantTotal);
+            } else {
+                // Cas normal avec versement
+                // Mise à jour des soldes
+                client.setBalance(client.getBalance() - montantTotal);
+                versement.setMontantRestant(versement.getMontantRestant() - montantTotal);
+                versementRepo.save(versement);
+            }
 
             partnerRepository.save(client);
-            versementRepo.save(versement);
 
             // Vérifier si tous les items sont livrés
             boolean allDelivered = achat.getItems().stream()

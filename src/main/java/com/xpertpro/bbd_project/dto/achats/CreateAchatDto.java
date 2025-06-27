@@ -10,4 +10,5 @@ public class CreateAchatDto {
     @Column(nullable = true)
     private Long versementId;
     private List<CreateItemsDto> items;
+
 }

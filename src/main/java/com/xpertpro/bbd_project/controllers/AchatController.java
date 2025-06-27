@@ -32,10 +32,15 @@ public class AchatController {
 
         try {
             String result = achatServices.createAchatForClient(clientId, userId, dto);
+
+            String message = result.equals("ACHAT_CREATED_AS_DEBT_SUCCESSFULLY")
+                    ? "Achat créé avec succès (enregistré comme dette)"
+                    : "Achat créé avec succès";
+
             return ResponseEntity.ok(
                     new ApiResponsee<>(
                             true,
-                            "Purchase created successfully",
+                            message,
                             result,
                             null
                     )
@@ -45,7 +50,7 @@ public class AchatController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponsee<>(
                             false,
-                            e.getMessage(),
+                            "Ressource non trouvée: " + e.getMessage(),
                             null,
                             Collections.singletonList(e.getMessage())
                     ));
@@ -54,7 +59,16 @@ public class AchatController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponsee<>(
                             false,
-                            e.getMessage(),
+                            "Erreur métier: " + e.getMessage(),
+                            null,
+                            Collections.singletonList(e.getMessage())
+                    ));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponsee<>(
+                            false,
+                            "Paramètres invalides: " + e.getMessage(),
                             null,
                             Collections.singletonList(e.getMessage())
                     ));
@@ -63,9 +77,9 @@ public class AchatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponsee<>(
                             false,
-                            "An unexpected error occurred",
+                            "Erreur serveur interne",
                             null,
-                            Collections.singletonList("SERVER_ERROR")
+                            Collections.singletonList("Erreur interne: " + e.getMessage())
                     ));
         }
     }
