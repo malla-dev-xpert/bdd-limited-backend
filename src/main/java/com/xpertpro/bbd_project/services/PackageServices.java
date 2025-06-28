@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -110,7 +111,7 @@ public class PackageServices {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
-        Page<Packages> expeditions = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+        Page<Packages> expeditions;
 
         if (query != null && !query.isEmpty()) {
             expeditions = packageRepository.findByStatusAndSearchQuery(
@@ -122,7 +123,6 @@ public class PackageServices {
             expeditions = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
         }
 
-
         return expeditions.stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
                 .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
@@ -130,7 +130,6 @@ public class PackageServices {
                     PackageDto dto = new PackageDto();
                     dto.setId(pkg.getId());
                     dto.setRef(pkg.getRef());
-                    dto.setWeight(pkg.getWeight());
                     dto.setWeight(pkg.getWeight());
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
@@ -151,10 +150,28 @@ public class PackageServices {
                             ? pkg.getClient().getPhoneNumber()
                             : null);
 
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
-
     }
 
     public List<PackageDto> getAllEnAttente(int page) {
@@ -191,6 +208,25 @@ public class PackageServices {
                     dto.setClientPhone(pkg.getClient() != null
                             ? pkg.getClient().getPhoneNumber()
                             : null);
+
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
 
                     return dto;
                 })
@@ -363,6 +399,25 @@ public class PackageServices {
                     dto.setClientPhone(pkg.getClient() != null
                             ? pkg.getClient().getPhoneNumber()
                             : null);
+
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
 
                     return dto;
                 })

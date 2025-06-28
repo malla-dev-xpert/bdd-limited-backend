@@ -1,5 +1,7 @@
 package com.xpertpro.bbd_project.dto;
 
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,4 +30,5 @@ public class PackageDto {
     private String warehouseName;
     private String warehouseAddress;
     private List<Long> itemIds;
+    private List<ItemDto> items;
 }
