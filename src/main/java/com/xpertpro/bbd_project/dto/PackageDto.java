@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class PackageDto {
@@ -26,4 +27,5 @@ public class PackageDto {
     private String status;
     private String warehouseName;
     private String warehouseAddress;
+    private List<Long> itemIds;
 }

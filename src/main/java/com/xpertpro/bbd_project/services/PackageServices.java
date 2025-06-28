@@ -36,22 +36,66 @@ public class PackageServices {
     ContainersRepository containersRepository;
     @Autowired
     WarehouseRepository warehouseRepository;
+    @Autowired
+    ItemsRepository itemsRepository;
 
+    @Transactional
     public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        Partners client = clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
-        Containers container = containersRepository.findById(containerId).orElseThrow(() -> new RuntimeException("Container not found"));
-        Warehouse warehouse = warehouseRepository.findById(warehouseId).orElseThrow(() -> new RuntimeException("Warehouse not found"));
+        // 1. Validation des entités existantes
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        Partners client = clientRepo.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found"));
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new EntityNotFoundException("Container not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
 
+        // 2. Validation des items
+        if (dto.getItemIds() == null || dto.getItemIds().isEmpty()) {
+            throw new AchatServices.BusinessException("NO_ITEMS_SELECTED", "At least one item must be selected for the package");
+        }
+
+        // 3. Création du colis
         Packages packages = packageDtoMapper.toEntity(dto);
-
         packages.setCreatedAt(LocalDateTime.now());
         packages.setClient(client);
         packages.setCreatedBy(user);
         packages.setContainer(container);
         packages.setWarehouse(warehouse);
+
+        // 4. Sauvegarde initiale pour obtenir l'ID
         Packages newPackage = packageRepository.save(packages);
 
+        // 5. Gestion des items sélectionnés
+        List<Items> itemsToPackage = itemsRepository.findAllById(dto.getItemIds());
+
+        // Vérification que tous les items existent
+        if (itemsToPackage.size() != dto.getItemIds().size()) {
+            throw new EntityNotFoundException("Some items were not found");
+        }
+
+        // Vérification que les items appartiennent bien au client
+        itemsToPackage.forEach(item -> {
+            if (!item.getAchats().getClient().getId().equals(clientId)) {
+                throw new AchatServices.BusinessException("ITEM_CLIENT_MISMATCH",
+                        "Item with ID " + item.getId() + " does not belong to client " + clientId);
+            }
+
+            // Vérification que l'item n'est pas déjà dans un autre colis
+            if (item.getPackages() != null) {
+                throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
+                        "Item with ID " + item.getId() + " is already in another package");
+            }
+
+            // Associer l'item au colis
+            item.setPackages(newPackage);
+        });
+
+        // Sauvegarder les modifications sur les items
+        itemsRepository.saveAll(itemsToPackage);
+
+        // 7. Logging
         logServices.logAction(
                 user,
                 "AJOUT_COLIS",
@@ -60,6 +104,7 @@ public class PackageServices {
 
         return "SUCCESS";
     }
+
 
     public List<PackageDto> getAll(int page, String query) {
         int pageSize = 30;

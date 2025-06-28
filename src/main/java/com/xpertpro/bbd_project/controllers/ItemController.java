@@ -23,6 +23,11 @@ public class ItemController {
         return itemServices.getItemsByPackageId(packageId);
     }
 
+    @GetMapping("/customer")
+    public List<ItemDto> getItemsByClientId(@RequestParam(name = "clientId") Long clientId) {
+        return itemServices.getItemsByClientId(clientId);
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "packageId") Long packageId){
         String result = itemServices.deleteItem(id, userId, packageId);

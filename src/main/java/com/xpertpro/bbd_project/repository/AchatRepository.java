@@ -8,8 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface AchatRepository extends JpaRepository<Achats, Long> {
     boolean existsByVersementId(Long versementId);
     Page<Achats> findByStatusNot(StatusEnum statusEnum, Pageable pageable);
+    List<Achats> findByClientId(Long clientId);
 }

@@ -12,6 +12,7 @@ public class ItemDto {
     private String supplierPhone;
     private Double totalPrice;
     private int quantity;
+    private Long packageId;
     private double unitPrice;
     private String status;
 }

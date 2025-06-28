@@ -4,6 +4,7 @@ import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.items.ItemResponseDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
+import com.xpertpro.bbd_project.repository.AchatRepository;
 import com.xpertpro.bbd_project.repository.ItemsRepository;
 import com.xpertpro.bbd_project.repository.PackageRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
@@ -28,6 +29,8 @@ public class ItemServices {
     PackageRepository packageRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    AchatRepository achatRepository;
 
     public List<ItemDto> getItemsByPackageId(Long packageId) {
         List<Items> items = itemsRepository.findByPackagesId(packageId);
@@ -44,6 +47,41 @@ public class ItemServices {
                     dto.setStatus(pkg.getStatus().name());
 
                     return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<ItemDto> getItemsByClientId(Long clientId) {
+        // 1. Récupérer tous les achats du client
+        List<Achats> achats = achatRepository.findByClientId(clientId);
+
+        // 2. Récupérer tous les items de ces achats
+        List<Items> items = achats.stream()
+                .flatMap(achat -> achat.getItems().stream())
+                .collect(Collectors.toList());
+
+        // 3. Filtrer et mapper vers ItemDto
+        return items.stream()
+                .filter(item -> item.getStatus() == StatusEnum.RECEIVED)
+                .filter(item -> item.getPackages() == null || item.getPackages().getId() == null)
+                .map(item -> {
+                    ItemDto itemDto = new ItemDto();
+                    itemDto.setId(item.getId());
+                    itemDto.setDescription(item.getDescription());
+                    itemDto.setQuantity(item.getQuantity());
+                    itemDto.setUnitPrice(item.getUnitPrice());
+
+                    // Info fournisseur
+                    if(item.getSupplier() != null) {
+                        itemDto.setSupplierName(item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName());
+                        itemDto.setSupplierPhone(item.getSupplier().getPhoneNumber());
+                    }
+
+                    itemDto.setStatus(item.getStatus().name());
+                    itemDto.setTotalPrice(item.getTotalPrice());
+                    itemDto.setPackageId(item.getPackages() != null ? item.getPackages().getId() : null);
+
+                    return itemDto;
                 })
                 .collect(Collectors.toList());
     }
