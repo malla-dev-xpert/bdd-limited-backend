@@ -14,5 +14,6 @@ public class ItemDto {
     private int quantity;
     private Long packageId;
     private double unitPrice;
+    private double salesRate;
     private String status;
 }

@@ -141,6 +141,7 @@ public class PartnerServices {
                                                         itemDto.setStatus(i.getStatus().name());
                                                         itemDto.setUnitPrice(i.getUnitPrice());
                                                         itemDto.setTotalPrice(i.getTotalPrice());
+                                                        itemDto.setSalesRate(i.getSalesRate());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 
@@ -268,6 +269,7 @@ public class PartnerServices {
                                                         itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                                         itemDto.setStatus(i.getStatus().name());
                                                         itemDto.setTotalPrice(i.getTotalPrice());
+                                                        itemDto.setSalesRate(i.getSalesRate());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 

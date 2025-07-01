@@ -182,6 +182,7 @@ public class VersementServices {
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
                                             itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 
@@ -260,6 +261,7 @@ public class VersementServices {
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
                                             itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 

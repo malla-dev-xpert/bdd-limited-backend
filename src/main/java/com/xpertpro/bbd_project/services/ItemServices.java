@@ -45,6 +45,8 @@ public class ItemServices {
                     dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
                     dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
                     dto.setStatus(pkg.getStatus().name());
+                    dto.setTotalPrice(pkg.getTotalPrice());
+                    dto.setSalesRate(pkg.getSalesRate());
 
                     return dto;
                 })
@@ -70,6 +72,7 @@ public class ItemServices {
                     itemDto.setDescription(item.getDescription());
                     itemDto.setQuantity(item.getQuantity());
                     itemDto.setUnitPrice(item.getUnitPrice());
+                    itemDto.setSalesRate(item.getSalesRate());
 
                     // Info fournisseur
                     if(item.getSupplier() != null) {
@@ -146,6 +149,8 @@ public class ItemServices {
                     dto.setSupplierId(item.getSupplier() != null ? item.getSupplier().getId() : null);
                     dto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName() : null);
                     dto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
+                    dto.setTotalPrice(item.getTotalPrice());
+                    dto.setSalesRate(item.getSalesRate());
 
                     return dto;
                 })
