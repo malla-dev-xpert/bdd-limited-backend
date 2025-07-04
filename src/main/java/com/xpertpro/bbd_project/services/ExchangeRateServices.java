@@ -32,8 +32,17 @@ public class ExchangeRateServices {
         if (response.getStatusCode() == HttpStatus.OK) {
             Map body = response.getBody();
             if ("success".equals(body.get("result"))) {
-                Map<String, Double> rates = (Map<String, Double>) body.get("rates");
-                return rates.get(toCode);
+                Map<String, Object> rates = (Map<String, Object>) body.get("rates");
+                Object rateValue = rates.get(toCode);
+
+                // Gérer à la fois les cas entiers et doubles
+                if (rateValue instanceof Integer) {
+                    return ((Integer) rateValue).doubleValue();
+                } else if (rateValue instanceof Double) {
+                    return (Double) rateValue;
+                } else {
+                    throw new RuntimeException("Type de taux invalide renvoyé depuis l’API");
+                }
             }
         }
         throw new RuntimeException("Échec de récupération du taux de change.");

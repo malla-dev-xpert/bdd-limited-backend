@@ -7,6 +7,7 @@ import com.xpertpro.bbd_project.enums.StatusEnum;
 import com.xpertpro.bbd_project.dtoMapper.DeviseDtoMapper;
 import com.xpertpro.bbd_project.repository.DevisesRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,7 @@ public class DeviseService {
         this.restTemplate = restTemplate;
     }
 
+    @Transactional
     public String createDevise(DeviseDto deviseDto, Long userId) {
         try {
             UserEntity user = userRepository.findById(userId)
@@ -54,11 +56,12 @@ public class DeviseService {
             if (deviseDto.getRate() == null) {
                 try {
                     String referenceCurrency = "CNY"; // Monnaie chinoise comme référence
-                    Double realTimeRate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
-                    if (realTimeRate == null) {
+                    Number rate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
+                    if (rate == null) {
                         return "RATE_NOT_FOUND";
                     }
-                    devises.setRate(realTimeRate);
+                    // Convert the rate to Double regardless of whether it's Integer or Double
+                    devises.setRate(rate.doubleValue());
                 } catch (Exception e) {
                     System.out.println("Failed to fetch real-time rate for currency: " + deviseDto.getCode()+ e);
                     return "RATE_SERVICE_ERROR";
