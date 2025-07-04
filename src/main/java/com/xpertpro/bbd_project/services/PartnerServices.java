@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.CashWithdrawalDto;
 import com.xpertpro.bbd_project.dto.PackageDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
@@ -159,6 +160,24 @@ public class PartnerServices {
 
                                 newVersemtDto.setAchats(achatDtos);
 
+                                //La liste des retraits d'argennt
+                                List<CashWithdrawalDto> cashWithdrawalDtos = v.getCashWithdrawalList().stream()
+                                        .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                                        .map(cashWithdrawal -> {
+                                            CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                            cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                            cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                            cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                            cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                            cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                            cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                            cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+
+                                            return cashWithdrawalDto;
+                                        }).collect(Collectors.toList());
+
+                                newVersemtDto.setCashWithdrawalDtoList(cashWithdrawalDtos);
+
                                 return newVersemtDto;
 
                             }).collect(Collectors.toList());
@@ -286,6 +305,24 @@ public class PartnerServices {
                                         }).collect(Collectors.toList());
 
                                 newVersemtDto.setAchats(achatDtos);
+
+                                //La liste des retraits d'argennt
+                                List<CashWithdrawalDto> cashWithdrawalDtos = v.getCashWithdrawalList().stream()
+                                        .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                                        .map(cashWithdrawal -> {
+                                            CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                            cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                            cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                            cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                            cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                            cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                            cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                            cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+
+                                            return cashWithdrawalDto;
+                                        }).collect(Collectors.toList());
+
+                                newVersemtDto.setCashWithdrawalDtoList(cashWithdrawalDtos);
 
                                 return newVersemtDto;
 

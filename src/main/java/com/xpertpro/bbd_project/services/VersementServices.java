@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.CashWithdrawalDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
@@ -160,6 +161,7 @@ public class VersementServices {
                             ? versement.getDevise().getCode()
                             : null);
 
+//                    la liste des achats dans le verment
                     List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
@@ -192,6 +194,24 @@ public class VersementServices {
                             }).collect(Collectors.toList());
 
                     dto.setAchats(achatDtos);
+
+//                    La liste des retraits d'argennt
+                    List<CashWithdrawalDto> cashWithdrawalDtos = versement.getCashWithdrawalList().stream()
+                            .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                            .map(cashWithdrawal -> {
+                                CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+
+                                return cashWithdrawalDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setCashWithdrawalDtoList(cashWithdrawalDtos);
 
                     return dto;
                 })
@@ -270,6 +290,24 @@ public class VersementServices {
                             }).collect(Collectors.toList());
 
                     dto.setAchats(achatDtos);
+
+                    //La liste des retraits d'argennt
+                    List<CashWithdrawalDto> cashWithdrawalDtos = versement.getCashWithdrawalList().stream()
+                            .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                            .map(cashWithdrawal -> {
+                                CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+
+                                return cashWithdrawalDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setCashWithdrawalDtoList(cashWithdrawalDtos);
                     return dto;
                 })
                 .collect(Collectors.toList());

@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CashWithdrawalDto {
+    private Long id;
     private Long partnerId;
     private Long versementId;
     private Long deviseId;

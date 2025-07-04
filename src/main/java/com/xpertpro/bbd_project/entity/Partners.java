@@ -51,4 +51,7 @@ public class Partners {
 
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Items> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL)
+    private List<CashWithdrawal> cashWithdrawalList = new ArrayList<>();
 }
