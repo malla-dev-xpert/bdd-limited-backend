@@ -55,15 +55,18 @@ public class DeviseService {
             // Gestion du taux de change
             if (deviseDto.getRate() == null) {
                 try {
-                    String referenceCurrency = "CNY"; // Monnaie chinoise comme référence
-                    Number rate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
+                    String referenceCurrency = "CNY";
+                    Double rate = exchangeRateServices.getRealTimeRate(referenceCurrency, deviseDto.getCode());
+
                     if (rate == null) {
+                        System.out.println("Taux non trouvé pour {}"+ deviseDto.getCode());
                         return "RATE_NOT_FOUND";
                     }
-                    // Convert the rate to Double regardless of whether it's Integer or Double
-                    devises.setRate(rate.doubleValue());
+
+                    devises.setRate(rate);
+
                 } catch (Exception e) {
-                    System.out.println("Failed to fetch real-time rate for currency: " + deviseDto.getCode()+ e);
+                    System.out.println("Erreur service taux de change"+ e);
                     return "RATE_SERVICE_ERROR";
                 }
             } else {
