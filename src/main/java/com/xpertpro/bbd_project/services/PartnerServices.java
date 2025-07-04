@@ -40,14 +40,21 @@ public class PartnerServices {
     UserRepository userRepository;
 
     public String createPartners(PartnerDto partnersDto, Long userId) {
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (partnerRepository.findByEmail(partnersDto.getEmail()).isPresent()) {
-            return "EMAIL_EXIST";
+        // Vérifiez uniquement les e-mails s’ils sont fournis
+        if (partnersDto.getEmail() != null && !partnersDto.getEmail().isEmpty()) {
+            if (partnerRepository.findByEmail(partnersDto.getEmail()).isPresent()) {
+                return "EMAIL_EXIST";
+            }
         }
 
-        if (partnerRepository.findByPhoneNumber(partnersDto.getPhoneNumber()).isPresent()) {
-            return "PHONE_EXIST";
+        // Vérifiez uniquement le numéro de téléphone s’il est fourni
+        if (partnersDto.getPhoneNumber() != null && !partnersDto.getPhoneNumber().isEmpty()) {
+            if (partnerRepository.findByPhoneNumber(partnersDto.getPhoneNumber()).isPresent()) {
+                return "PHONE_EXIST";
+            }
         }
 
         Partners partners = partnersDtoMapper.toEntity(partnersDto);
