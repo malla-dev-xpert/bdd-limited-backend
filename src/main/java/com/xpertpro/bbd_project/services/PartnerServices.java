@@ -168,10 +168,12 @@ public class PartnerServices {
                                             cashWithdrawalDto.setId(cashWithdrawal.getId());
                                             cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
                                             cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                            cashWithdrawalDto.setDateRetrait(cashWithdrawal.getDateRetrait());
                                             cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
                                             cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
                                             cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
                                             cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+                                            cashWithdrawalDto.setUserName(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getFirstName() + " " + cashWithdrawal.getUser().getLastName() : null);
 
                                             return cashWithdrawalDto;
                                         }).collect(Collectors.toList());
@@ -314,10 +316,12 @@ public class PartnerServices {
                                             cashWithdrawalDto.setId(cashWithdrawal.getId());
                                             cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
                                             cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                            cashWithdrawalDto.setDateRetrait(cashWithdrawal.getDateRetrait());
                                             cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
                                             cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
                                             cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
                                             cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+                                            cashWithdrawalDto.setUserName(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getFirstName() + " " + cashWithdrawal.getUser().getLastName() : null);
 
                                             return cashWithdrawalDto;
                                         }).collect(Collectors.toList());
