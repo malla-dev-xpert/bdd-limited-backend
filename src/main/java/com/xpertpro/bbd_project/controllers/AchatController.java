@@ -33,53 +33,25 @@ public class AchatController {
         try {
             String result = achatServices.createAchatForClient(clientId, userId, dto);
 
-            String message = result.equals("ACHAT_CREATED_AS_DEBT_SUCCESSFULLY")
-                    ? "Achat créé avec succès (enregistré comme dette)"
-                    : "Achat créé avec succès";
-
             return ResponseEntity.ok(
                     new ApiResponsee<>(
                             true,
-                            message,
+                            result.equals("ACHAT_CREATED_AS_DEBT_SUCCESSFULLY")
+                                    ? "Achat créé (dette)"
+                                    : "Achat créé avec succès",
                             result,
                             null
                     )
             );
 
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponsee<>(
-                            false,
-                            "Ressource non trouvée: " + e.getMessage(),
-                            null,
-                            Collections.singletonList(e.getMessage())
-                    ));
-
-        } catch (AchatServices.BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponsee<>(
-                            false,
-                            "Erreur métier: " + e.getMessage(),
-                            null,
-                            Collections.singletonList(e.getMessage())
-                    ));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponsee<>(
-                            false,
-                            "Paramètres invalides: " + e.getMessage(),
-                            null,
-                            Collections.singletonList(e.getMessage())
-                    ));
-
         } catch (Exception e) {
+            System.out.println("Erreur endpoint création achat"+ e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponsee<>(
                             false,
-                            "Erreur serveur interne",
+                            "Échec création achat",
                             null,
-                            Collections.singletonList("Erreur interne: " + e.getMessage())
+                            List.of(e.getMessage())
                     ));
         }
     }
