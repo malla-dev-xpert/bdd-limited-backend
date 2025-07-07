@@ -29,13 +29,13 @@ public class ItemController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "packageId") Long packageId){
-        String result = itemServices.deleteItem(id, userId, packageId);
+    public ResponseEntity<String> delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "clientId") Long clientId){
+        String result = itemServices.deleteItem(id, userId, clientId);
         switch (result) {
             case "ITEM_NOT_FOUND":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Article non trouve.");
-            case "PACKAGE_NOT_FOUND":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Colis non trouve.");
+            case "CLIENT_NOT_FOUND_OR_MISMATCH":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Client non trouve.");
             case "USER_NOT_FOUND":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Utilisateur non trouve.");
             default:

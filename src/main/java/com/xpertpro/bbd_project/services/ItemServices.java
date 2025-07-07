@@ -31,6 +31,8 @@ public class ItemServices {
     UserRepository userRepository;
     @Autowired
     AchatRepository achatRepository;
+    @Autowired
+    LogServices logServices;
 
     public List<ItemDto> getItemsByPackageId(Long packageId) {
         List<Items> items = itemsRepository.findByPackagesId(packageId);
@@ -89,27 +91,41 @@ public class ItemServices {
                 .collect(Collectors.toList());
     }
 
-    public String deleteItem(Long id, Long userId, Long packageId) {
+    public String deleteItem(Long id, Long userId, Long clientId) {
         Optional<Items> optionalItems = itemsRepository.findById(id);
-        Optional<Packages> optionalPackages = packageRepository.findById(packageId);
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
         if (optionalItems.isEmpty()) {
             return "ITEM_NOT_FOUND";
-        }
-
-        if (optionalPackages.isEmpty()) {
-            return "PACKAGE_NOT_FOUND";
         }
 
         if (optionalUser.isEmpty()) {
             return "USER_NOT_FOUND";
         }
 
-        Items items = optionalItems.get();
+        Items item = optionalItems.get();
+        Achats achat = item.getAchats();
 
-        items.setStatus(StatusEnum.DELETE);
-        items.setUser(optionalUser.get());
-        itemsRepository.save(items);
+        // Vérification du client
+        if (achat == null || achat.getClient() == null || !achat.getClient().getId().equals(clientId)) {
+            return "CLIENT_NOT_FOUND_OR_MISMATCH";
+        }
+
+        // Vérification si c'est le seul item dans l'achat
+        boolean isLastItem = achat.getItems().size() == 1;
+
+        item.setStatus(StatusEnum.DELETE);
+        item.setUser(optionalUser.get());
+        itemsRepository.save(item);
+
+        // Si c'était le dernier item, supprimer l'achat
+        if (isLastItem) {
+            achat.setStatus(StatusEnum.DELETE);
+            achatRepository.save(achat);
+            return "DELETED_WITH_ACHAT";
+        }
+
+        logServices.logAction(optionalUser.get(), "SUPPRESSION_ARTICLE", "ITEMS", id);
 
         return "DELETED";
     }

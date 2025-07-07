@@ -138,6 +138,7 @@ public class PartnerServices {
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
+                                                    .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                                     .map(i -> {
                                                         ItemDto itemDto = new ItemDto();
                                                         itemDto.setId(i.getId());
@@ -287,6 +288,7 @@ public class PartnerServices {
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
+                                                    .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                                     .map(i -> {
                                                         ItemDto itemDto = new ItemDto();
                                                         itemDto.setId(i.getId());

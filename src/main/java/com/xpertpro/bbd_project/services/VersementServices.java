@@ -174,6 +174,7 @@ public class VersementServices {
                                 achatDto.setIsDebt(item.getIsDebt());
 
                                 List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                         .map(i -> {
                                             ItemDto itemDto = new ItemDto();
                                             itemDto.setId(i.getId());
@@ -273,6 +274,7 @@ public class VersementServices {
 
                                 // Lignes d'achat
                                 List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                         .map(i -> {
                                             ItemDto itemDto = new ItemDto();
                                             itemDto.setId(i.getId());
