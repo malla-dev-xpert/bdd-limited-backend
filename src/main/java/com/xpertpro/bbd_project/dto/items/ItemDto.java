@@ -11,9 +11,12 @@ public class ItemDto {
     private String supplierName;
     private String supplierPhone;
     private Double totalPrice;
-    private int quantity;
+    private Integer quantity;
     private Long packageId;
-    private double unitPrice;
-    private double salesRate;
+    private Double unitPrice;
+    private Double salesRate;
     private String status;
+    private Long clientId;
+    private String invoiceNumber;
+    private Long supplierId;
 }

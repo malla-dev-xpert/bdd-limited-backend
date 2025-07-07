@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.xpertpro.bbd_project.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,7 @@ public class Items {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "achat_id", nullable = false)
+    @JsonIgnoreProperties("items")
     private Achats achats;
 
     @ManyToOne(fetch = FetchType.LAZY)

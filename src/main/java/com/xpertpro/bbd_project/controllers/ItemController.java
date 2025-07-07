@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/items")
@@ -50,12 +51,22 @@ public class ItemController {
 
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updatePackage(
+    public ResponseEntity<String> updateItem(
             @PathVariable Long id,
-            @RequestParam(name = "packageId")Long packageId,
-            @RequestBody ItemDto dto
-    ) {
-        itemServices.updateItem(id, packageId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Article modifier avec succès !");
+            @RequestParam Long userId,
+            @RequestBody ItemDto request) {
+
+        try {
+            String result = itemServices.updateItem(id, userId, request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return switch (e.getMessage()) {
+                case "ITEM_NOT_FOUND" -> ResponseEntity.notFound().build();
+                case "USER_NOT_FOUND" -> ResponseEntity.badRequest().body("USER_NOT_FOUND");
+                case "CLIENT_MISMATCH" -> ResponseEntity.badRequest().body("CLIENT_MISMATCH");
+                case "SUPPLIER_NOT_FOUND" -> ResponseEntity.badRequest().body("SUPPLIER_NOT_FOUND");
+                default -> ResponseEntity.internalServerError().body("UPDATE_FAILED: " + e.getMessage());
+            };
+        }
     }
 }

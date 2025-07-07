@@ -4,11 +4,8 @@ import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dto.items.ItemResponseDto;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
-import com.xpertpro.bbd_project.repository.AchatRepository;
-import com.xpertpro.bbd_project.repository.ItemsRepository;
-import com.xpertpro.bbd_project.repository.PackageRepository;
-import com.xpertpro.bbd_project.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.xpertpro.bbd_project.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,9 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +28,8 @@ public class ItemServices {
     AchatRepository achatRepository;
     @Autowired
     LogServices logServices;
+    @Autowired
+    PartnerRepository partnerRepository;
 
     public List<ItemDto> getItemsByPackageId(Long packageId) {
         List<Items> items = itemsRepository.findByPackagesId(packageId);
@@ -130,19 +127,72 @@ public class ItemServices {
         return "DELETED";
     }
 
-    public String updateItem(Long id, Long packageId, ItemDto dto) {
-        packageRepository.findById(packageId)
-                .orElseThrow(() -> new EntityNotFoundException("Package not found with id: " + id));
-        Items existingItem = itemsRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + id));
+    @Transactional
+    public String updateItem(Long itemId, Long userId, ItemDto request) {
+        // 1. Vérification de l'existence de l'item et de l'utilisateur
+        Items item = itemsRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("ITEM_NOT_FOUND"));
 
-        existingItem.setQuantity(dto.getQuantity());
-        existingItem.setDescription(dto.getDescription());
-        existingItem.setUnitPrice(dto.getUnitPrice());
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
 
-        itemsRepository.save(existingItem);
+        // 2. Vérification que l'item appartient bien au client spécifié
+        if (!item.getAchats().getClient().getId().equals(request.getClientId())) {
+            throw new RuntimeException("CLIENT_MISMATCH");
+        }
 
-        return "Item updated";
+        // 3. Mise à jour des champs modifiables
+        if (request.getDescription() != null) {
+            item.setDescription(request.getDescription());
+        }
+
+        if (request.getQuantity() != null) {
+            item.setQuantity(request.getQuantity());
+            item.setTotalPrice(item.getQuantity() * item.getUnitPrice());
+        }
+
+        if (request.getUnitPrice() != null) {
+            item.setUnitPrice(request.getUnitPrice());
+            item.setTotalPrice(item.getQuantity() * item.getUnitPrice());
+        }
+
+        if (request.getSalesRate() != null) {
+            item.setSalesRate(request.getSalesRate());
+        }
+
+        if (request.getInvoiceNumber() != null) {
+            item.setInvoiceNumber(request.getInvoiceNumber());
+        }
+
+        if (request.getSupplierId() != null) {
+            Partners supplier = partnerRepository.findById(request.getSupplierId())
+                    .orElseThrow(() -> new RuntimeException("SUPPLIER_NOT_FOUND"));
+            item.setSupplier(supplier);
+        }
+
+        // Mise à jour de l'utilisateur qui a modifié l'article
+        item.setUser(user);
+
+        // Sauvegarde des modifications
+        itemsRepository.save(item);
+
+        // Mise à jour du montant total de l'achat parent
+        updateAchatTotal(item.getAchats());
+
+        // Journalisation
+        logServices.logAction(user, "MODIFICATION_ARTICLE", "ITEMS", itemId);
+
+        return "SUCCESS";
+    }
+
+    private void updateAchatTotal(Achats achat) {
+        double total = achat.getItems().stream()
+                .filter(i -> i.getStatus() != StatusEnum.DELETE)
+                .mapToDouble(Items::getTotalPrice)
+                .sum();
+
+        achat.setMontantTotal(total);
+        achatRepository.save(achat);
     }
 
     public List<ItemResponseDto> getAllItem(int page) {
