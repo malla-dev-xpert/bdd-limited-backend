@@ -31,7 +31,8 @@ public class Partners {
 
     private String accountType;
     private Double balance = 0.0; //solde du client
-    private Double totalDebt;
+    @Column(nullable = false, columnDefinition = "double default 0.0")
+    private Double totalDebt = 0.0; // Initialisation par défaut
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
