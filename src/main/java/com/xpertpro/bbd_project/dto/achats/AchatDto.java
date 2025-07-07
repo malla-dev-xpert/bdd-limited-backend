@@ -16,6 +16,7 @@ public class AchatDto {
     private Double montantTotal;
     private String client;
     private String clientPhone;
+    private Long clientId;
     private String status;
     private List<ItemDto> items;
     private Boolean isDebt;

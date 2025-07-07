@@ -172,6 +172,7 @@ public class VersementServices {
                                 // Utilisation des montants du versement parent
                                 achatDto.setReferenceVersement(item.getVersement().getReference());
                                 achatDto.setIsDebt(item.getIsDebt());
+                                achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                 List<ItemDto> itemsDtos = item.getItems().stream()
                                         .filter(items -> items.getStatus() != StatusEnum.DELETE)
@@ -271,6 +272,7 @@ public class VersementServices {
                                     achatDto.setReferenceVersement(item.getVersement().getReference());
                                 }
                                 achatDto.setIsDebt(item.getIsDebt());
+                                achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                 // Lignes d'achat
                                 List<ItemDto> itemsDtos = item.getItems().stream()

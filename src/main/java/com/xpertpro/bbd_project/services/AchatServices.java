@@ -244,6 +244,7 @@ public class AchatServices {
                     if (achat.getClient() != null) {
                         dto.setClient(achat.getClient().getFirstName() + " " + achat.getClient().getLastName());
                         dto.setClientPhone(achat.getClient().getPhoneNumber());
+                        dto.setClientId(achat.getClient().getId());
                     } else {
                         dto.setClient(null);
                         dto.setClientPhone(null);

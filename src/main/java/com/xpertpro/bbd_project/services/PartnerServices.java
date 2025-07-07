@@ -135,6 +135,7 @@ public class PartnerServices {
                                             // Utilisation des montants du versement parent
                                             achatDto.setReferenceVersement(item.getVersement() != null ? item.getVersement().getReference() : null);
                                             achatDto.setIsDebt(item.getIsDebt());
+                                            achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
@@ -285,6 +286,7 @@ public class PartnerServices {
                                             achatDto.setStatus(item.getStatus().name());
                                             achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                             achatDto.setIsDebt(item.getIsDebt());
+                                            achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                             List<ItemDto> itemsDtos = item.getItems().stream()
                                                     .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
