@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.services;
 
 import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import com.xpertpro.bbd_project.dtoMapper.PackageDtoMapper;
 import com.xpertpro.bbd_project.entity.*;
 import com.xpertpro.bbd_project.enums.StatusEnum;
@@ -36,22 +37,66 @@ public class PackageServices {
     ContainersRepository containersRepository;
     @Autowired
     WarehouseRepository warehouseRepository;
+    @Autowired
+    ItemsRepository itemsRepository;
 
+    @Transactional
     public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        Partners client = clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
-        Containers container = containersRepository.findById(containerId).orElseThrow(() -> new RuntimeException("Container not found"));
-        Warehouse warehouse = warehouseRepository.findById(warehouseId).orElseThrow(() -> new RuntimeException("Warehouse not found"));
+        // 1. Validation des entités existantes
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        Partners client = clientRepo.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found"));
+        Containers container = containersRepository.findById(containerId)
+                .orElseThrow(() -> new EntityNotFoundException("Container not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
 
+        // 2. Validation des items
+        if (dto.getItemIds() == null || dto.getItemIds().isEmpty()) {
+            throw new AchatServices.BusinessException("NO_ITEMS_SELECTED", "At least one item must be selected for the package");
+        }
+
+        // 3. Création du colis
         Packages packages = packageDtoMapper.toEntity(dto);
-
         packages.setCreatedAt(LocalDateTime.now());
         packages.setClient(client);
         packages.setCreatedBy(user);
         packages.setContainer(container);
         packages.setWarehouse(warehouse);
+
+        // 4. Sauvegarde initiale pour obtenir l'ID
         Packages newPackage = packageRepository.save(packages);
 
+        // 5. Gestion des items sélectionnés
+        List<Items> itemsToPackage = itemsRepository.findAllById(dto.getItemIds());
+
+        // Vérification que tous les items existent
+        if (itemsToPackage.size() != dto.getItemIds().size()) {
+            throw new EntityNotFoundException("Some items were not found");
+        }
+
+        // Vérification que les items appartiennent bien au client
+        itemsToPackage.forEach(item -> {
+            if (!item.getAchats().getClient().getId().equals(clientId)) {
+                throw new AchatServices.BusinessException("ITEM_CLIENT_MISMATCH",
+                        "Item with ID " + item.getId() + " does not belong to client " + clientId);
+            }
+
+            // Vérification que l'item n'est pas déjà dans un autre colis
+            if (item.getPackages() != null) {
+                throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
+                        "Item with ID " + item.getId() + " is already in another package");
+            }
+
+            // Associer l'item au colis
+            item.setPackages(newPackage);
+        });
+
+        // Sauvegarder les modifications sur les items
+        itemsRepository.saveAll(itemsToPackage);
+
+        // 7. Logging
         logServices.logAction(
                 user,
                 "AJOUT_COLIS",
@@ -61,11 +106,12 @@ public class PackageServices {
         return "SUCCESS";
     }
 
+
     public List<PackageDto> getAll(int page, String query) {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
 
-        Page<Packages> expeditions = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
+        Page<Packages> expeditions;
 
         if (query != null && !query.isEmpty()) {
             expeditions = packageRepository.findByStatusAndSearchQuery(
@@ -77,7 +123,6 @@ public class PackageServices {
             expeditions = packageRepository.findByStatusNot(StatusEnum.DELETE, pageable);
         }
 
-
         return expeditions.stream()
                 .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
                 .sorted(Comparator.comparing(Packages::getCreatedAt).reversed())
@@ -85,7 +130,6 @@ public class PackageServices {
                     PackageDto dto = new PackageDto();
                     dto.setId(pkg.getId());
                     dto.setRef(pkg.getRef());
-                    dto.setWeight(pkg.getWeight());
                     dto.setWeight(pkg.getWeight());
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
@@ -106,10 +150,28 @@ public class PackageServices {
                             ? pkg.getClient().getPhoneNumber()
                             : null);
 
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
-
     }
 
     public List<PackageDto> getAllEnAttente(int page) {
@@ -146,6 +208,25 @@ public class PackageServices {
                     dto.setClientPhone(pkg.getClient() != null
                             ? pkg.getClient().getPhoneNumber()
                             : null);
+
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
 
                     return dto;
                 })
@@ -318,6 +399,25 @@ public class PackageServices {
                     dto.setClientPhone(pkg.getClient() != null
                             ? pkg.getClient().getPhoneNumber()
                             : null);
+
+                    // Ajout des items du colis
+                    List<ItemDto> itemDtos = pkg.getItems().stream()
+                            .map(item -> {
+                                ItemDto itemDto = new ItemDto();
+                                itemDto.setId(item.getId());
+                                itemDto.setDescription(item.getDescription());
+                                itemDto.setQuantity(item.getQuantity());
+                                itemDto.setUnitPrice(item.getUnitPrice());
+                                itemDto.setTotalPrice(item.getTotalPrice());
+                                itemDto.setStatus(item.getStatus().name());
+                                itemDto.setSupplierName(item.getSupplier() != null
+                                        ? item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName()
+                                        : null);
+                                return itemDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setItems(itemDtos);
 
                     return dto;
                 })

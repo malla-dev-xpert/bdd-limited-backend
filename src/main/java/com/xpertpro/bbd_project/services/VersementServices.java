@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.services;
 
+import com.xpertpro.bbd_project.dto.CashWithdrawalDto;
 import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.VersementDto;
 import com.xpertpro.bbd_project.dto.items.ItemDto;
@@ -160,17 +161,21 @@ public class VersementServices {
                             ? versement.getDevise().getCode()
                             : null);
 
+//                    la liste des achats dans le verment
                     List<AchatDto> achatDtos = versement.getAchats().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
+                                achatDto.setMontantTotal(item.getMontantTotal());
+                                achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                 // Utilisation des montants du versement parent
-                                achatDto.setMontantRestant(versement.getMontantRestant());
-                                achatDto.setMontantVerser(versement.getMontantVerser());
-                                achatDto.setReferenceVersement(versement.getReference());
+                                achatDto.setReferenceVersement(item.getVersement().getReference());
+                                achatDto.setIsDebt(item.getIsDebt());
+                                achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                 List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                         .map(i -> {
                                             ItemDto itemDto = new ItemDto();
                                             itemDto.setId(i.getId());
@@ -180,6 +185,8 @@ public class VersementServices {
                                             itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 
@@ -189,6 +196,26 @@ public class VersementServices {
                             }).collect(Collectors.toList());
 
                     dto.setAchats(achatDtos);
+
+//                    La liste des retraits d'argennt
+                    List<CashWithdrawalDto> cashWithdrawalDtos = versement.getCashWithdrawalList().stream()
+                            .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                            .map(cashWithdrawal -> {
+                                CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                cashWithdrawalDto.setDateRetrait(cashWithdrawal.getDateRetrait());
+                                cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+                                cashWithdrawalDto.setUserName(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getFirstName() + " " + cashWithdrawal.getUser().getLastName() : null);
+
+                                return cashWithdrawalDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setCashWithdrawalDtoList(cashWithdrawalDtos);
 
                     return dto;
                 })
@@ -238,16 +265,18 @@ public class VersementServices {
                             .map(item -> {
                                 AchatDto achatDto = new AchatDto();
                                 achatDto.setId(item.getId());
-
+                                achatDto.setMontantTotal(item.getMontantTotal());
+                                achatDto.setCreatedAt(item.getCreatedAt() != null ? item.getCreatedAt() : null);
                                 // Info versement
                                 if (item.getVersement() != null) {
-                                    achatDto.setMontantRestant(item.getVersement().getMontantRestant());
-                                    achatDto.setMontantVerser(item.getVersement().getMontantVerser());
                                     achatDto.setReferenceVersement(item.getVersement().getReference());
                                 }
+                                achatDto.setIsDebt(item.getIsDebt());
+                                achatDto.setClientId(item.getClient() != null ? item.getClient().getId() : null);
 
                                 // Lignes d'achat
                                 List<ItemDto> itemsDtos = item.getItems().stream()
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
                                         .map(i -> {
                                             ItemDto itemDto = new ItemDto();
                                             itemDto.setId(i.getId());
@@ -257,6 +286,8 @@ public class VersementServices {
                                             itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
                                             itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
                                             itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
                                             return itemDto;
                                         }).collect(Collectors.toList());
 
@@ -265,6 +296,26 @@ public class VersementServices {
                             }).collect(Collectors.toList());
 
                     dto.setAchats(achatDtos);
+
+                    //La liste des retraits d'argennt
+                    List<CashWithdrawalDto> cashWithdrawalDtos = versement.getCashWithdrawalList().stream()
+                            .filter(cashWithdrawal -> cashWithdrawal.getStatus() != StatusEnum.DELETE)
+                            .map(cashWithdrawal -> {
+                                CashWithdrawalDto cashWithdrawalDto = new CashWithdrawalDto();
+                                cashWithdrawalDto.setId(cashWithdrawal.getId());
+                                cashWithdrawalDto.setMontant(cashWithdrawal.getMontant());
+                                cashWithdrawalDto.setNote(cashWithdrawal.getNote());
+                                cashWithdrawalDto.setDateRetrait(cashWithdrawal.getDateRetrait());
+                                cashWithdrawalDto.setVersementId(cashWithdrawal.getVersement() != null ? cashWithdrawal.getVersement().getId() : null);
+                                cashWithdrawalDto.setUserId(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getId() : null);
+                                cashWithdrawalDto.setDeviseId(cashWithdrawal.getDevise() != null ? cashWithdrawal.getDevise().getId() : null);
+                                cashWithdrawalDto.setPartnerId(cashWithdrawal.getPartner() != null ? cashWithdrawal.getPartner().getId() : null);
+                                cashWithdrawalDto.setUserName(cashWithdrawal.getUser() != null ? cashWithdrawal.getUser().getFirstName() + " " + cashWithdrawal.getUser().getLastName() : null);
+
+                                return cashWithdrawalDto;
+                            }).collect(Collectors.toList());
+
+                    dto.setCashWithdrawalDtoList(cashWithdrawalDtos);
                     return dto;
                 })
                 .collect(Collectors.toList());

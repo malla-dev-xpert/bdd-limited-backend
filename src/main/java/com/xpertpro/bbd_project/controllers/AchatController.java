@@ -1,6 +1,7 @@
 package com.xpertpro.bbd_project.controllers;
 
 import com.xpertpro.bbd_project.config.ApiResponsee;
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
 import com.xpertpro.bbd_project.dto.achats.ConfirmItemsDelivery;
 import com.xpertpro.bbd_project.dto.achats.CreateAchatDto;
 import com.xpertpro.bbd_project.services.AchatServices;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/achats")
@@ -30,40 +32,26 @@ public class AchatController {
 
         try {
             String result = achatServices.createAchatForClient(clientId, userId, dto);
+
             return ResponseEntity.ok(
                     new ApiResponsee<>(
                             true,
-                            "Purchase created successfully",
+                            result.equals("ACHAT_CREATED_AS_DEBT_SUCCESSFULLY")
+                                    ? "Achat créé (dette)"
+                                    : "Achat créé avec succès",
                             result,
                             null
                     )
             );
 
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponsee<>(
-                            false,
-                            e.getMessage(),
-                            null,
-                            Collections.singletonList(e.getMessage())
-                    ));
-
-        } catch (AchatServices.BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponsee<>(
-                            false,
-                            e.getMessage(),
-                            null,
-                            Collections.singletonList(e.getMessage())
-                    ));
-
         } catch (Exception e) {
+            System.out.println("Erreur endpoint création achat"+ e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponsee<>(
                             false,
-                            "An unexpected error occurred",
+                            "Échec création achat",
                             null,
-                            Collections.singletonList("SERVER_ERROR")
+                            List.of(e.getMessage())
                     ));
         }
     }
@@ -120,4 +108,10 @@ public class AchatController {
                     ));
         }
     }
+
+    @GetMapping()
+    public List<AchatDto> getAll(@RequestParam int page){
+        return achatServices.getAll(page);
+    }
+
 }

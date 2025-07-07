@@ -1,4 +1,5 @@
 package com.xpertpro.bbd_project.dto.achats;
+import com.xpertpro.bbd_project.dto.CashWithdrawalDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class VersementDto {
     private Long deviseId;
     private String deviseCode;
     private List<AchatDto> achats;
+    private List<CashWithdrawalDto> cashWithdrawalDtoList;
     private String commissionnaireName;
     private String commissionnairePhone;
     private String type;

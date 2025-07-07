@@ -30,7 +30,7 @@ public class PackageController {
     {
         try{
             packageServices.create(dto, clientId, userId, containerId, warehouseId);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Expedition ajouter avec succès.");
+            return ResponseEntity.status(HttpStatus.CREATED).body("Colis ajouter avec succès.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }

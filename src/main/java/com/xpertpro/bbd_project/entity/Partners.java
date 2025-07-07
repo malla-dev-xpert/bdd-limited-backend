@@ -31,6 +31,8 @@ public class Partners {
 
     private String accountType;
     private Double balance = 0.0; //solde du client
+    @Column(nullable = false, columnDefinition = "double default 0.0")
+    private Double totalDebt = 0.0; // Initialisation par défaut
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt;
@@ -50,4 +52,7 @@ public class Partners {
 
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Items> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL)
+    private List<CashWithdrawal> cashWithdrawalList = new ArrayList<>();
 }

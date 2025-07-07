@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity(name = "versements")
 public class Versements {
     @Id
@@ -40,6 +42,9 @@ public class Versements {
 
     @OneToMany(mappedBy = "versement", cascade = CascadeType.ALL)
     private List<Achats> achats = new ArrayList<>();
+
+    @OneToMany(mappedBy = "versement", cascade = CascadeType.ALL)
+    private List<CashWithdrawal> cashWithdrawalList = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "devise_id")

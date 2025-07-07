@@ -1,11 +1,14 @@
 package com.xpertpro.bbd_project.dto;
 
+import com.xpertpro.bbd_project.dto.achats.AchatDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class PackageDto {
@@ -26,4 +29,6 @@ public class PackageDto {
     private String status;
     private String warehouseName;
     private String warehouseAddress;
+    private List<Long> itemIds;
+    private List<ItemDto> items;
 }

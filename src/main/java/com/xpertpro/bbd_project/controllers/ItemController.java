@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/items")
@@ -23,14 +24,19 @@ public class ItemController {
         return itemServices.getItemsByPackageId(packageId);
     }
 
+    @GetMapping("/customer")
+    public List<ItemDto> getItemsByClientId(@RequestParam(name = "clientId") Long clientId) {
+        return itemServices.getItemsByClientId(clientId);
+    }
+
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "packageId") Long packageId){
-        String result = itemServices.deleteItem(id, userId, packageId);
+    public ResponseEntity<String> delete(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "clientId") Long clientId){
+        String result = itemServices.deleteItem(id, userId, clientId);
         switch (result) {
             case "ITEM_NOT_FOUND":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Article non trouve.");
-            case "PACKAGE_NOT_FOUND":
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Colis non trouve.");
+            case "CLIENT_NOT_FOUND_OR_MISMATCH":
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Client non trouve.");
             case "USER_NOT_FOUND":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Utilisateur non trouve.");
             default:
@@ -45,12 +51,22 @@ public class ItemController {
 
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updatePackage(
+    public ResponseEntity<String> updateItem(
             @PathVariable Long id,
-            @RequestParam(name = "packageId")Long packageId,
-            @RequestBody ItemDto dto
-    ) {
-        itemServices.updateItem(id, packageId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Article modifier avec succès !");
+            @RequestParam Long userId,
+            @RequestBody ItemDto request) {
+
+        try {
+            String result = itemServices.updateItem(id, userId, request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return switch (e.getMessage()) {
+                case "ITEM_NOT_FOUND" -> ResponseEntity.notFound().build();
+                case "USER_NOT_FOUND" -> ResponseEntity.badRequest().body("USER_NOT_FOUND");
+                case "CLIENT_MISMATCH" -> ResponseEntity.badRequest().body("CLIENT_MISMATCH");
+                case "SUPPLIER_NOT_FOUND" -> ResponseEntity.badRequest().body("SUPPLIER_NOT_FOUND");
+                default -> ResponseEntity.internalServerError().body("UPDATE_FAILED: " + e.getMessage());
+            };
+        }
     }
 }

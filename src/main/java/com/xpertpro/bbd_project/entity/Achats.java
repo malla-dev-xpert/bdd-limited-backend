@@ -21,6 +21,7 @@ public class Achats {
     private LocalDateTime editedAt;
     private Double montantTotal;
     private Double tauxUtilise;
+    private Boolean isDebt;
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
@@ -28,11 +29,8 @@ public class Achats {
     @OneToMany(mappedBy = "achats", cascade = CascadeType.ALL)
     private List<Items> items = new ArrayList<>();
     @ManyToOne
-    @JoinColumn(name = "versement_id", nullable = false)
+    @JoinColumn(name = "versement_id", nullable = true)
     private Versements versement;
-//    @ManyToOne
-//    @JoinColumn(name = "fournisseur_id")
-//    private Partners fournisseur;
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Partners client;

@@ -10,6 +10,8 @@ public class ItemResponseDto {
     private String description;
     private double quantity;
     private double unitPrice;
+    private double totalPrice;
+    private double salesRate;
     private LocalDateTime achatDate;
     private Long clientId;
     private String clientName;

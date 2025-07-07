@@ -10,7 +10,13 @@ public class ItemDto {
     private String description;
     private String supplierName;
     private String supplierPhone;
-    private int quantity;
-    private double unitPrice;
+    private Double totalPrice;
+    private Integer quantity;
+    private Long packageId;
+    private Double unitPrice;
+    private Double salesRate;
     private String status;
+    private Long clientId;
+    private String invoiceNumber;
+    private Long supplierId;
 }
