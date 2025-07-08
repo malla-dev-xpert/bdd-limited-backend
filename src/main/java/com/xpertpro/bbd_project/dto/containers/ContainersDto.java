@@ -35,4 +35,5 @@ public class ContainersDto {
     private Double telxFee;
     private Double  otherFees;
     private Double  margin;
+    private Double amount;
 }
