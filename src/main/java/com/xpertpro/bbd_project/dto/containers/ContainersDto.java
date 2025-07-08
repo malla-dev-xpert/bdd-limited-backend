@@ -27,4 +27,12 @@ public class ContainersDto {
     @JoinColumn(nullable = true)
     private Long supplier_id;
     private String supplierPhone;
+    private Double locationFee;
+    private Double  localCharge;
+    private Double  loadingFee;
+    private Double  overweightFee;
+    private Double  checkingFee;
+    private Double telxFee;
+    private Double  otherFees;
+    private Double  margin;
 }

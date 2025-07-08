@@ -10,6 +10,14 @@ public class ContainersDtoMapper {
         Containers containers = new Containers();
         containers.setReference(dto.getReference());
         containers.setIsAvailable(dto.getIsAvailable());
+        containers.setLoadingFee(dto.getLoadingFee());
+        containers.setLocalCharge(dto.getLocalCharge());
+        containers.setLocationFee(dto.getLocationFee());
+        containers.setOverweightFee(dto.getOverweightFee());
+        containers.setCheckingFee(dto.getCheckingFee());
+        containers.setTelxFee(dto.getTelxFee());
+        containers.setOtherFees(dto.getOtherFees());
+        containers.setMargin(dto.getMargin());
         return containers;
     }
 }

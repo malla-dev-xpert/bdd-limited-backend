@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -54,6 +55,29 @@ public class ContainerServices {
         container.setIsAvailable(containersDto.getIsAvailable());
         container.setCreatedAt(LocalDateTime.now());
         container.setSize(containersDto.getSize());
+
+        // Correction: Utiliser les valeurs du DTO au lieu du container vide
+        container.setLoadingFee(containersDto.getLoadingFee());
+        container.setLocationFee(containersDto.getLocationFee());
+        container.setMargin(containersDto.getMargin());
+        container.setTelxFee(containersDto.getTelxFee());
+        container.setOtherFees(containersDto.getOtherFees());
+        container.setOverweightFee(containersDto.getOverweightFee());
+        container.setLocalCharge(containersDto.getLocalCharge());
+        container.setCheckingFee(containersDto.getCheckingFee());
+
+        // Calculer la somme totale de tous les frais + marge
+        Double totalFees =
+                (container.getLoadingFee() != null ? container.getLoadingFee() : 0.0) +
+                        (container.getLocationFee() != null ? container.getLocationFee() : 0.0) +
+                        (container.getTelxFee() != null ? container.getTelxFee() : 0.0) +
+                        (container.getOtherFees() != null ? container.getOtherFees() : 0.0) +
+                        (container.getOverweightFee() != null ? container.getOverweightFee() : 0.0) +
+                        (container.getLocalCharge() != null ? container.getLocalCharge() : 0.0) +
+                        (container.getCheckingFee() != null ? container.getCheckingFee() : 0.0) +
+                        (container.getMargin() != null ? container.getMargin() : 0.0);
+
+        container.setAmount(totalFees);
         container.setUser(user);
         container.setStatus(StatusEnum.PENDING); // Set default status
 
