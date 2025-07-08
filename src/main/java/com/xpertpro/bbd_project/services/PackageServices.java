@@ -39,6 +39,8 @@ public class PackageServices {
     WarehouseRepository warehouseRepository;
     @Autowired
     ItemsRepository itemsRepository;
+    @Autowired
+    HarborRepository harborRepository;
 
     @Transactional
     public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
@@ -105,7 +107,6 @@ public class PackageServices {
 
         return "SUCCESS";
     }
-
 
     public List<PackageDto> getAll(int page, String query) {
         int pageSize = 30;
@@ -305,6 +306,10 @@ public class PackageServices {
     public String updateExpedition(Long id, PackageDto newExpedition, Long userId) {
         Optional<Packages> optionalExpedition = packageRepository.findById(id);
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
+        Harbor startPort = harborRepository.findById(newExpedition.getStartHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Start port not found"));
+        Harbor destinationPort = harborRepository.findById(newExpedition.getDestinationHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Destination port not found"));
 
         if (optionalExpedition.isEmpty()) {
             throw new RuntimeException("Expedition not found with ID: " + id);
@@ -336,10 +341,10 @@ public class PackageServices {
 
         // Mise à jour des informations géographiques
         if (newExpedition.getStartCountry() != null) {
-            expedition.setStartCountry(newExpedition.getStartCountry());
+            expedition.setStartCountry(startPort.getName());
         }
         if (newExpedition.getDestinationCountry() != null) {
-            expedition.setDestinationCountry(newExpedition.getDestinationCountry());
+            expedition.setDestinationCountry(destinationPort.getName());
         }
 
         // Mise à jour des dates
