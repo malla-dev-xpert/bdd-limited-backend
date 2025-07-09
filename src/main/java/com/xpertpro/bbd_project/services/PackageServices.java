@@ -108,6 +108,64 @@ public class PackageServices {
         return "SUCCESS";
     }
 
+    @Transactional
+    public String addItemsToPackage(Long packageId, List<Long> itemIds, Long userId) {
+        // 1. Validation des entrées
+        if (itemIds == null || itemIds.isEmpty()) {
+            throw new AchatServices.BusinessException("NO_ITEMS", "Aucun article sélectionné");
+        }
+
+        // 2. Récupération des entités
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+        Packages packagee = packageRepository.findById(packageId)
+                .orElseThrow(() -> new EntityNotFoundException("Colis non trouvé"));
+
+        // 3. Récupération des articles
+        List<Items> items = itemsRepository.findAllById(itemIds);
+
+        if (items.size() != itemIds.size()) {
+            throw new EntityNotFoundException("Certains articles n'ont pas été trouvés");
+        }
+
+        // 4. Vérifications métier
+        Long clientId = packagee.getClient().getId();
+
+        items.forEach(item -> {
+            // Vérification que l'article appartient au même client que le colis
+            if (!item.getAchats().getClient().getId().equals(clientId)) {
+                throw new AchatServices.BusinessException("CLIENT_MISMATCH",
+                        "L'article ID " + item.getId() + " n'appartient pas au bon client");
+            }
+
+            // Vérification que l'article n'est pas déjà dans un colis
+            if (item.getPackages() != null) {
+                throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
+                        "L'article ID " + item.getId() + " est déjà dans un autre colis");
+            }
+        });
+
+        // 5. Association des articles au colis
+        items.forEach(item -> {
+            item.setPackages(packagee);
+        });
+
+        itemsRepository.saveAll(items);
+
+        packageRepository.save(packagee);
+
+        // 6. Journalisation
+//        logServices.logAction(
+//                user,
+//                "AJOUT_ARTICLES_COLIS",
+//                "Packages",
+//                packagee.getId(),
+//                items.size());
+
+        return "SUCCESS";
+    }
+
     public List<PackageDto> getAll(int page, String query) {
         int pageSize = 30;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());

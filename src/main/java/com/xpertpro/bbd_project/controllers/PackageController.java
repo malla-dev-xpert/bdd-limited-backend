@@ -1,6 +1,9 @@
 package com.xpertpro.bbd_project.controllers;
 
+import com.xpertpro.bbd_project.config.ApiResponsee;
 import com.xpertpro.bbd_project.dto.PackageDto;
+import com.xpertpro.bbd_project.dto.items.ItemDto;
+import com.xpertpro.bbd_project.services.AchatServices;
 import com.xpertpro.bbd_project.services.ContainerPackageService;
 import com.xpertpro.bbd_project.services.PackageServices;
 import jakarta.persistence.EntityNotFoundException;
@@ -9,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -33,6 +37,28 @@ public class PackageController {
             return ResponseEntity.status(HttpStatus.CREATED).body("Colis ajouter avec succès.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{packageId}/items")
+    public ResponseEntity<String> addItemsToPackage(
+            @PathVariable Long packageId,
+            @RequestBody ItemDto request,
+            @RequestHeader("X-User-Id") Long userId) {
+
+        try {
+            packageServices.addItemsToPackage(packageId, request.getItemIds(), userId);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body("Colis ajouter avec succès.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (AchatServices.BusinessException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
         }
     }
 
