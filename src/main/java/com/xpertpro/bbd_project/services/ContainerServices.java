@@ -486,6 +486,7 @@ public class ContainerServices {
         return dto;
     }
 
+    @Transactional
     public String startDelivery(Long id, Long userId) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
@@ -496,6 +497,12 @@ public class ContainerServices {
         if(containers.getPackages().isEmpty()){
             return "NO_PACKAGE_FOR_DELIVERY";
         }
+
+        // Mettre à jour le statut de tous les packages du conteneur
+        containers.getPackages().forEach(pkg -> {
+            pkg.setStatus(StatusEnum.INPROGRESS);
+            pkg.setEditedAt(LocalDateTime.now());
+        });
 
         containers.setStatus(StatusEnum.INPROGRESS);
         containers.setUser(user);
@@ -511,6 +518,7 @@ public class ContainerServices {
         return "La livraison démarre avec succès.";
     }
 
+    @Transactional
     public String confirmDelivery(Long id, Long userId) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
@@ -525,6 +533,12 @@ public class ContainerServices {
         if(containers.getStatus() != StatusEnum.INPROGRESS){
             return "CONTAINER_NOT_IN_PROGRESS";
         }
+
+        // Mettre à jour le statut de tous les packages du conteneur
+        containers.getPackages().forEach(pkg -> {
+            pkg.setStatus(StatusEnum.DELIVERED);
+            pkg.setEditedAt(LocalDateTime.now());
+        });
 
         containers.setStatus(StatusEnum.RECEIVED);
         containers.setUser(user);
