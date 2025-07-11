@@ -44,7 +44,7 @@ public class PackageServices {
 
     @Transactional
     public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
-        // 1. Validation des entités existantes
+        //  Validation des entités existantes
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Partners client = clientRepo.findById(clientId)
@@ -54,12 +54,20 @@ public class PackageServices {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
 
-        // 2. Validation des items
+        // Récupération et validation du port de départ
+        Harbor startPort = harborRepository.findById(dto.getStartHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Start port not found"));
+
+        // Embarquer le conteneur dans le port de depart
+        container.setHarbor(startPort);
+        containersRepository.save(container);
+
+        // Validation des items
         if (dto.getItemIds() == null || dto.getItemIds().isEmpty()) {
             throw new AchatServices.BusinessException("NO_ITEMS_SELECTED", "At least one item must be selected for the package");
         }
 
-        // 3. Création du colis
+        // Création du colis
         Packages packages = packageDtoMapper.toEntity(dto);
         packages.setCreatedAt(LocalDateTime.now());
         packages.setClient(client);
@@ -67,10 +75,10 @@ public class PackageServices {
         packages.setContainer(container);
         packages.setWarehouse(warehouse);
 
-        // 4. Sauvegarde initiale pour obtenir l'ID
+        // Sauvegarde initiale pour obtenir l'ID
         Packages newPackage = packageRepository.save(packages);
 
-        // 5. Gestion des items sélectionnés
+        // Gestion des items sélectionnés
         List<Items> itemsToPackage = itemsRepository.findAllById(dto.getItemIds());
 
         // Vérification que tous les items existent
@@ -78,27 +86,23 @@ public class PackageServices {
             throw new EntityNotFoundException("Some items were not found");
         }
 
-        // Vérification que les items appartiennent bien au client
         itemsToPackage.forEach(item -> {
             if (!item.getAchats().getClient().getId().equals(clientId)) {
                 throw new AchatServices.BusinessException("ITEM_CLIENT_MISMATCH",
                         "Item with ID " + item.getId() + " does not belong to client " + clientId);
             }
 
-            // Vérification que l'item n'est pas déjà dans un autre colis
             if (item.getPackages() != null) {
                 throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
                         "Item with ID " + item.getId() + " is already in another package");
             }
 
-            // Associer l'item au colis
             item.setPackages(newPackage);
         });
 
-        // Sauvegarder les modifications sur les items
         itemsRepository.saveAll(itemsToPackage);
 
-        // 7. Logging
+        // 8. Logging
         logServices.logAction(
                 user,
                 "AJOUT_COLIS",
