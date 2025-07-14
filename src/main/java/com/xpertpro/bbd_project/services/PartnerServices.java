@@ -152,6 +152,7 @@ public class PartnerServices {
                                                         itemDto.setUnitPrice(i.getUnitPrice());
                                                         itemDto.setTotalPrice(i.getTotalPrice());
                                                         itemDto.setSalesRate(i.getSalesRate());
+                                                        itemDto.setInvoiceNumber(i.getInvoiceNumber());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 
@@ -302,6 +303,7 @@ public class PartnerServices {
                                                         itemDto.setStatus(i.getStatus().name());
                                                         itemDto.setTotalPrice(i.getTotalPrice());
                                                         itemDto.setSalesRate(i.getSalesRate());
+                                                        itemDto.setInvoiceNumber(i.getInvoiceNumber());
                                                         return itemDto;
                                                     }).collect(Collectors.toList());
 

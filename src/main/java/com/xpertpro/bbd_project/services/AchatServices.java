@@ -266,6 +266,7 @@ public class AchatServices {
                                 itemDto.setQuantity(i.getQuantity());
                                 itemDto.setUnitPrice(i.getUnitPrice());
                                 itemDto.setTotalPrice(i.getTotalPrice());
+                                itemDto.setInvoiceNumber(i.getInvoiceNumber());
 
                                 if (i.getSupplier() != null) {
                                     itemDto.setSupplierName(i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName());
