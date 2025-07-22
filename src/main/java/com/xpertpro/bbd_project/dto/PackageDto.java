@@ -33,4 +33,5 @@ public class PackageDto {
     private List<ItemDto> items;
     private Long startHarborId;
     private Long destinationHarborId;
+    private LocalDateTime receivedDate;
 }

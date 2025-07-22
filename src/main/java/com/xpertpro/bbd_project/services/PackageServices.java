@@ -197,6 +197,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());
@@ -256,6 +257,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());
@@ -334,9 +336,10 @@ public class PackageServices {
     }
 
     @Transactional
-    public void receivedExpedition(Long expeditionId) {
+    public void receivedExpedition(Long expeditionId, Long userId, LocalDateTime deliveryDate) {
         Packages expedition = packageRepository.findById(expeditionId)
                 .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+        UserEntity user = userRepository.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found with id : " + userId));
 
         if (expedition.getStatus() == StatusEnum.RECEIVED) {
             throw new IllegalStateException("L'expédition est déjà livrée.");
@@ -347,8 +350,15 @@ public class PackageServices {
         }
 
         expedition.setStatus(StatusEnum.RECEIVED);
-        expedition.setEditedAt(LocalDateTime.now());
-        packageRepository.save(expedition);
+        expedition.setReceivedDate(deliveryDate != null ? deliveryDate : LocalDateTime.now());
+        expedition.setCreatedBy(user);
+        Packages p = packageRepository.save(expedition);
+
+        logServices.logAction(
+                user,
+                "COLIS_RECU",
+                "Packages",
+                p.getId());
     }
 
     @Transactional
@@ -451,6 +461,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());

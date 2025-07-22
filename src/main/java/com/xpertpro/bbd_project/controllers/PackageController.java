@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -125,9 +126,12 @@ public class PackageController {
     }
 
     @DeleteMapping("/received-expedition")
-    public ResponseEntity<String> receivedExpedition(@RequestParam(name = "expeditionId") Long expeditionId) {
+    public ResponseEntity<String> receivedExpedition(
+            @RequestParam(name = "expeditionId") Long expeditionId,
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "deliveryDate")LocalDateTime deliveryDate) {
         try {
-            packageServices.receivedExpedition(expeditionId);
+            packageServices.receivedExpedition(expeditionId,userId, deliveryDate);
             return ResponseEntity.status(HttpStatus.OK).body("L'expédition est livrée avec succès.");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
