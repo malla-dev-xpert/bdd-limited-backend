@@ -55,8 +55,6 @@ public class ContainerServices {
         container.setIsAvailable(containersDto.getIsAvailable());
         container.setCreatedAt(LocalDateTime.now());
         container.setSize(containersDto.getSize());
-
-        // Correction: Utiliser les valeurs du DTO au lieu du container vide
         container.setLoadingFee(containersDto.getLoadingFee());
         container.setLocationFee(containersDto.getLocationFee());
         container.setMargin(containersDto.getMargin());
@@ -233,6 +231,8 @@ public class ContainerServices {
                     dto.setSize(pkg.getSize());
                     dto.setIsAvailable(pkg.getIsAvailable());
                     dto.setAmount(pkg.getAmount());
+                    dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+                    dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
 
                     // Tous les frais
                     dto.setLoadingFee(pkg.getLoadingFee());
@@ -312,6 +312,8 @@ public class ContainerServices {
                     dto.setSize(pkg.getSize());
                     dto.setIsAvailable(pkg.getIsAvailable());
                     dto.setAmount(pkg.getAmount());
+                    dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+                    dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
 
                     // Tous les frais
                     dto.setLoadingFee(pkg.getLoadingFee());
@@ -429,6 +431,8 @@ public class ContainerServices {
         dto.setSize(pkg.getSize());
         dto.setIsAvailable(pkg.getIsAvailable());
         dto.setAmount(pkg.getAmount());
+        dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+        dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
 
         // Tous les frais
         dto.setLoadingFee(pkg.getLoadingFee());
@@ -487,7 +491,7 @@ public class ContainerServices {
     }
 
     @Transactional
-    public String startDelivery(Long id, Long userId) {
+    public String startDelivery(Long id, Long userId, LocalDateTime startDeliveryDate) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
 
@@ -507,6 +511,7 @@ public class ContainerServices {
         containers.setStatus(StatusEnum.INPROGRESS);
         containers.setUser(user);
         containers.setEditedAt(LocalDateTime.now());
+        containers.setStartDeliveryDate(startDeliveryDate != null ? startDeliveryDate : LocalDateTime.now());
         containersRepository.save(containers);
 
         // Log action
@@ -519,7 +524,7 @@ public class ContainerServices {
     }
 
     @Transactional
-    public String confirmDelivery(Long id, Long userId) {
+    public String confirmDelivery(Long id, Long userId, LocalDateTime confirmDeliveryDate) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
 
@@ -543,6 +548,7 @@ public class ContainerServices {
         containers.setStatus(StatusEnum.RECEIVED);
         containers.setUser(user);
         containers.setEditedAt(LocalDateTime.now());
+        containers.setConfirmDeliveryDate(confirmDeliveryDate != null ? confirmDeliveryDate : LocalDateTime.now());
         containersRepository.save(containers);
 
         // Log action

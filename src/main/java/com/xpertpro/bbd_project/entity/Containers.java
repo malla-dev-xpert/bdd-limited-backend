@@ -28,6 +28,8 @@ public class Containers {
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+    private LocalDateTime startDeliveryDate;
+    private LocalDateTime confirmDeliveryDate;
 
     @JoinColumn(name = "user_id")
     @ManyToOne

@@ -16,6 +16,8 @@ public class ContainersDto {
     private String size;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
+    private LocalDateTime startDeliveryDate;
+    private LocalDateTime confirmDeliveryDate;
     private Boolean isAvailable;
     private String status;
     private Long userId;
