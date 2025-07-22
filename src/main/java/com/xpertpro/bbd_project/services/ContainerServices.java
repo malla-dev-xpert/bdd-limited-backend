@@ -63,6 +63,7 @@ public class ContainerServices {
         container.setOverweightFee(containersDto.getOverweightFee());
         container.setLocalCharge(containersDto.getLocalCharge());
         container.setCheckingFee(containersDto.getCheckingFee());
+        container.setIsTeam(false);
 
         // Calculer la somme totale de tous les frais + marge
         Double totalFees =
@@ -118,6 +119,9 @@ public class ContainerServices {
         // Mettre à jour les propriétés de base
         if (containersDto.getReference() != null) {
             existingContainer.setReference(containersDto.getReference());
+        }
+        if (containersDto.getIsTeam() != null) {
+            existingContainer.setIsTeam(containersDto.getIsTeam());
         }
         if (containersDto.getSize() != null) {
             existingContainer.setSize(containersDto.getSize());
@@ -233,6 +237,7 @@ public class ContainerServices {
                     dto.setAmount(pkg.getAmount());
                     dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
                     dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+                    dto.setIsTeam(pkg.getIsTeam());
 
                     // Tous les frais
                     dto.setLoadingFee(pkg.getLoadingFee());
@@ -314,6 +319,7 @@ public class ContainerServices {
                     dto.setAmount(pkg.getAmount());
                     dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
                     dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+                    dto.setIsTeam(pkg.getIsTeam());
 
                     // Tous les frais
                     dto.setLoadingFee(pkg.getLoadingFee());
@@ -433,6 +439,7 @@ public class ContainerServices {
         dto.setAmount(pkg.getAmount());
         dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
         dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+        dto.setIsTeam(pkg.getIsTeam());
 
         // Tous les frais
         dto.setLoadingFee(pkg.getLoadingFee());

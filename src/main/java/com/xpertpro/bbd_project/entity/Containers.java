@@ -25,6 +25,7 @@ public class Containers {
     private StatusEnum status = StatusEnum.PENDING;
 
     private Boolean isAvailable;
+    private Boolean isTeam; //definir si c'est un groupage ou pas
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;

@@ -19,6 +19,7 @@ public class ContainersDto {
     private LocalDateTime startDeliveryDate;
     private LocalDateTime confirmDeliveryDate;
     private Boolean isAvailable;
+    private Boolean isTeam;
     private String status;
     private Long userId;
     private String userName;
