@@ -39,10 +39,12 @@ public class PackageServices {
     WarehouseRepository warehouseRepository;
     @Autowired
     ItemsRepository itemsRepository;
+    @Autowired
+    HarborRepository harborRepository;
 
     @Transactional
     public String create(PackageDto dto, Long clientId, Long userId, Long containerId, Long warehouseId) {
-        // 1. Validation des entités existantes
+        //  Validation des entités existantes
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Partners client = clientRepo.findById(clientId)
@@ -52,12 +54,20 @@ public class PackageServices {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
 
-        // 2. Validation des items
+        // Récupération et validation du port de départ
+        Harbor startPort = harborRepository.findById(dto.getStartHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Start port not found"));
+
+        // Embarquer le conteneur dans le port de depart
+        container.setHarbor(startPort);
+        containersRepository.save(container);
+
+        // Validation des items
         if (dto.getItemIds() == null || dto.getItemIds().isEmpty()) {
             throw new AchatServices.BusinessException("NO_ITEMS_SELECTED", "At least one item must be selected for the package");
         }
 
-        // 3. Création du colis
+        // Création du colis
         Packages packages = packageDtoMapper.toEntity(dto);
         packages.setCreatedAt(LocalDateTime.now());
         packages.setClient(client);
@@ -65,10 +75,10 @@ public class PackageServices {
         packages.setContainer(container);
         packages.setWarehouse(warehouse);
 
-        // 4. Sauvegarde initiale pour obtenir l'ID
+        // Sauvegarde initiale pour obtenir l'ID
         Packages newPackage = packageRepository.save(packages);
 
-        // 5. Gestion des items sélectionnés
+        // Gestion des items sélectionnés
         List<Items> itemsToPackage = itemsRepository.findAllById(dto.getItemIds());
 
         // Vérification que tous les items existent
@@ -76,27 +86,23 @@ public class PackageServices {
             throw new EntityNotFoundException("Some items were not found");
         }
 
-        // Vérification que les items appartiennent bien au client
         itemsToPackage.forEach(item -> {
             if (!item.getAchats().getClient().getId().equals(clientId)) {
                 throw new AchatServices.BusinessException("ITEM_CLIENT_MISMATCH",
                         "Item with ID " + item.getId() + " does not belong to client " + clientId);
             }
 
-            // Vérification que l'item n'est pas déjà dans un autre colis
             if (item.getPackages() != null) {
                 throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
                         "Item with ID " + item.getId() + " is already in another package");
             }
 
-            // Associer l'item au colis
             item.setPackages(newPackage);
         });
 
-        // Sauvegarder les modifications sur les items
         itemsRepository.saveAll(itemsToPackage);
 
-        // 7. Logging
+        // 8. Logging
         logServices.logAction(
                 user,
                 "AJOUT_COLIS",
@@ -106,6 +112,63 @@ public class PackageServices {
         return "SUCCESS";
     }
 
+    @Transactional
+    public String addItemsToPackage(Long packageId, List<Long> itemIds, Long userId) {
+        // 1. Validation des entrées
+        if (itemIds == null || itemIds.isEmpty()) {
+            throw new AchatServices.BusinessException("NO_ITEMS", "Aucun article sélectionné");
+        }
+
+        // 2. Récupération des entités
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+        Packages packagee = packageRepository.findById(packageId)
+                .orElseThrow(() -> new EntityNotFoundException("Colis non trouvé"));
+
+        // 3. Récupération des articles
+        List<Items> items = itemsRepository.findAllById(itemIds);
+
+        if (items.size() != itemIds.size()) {
+            throw new EntityNotFoundException("Certains articles n'ont pas été trouvés");
+        }
+
+        // 4. Vérifications métier
+        Long clientId = packagee.getClient().getId();
+
+        items.forEach(item -> {
+            // Vérification que l'article appartient au même client que le colis
+            if (!item.getAchats().getClient().getId().equals(clientId)) {
+                throw new AchatServices.BusinessException("CLIENT_MISMATCH",
+                        "L'article ID " + item.getId() + " n'appartient pas au bon client");
+            }
+
+            // Vérification que l'article n'est pas déjà dans un colis
+            if (item.getPackages() != null) {
+                throw new AchatServices.BusinessException("ITEM_ALREADY_PACKAGED",
+                        "L'article ID " + item.getId() + " est déjà dans un autre colis");
+            }
+        });
+
+        // 5. Association des articles au colis
+        items.forEach(item -> {
+            item.setPackages(packagee);
+        });
+
+        itemsRepository.saveAll(items);
+
+        packageRepository.save(packagee);
+
+        // 6. Journalisation
+//        logServices.logAction(
+//                user,
+//                "AJOUT_ARTICLES_COLIS",
+//                "Packages",
+//                packagee.getId(),
+//                items.size());
+
+        return "SUCCESS";
+    }
 
     public List<PackageDto> getAll(int page, String query) {
         int pageSize = 30;
@@ -134,6 +197,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());
@@ -193,6 +257,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());
@@ -271,9 +336,10 @@ public class PackageServices {
     }
 
     @Transactional
-    public void receivedExpedition(Long expeditionId) {
+    public void receivedExpedition(Long expeditionId, Long userId, LocalDateTime deliveryDate) {
         Packages expedition = packageRepository.findById(expeditionId)
                 .orElseThrow(() -> new EntityNotFoundException("Expédition introuvable avec l'ID : " + expeditionId));
+        UserEntity user = userRepository.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found with id : " + userId));
 
         if (expedition.getStatus() == StatusEnum.RECEIVED) {
             throw new IllegalStateException("L'expédition est déjà livrée.");
@@ -284,8 +350,15 @@ public class PackageServices {
         }
 
         expedition.setStatus(StatusEnum.RECEIVED);
-        expedition.setEditedAt(LocalDateTime.now());
-        packageRepository.save(expedition);
+        expedition.setReceivedDate(deliveryDate != null ? deliveryDate : LocalDateTime.now());
+        expedition.setCreatedBy(user);
+        Packages p = packageRepository.save(expedition);
+
+        logServices.logAction(
+                user,
+                "COLIS_RECU",
+                "Packages",
+                p.getId());
     }
 
     @Transactional
@@ -305,6 +378,10 @@ public class PackageServices {
     public String updateExpedition(Long id, PackageDto newExpedition, Long userId) {
         Optional<Packages> optionalExpedition = packageRepository.findById(id);
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
+        Harbor startPort = harborRepository.findById(newExpedition.getStartHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Start port not found"));
+        Harbor destinationPort = harborRepository.findById(newExpedition.getDestinationHarborId())
+                .orElseThrow(() -> new EntityNotFoundException("Destination port not found"));
 
         if (optionalExpedition.isEmpty()) {
             throw new RuntimeException("Expedition not found with ID: " + id);
@@ -336,10 +413,10 @@ public class PackageServices {
 
         // Mise à jour des informations géographiques
         if (newExpedition.getStartCountry() != null) {
-            expedition.setStartCountry(newExpedition.getStartCountry());
+            expedition.setStartCountry(startPort.getName());
         }
         if (newExpedition.getDestinationCountry() != null) {
-            expedition.setDestinationCountry(newExpedition.getDestinationCountry());
+            expedition.setDestinationCountry(destinationPort.getName());
         }
 
         // Mise à jour des dates
@@ -384,6 +461,7 @@ public class PackageServices {
                     dto.setCbn(pkg.getCbn());
                     dto.setStartDate(pkg.getStartDate());
                     dto.setArrivalDate(pkg.getArrivalDate());
+                    dto.setReceivedDate(pkg.getReceivedDate());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setDestinationCountry(pkg.getDestinationCountry());
                     dto.setExpeditionType(pkg.getExpeditionType());

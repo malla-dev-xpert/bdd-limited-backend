@@ -25,9 +25,12 @@ public class Containers {
     private StatusEnum status = StatusEnum.PENDING;
 
     private Boolean isAvailable;
+    private Boolean isTeam; //definir si c'est un groupage ou pas
 
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
+    private LocalDateTime startDeliveryDate;
+    private LocalDateTime confirmDeliveryDate;
 
     @JoinColumn(name = "user_id")
     @ManyToOne
@@ -43,4 +46,14 @@ public class Containers {
     @ManyToOne
     @JoinColumn(name = "supplier_id", nullable = true)
     private Partners supplier;
+
+    private Double locationFee;
+    private Double  localCharge;
+    private Double  loadingFee;
+    private Double  overweightFee;
+    private Double  checkingFee;
+    private Double telxFee;
+    private Double  otherFees;
+    private Double  margin;
+    private Double amount;
 }

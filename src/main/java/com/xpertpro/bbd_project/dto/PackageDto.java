@@ -31,4 +31,7 @@ public class PackageDto {
     private String warehouseAddress;
     private List<Long> itemIds;
     private List<ItemDto> items;
+    private Long startHarborId;
+    private Long destinationHarborId;
+    private LocalDateTime receivedDate;
 }

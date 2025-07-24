@@ -30,6 +30,7 @@ public class Packages {
     private String startCountry;
     private String destinationCountry;
 
+    private LocalDateTime receivedDate;
     private LocalDateTime arrivalDate;
     private LocalDateTime startDate;
     private LocalDateTime createdAt;

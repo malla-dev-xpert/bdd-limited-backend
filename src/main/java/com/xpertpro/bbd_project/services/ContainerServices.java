@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -54,6 +55,28 @@ public class ContainerServices {
         container.setIsAvailable(containersDto.getIsAvailable());
         container.setCreatedAt(LocalDateTime.now());
         container.setSize(containersDto.getSize());
+        container.setLoadingFee(containersDto.getLoadingFee());
+        container.setLocationFee(containersDto.getLocationFee());
+        container.setMargin(containersDto.getMargin());
+        container.setTelxFee(containersDto.getTelxFee());
+        container.setOtherFees(containersDto.getOtherFees());
+        container.setOverweightFee(containersDto.getOverweightFee());
+        container.setLocalCharge(containersDto.getLocalCharge());
+        container.setCheckingFee(containersDto.getCheckingFee());
+        container.setIsTeam(false);
+
+        // Calculer la somme totale de tous les frais + marge
+        Double totalFees =
+                (container.getLoadingFee() != null ? container.getLoadingFee() : 0.0) +
+                        (container.getLocationFee() != null ? container.getLocationFee() : 0.0) +
+                        (container.getTelxFee() != null ? container.getTelxFee() : 0.0) +
+                        (container.getOtherFees() != null ? container.getOtherFees() : 0.0) +
+                        (container.getOverweightFee() != null ? container.getOverweightFee() : 0.0) +
+                        (container.getLocalCharge() != null ? container.getLocalCharge() : 0.0) +
+                        (container.getCheckingFee() != null ? container.getCheckingFee() : 0.0) +
+                        (container.getMargin() != null ? container.getMargin() : 0.0);
+
+        container.setAmount(totalFees);
         container.setUser(user);
         container.setStatus(StatusEnum.PENDING); // Set default status
 
@@ -77,27 +100,94 @@ public class ContainerServices {
         return "SUCCESS";
     }
 
+    @Transactional
     public String updateContainer(Long id, ContainersDto containersDto, Long userId) {
-        Containers newContainer = containersRepository.findById(id)
+        // Récupérer le conteneur existant
+        Containers existingContainer = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé"));
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
 
-        Optional<Containers> existingContainer = containersRepository.findByReference(containersDto.getReference());
-        if (existingContainer.isPresent() && !existingContainer.get().getId().equals(id)) {
+        // Vérifier l'unicité de la référence (sauf pour le conteneur actuel)
+        Optional<Containers> containerWithSameRef = containersRepository.findByReference(containersDto.getReference());
+        if (containerWithSameRef.isPresent() && !containerWithSameRef.get().getId().equals(id)) {
             return "REF_EXIST";
         }
 
-        if (optionalUser.isPresent()) {
-            if (containersDto.getReference() != null) newContainer.setReference(containersDto.getReference());
-            if (containersDto.getSize() != null) newContainer.setSize(containersDto.getSize());
-            if (containersDto.getIsAvailable() != null) newContainer.setIsAvailable(containersDto.getIsAvailable());
-            newContainer.setEditedAt(containersDto.getEditedAt());
+        // Vérifier l'existence de l'utilisateur
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec ID: " + userId));
 
-            containersRepository.save(newContainer);
-            return "SUCCESS";
-        } else {
-            throw new RuntimeException("User not found with ID: " + id);
+        // Mettre à jour les propriétés de base
+        if (containersDto.getReference() != null) {
+            existingContainer.setReference(containersDto.getReference());
         }
+        if (containersDto.getIsTeam() != null) {
+            existingContainer.setIsTeam(containersDto.getIsTeam());
+        }
+        if (containersDto.getSize() != null) {
+            existingContainer.setSize(containersDto.getSize());
+        }
+        if (containersDto.getIsAvailable() != null) {
+            existingContainer.setIsAvailable(containersDto.getIsAvailable());
+        }
+        existingContainer.setEditedAt(LocalDateTime.now());
+
+        // Mettre à jour tous les frais
+        if (containersDto.getLoadingFee() != null) {
+            existingContainer.setLoadingFee(containersDto.getLoadingFee());
+        }
+        if (containersDto.getLocationFee() != null) {
+            existingContainer.setLocationFee(containersDto.getLocationFee());
+        }
+        if (containersDto.getMargin() != null) {
+            existingContainer.setMargin(containersDto.getMargin());
+        }
+        if (containersDto.getTelxFee() != null) {
+            existingContainer.setTelxFee(containersDto.getTelxFee());
+        }
+        if (containersDto.getOtherFees() != null) {
+            existingContainer.setOtherFees(containersDto.getOtherFees());
+        }
+        if (containersDto.getOverweightFee() != null) {
+            existingContainer.setOverweightFee(containersDto.getOverweightFee());
+        }
+        if (containersDto.getLocalCharge() != null) {
+            existingContainer.setLocalCharge(containersDto.getLocalCharge());
+        }
+        if (containersDto.getCheckingFee() != null) {
+            existingContainer.setCheckingFee(containersDto.getCheckingFee());
+        }
+
+        // Recalculer le montant total
+        Double totalFees =
+                (existingContainer.getLoadingFee() != null ? existingContainer.getLoadingFee() : 0.0) +
+                        (existingContainer.getLocationFee() != null ? existingContainer.getLocationFee() : 0.0) +
+                        (existingContainer.getTelxFee() != null ? existingContainer.getTelxFee() : 0.0) +
+                        (existingContainer.getOtherFees() != null ? existingContainer.getOtherFees() : 0.0) +
+                        (existingContainer.getOverweightFee() != null ? existingContainer.getOverweightFee() : 0.0) +
+                        (existingContainer.getLocalCharge() != null ? existingContainer.getLocalCharge() : 0.0) +
+                        (existingContainer.getCheckingFee() != null ? existingContainer.getCheckingFee() : 0.0) +
+                        (existingContainer.getMargin() != null ? existingContainer.getMargin() : 0.0);
+
+        existingContainer.setAmount(totalFees);
+
+        // Mettre à jour le fournisseur si nécessaire
+        if (containersDto.getSupplier_id() != null) {
+            Partners supplier = partnerRepository.findById(containersDto.getSupplier_id())
+                    .orElseThrow(() -> new EntityNotFoundException("Fournisseur non trouvé avec ID: " + containersDto.getSupplier_id()));
+            existingContainer.setSupplier(supplier);
+        }
+
+        // Sauvegarder les modifications
+        containersRepository.save(existingContainer);
+
+        // Logger l'action
+        logServices.logAction(
+                user,
+                "MODIFIER_CONTENEUR",
+                "Containers",
+                existingContainer.getId());
+
+        return "SUCCESS";
     }
 
     @Transactional
@@ -136,22 +226,41 @@ public class ContainerServices {
                 .sorted(Comparator.comparing(Containers::getCreatedAt).reversed())
                 .map(pkg -> {
                     ContainersDto dto = new ContainersDto();
+                    // Informations de base
                     dto.setId(pkg.getId());
                     dto.setReference(pkg.getReference());
                     dto.setCreatedAt(pkg.getCreatedAt());
                     dto.setEditedAt(pkg.getEditedAt());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setSize(pkg.getSize());
-                    dto.setStatus(pkg.getStatus().name());
                     dto.setIsAvailable(pkg.getIsAvailable());
-                    dto.setUserName(pkg.getUser() != null ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
+                    dto.setAmount(pkg.getAmount());
+                    dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+                    dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+                    dto.setIsTeam(pkg.getIsTeam());
+
+                    // Tous les frais
+                    dto.setLoadingFee(pkg.getLoadingFee());
+                    dto.setLocationFee(pkg.getLocationFee());
+                    dto.setMargin(pkg.getMargin());
+                    dto.setTelxFee(pkg.getTelxFee());
+                    dto.setOtherFees(pkg.getOtherFees());
+                    dto.setOverweightFee(pkg.getOverweightFee());
+                    dto.setLocalCharge(pkg.getLocalCharge());
+                    dto.setCheckingFee(pkg.getCheckingFee());
+
+                    // Informations utilisateur
+                    dto.setUserName(pkg.getUser() != null ?
+                            pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
                     dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+
+                    // Informations fournisseur
                     dto.setSupplier_id(pkg.getSupplier() != null ? pkg.getSupplier().getId() : null);
                     dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
-                    dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " +  pkg.getSupplier().getLastName(): null);
-//                    dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
-//                    dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
+                    dto.setSupplierName(pkg.getSupplier() != null ?
+                            pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
 
+                    // Packages associés
                     List<PackageDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .filter(item -> item.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
@@ -159,7 +268,6 @@ public class ContainerServices {
                                 PackageDto packageDto = new PackageDto();
                                 packageDto.setId(packages.getId());
                                 packageDto.setRef(packages.getRef());
-                                packageDto.setWeight(packages.getWeight());
                                 packageDto.setWeight(packages.getWeight());
                                 packageDto.setCbn(packages.getCbn());
                                 packageDto.setStartDate(packages.getStartDate());
@@ -187,7 +295,6 @@ public class ContainerServices {
                     return dto;
                 })
                 .collect(Collectors.toList());
-
     }
 
     public List<ContainersDto> getAllContainersNotInHarbor(int page) {
@@ -201,22 +308,41 @@ public class ContainerServices {
                 .sorted(Comparator.comparing(Containers::getCreatedAt).reversed())
                 .map(pkg -> {
                     ContainersDto dto = new ContainersDto();
+                    // Informations de base
                     dto.setId(pkg.getId());
                     dto.setReference(pkg.getReference());
-                    dto.setCreatedAt(pkg.getCreatedAt() != null ? pkg.getCreatedAt() : null);
-                    dto.setEditedAt(pkg.getEditedAt() != null ? pkg.getCreatedAt() : null);
+                    dto.setCreatedAt(pkg.getCreatedAt());
+                    dto.setEditedAt(pkg.getEditedAt());
                     dto.setStatus(pkg.getStatus().name());
                     dto.setSize(pkg.getSize());
-                    dto.setStatus(pkg.getStatus().name());
                     dto.setIsAvailable(pkg.getIsAvailable());
-                    dto.setUserName(pkg.getUser() != null ? pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
+                    dto.setAmount(pkg.getAmount());
+                    dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+                    dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+                    dto.setIsTeam(pkg.getIsTeam());
+
+                    // Tous les frais
+                    dto.setLoadingFee(pkg.getLoadingFee());
+                    dto.setLocationFee(pkg.getLocationFee());
+                    dto.setMargin(pkg.getMargin());
+                    dto.setTelxFee(pkg.getTelxFee());
+                    dto.setOtherFees(pkg.getOtherFees());
+                    dto.setOverweightFee(pkg.getOverweightFee());
+                    dto.setLocalCharge(pkg.getLocalCharge());
+                    dto.setCheckingFee(pkg.getCheckingFee());
+
+                    // Informations utilisateur
+                    dto.setUserName(pkg.getUser() != null ?
+                            pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
                     dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
-                    dto.setHarborId(pkg.getHarbor() != null ? pkg.getHarbor().getId() : null);
-                    dto.setHarborName(pkg.getHarbor() != null ? pkg.getHarbor().getName() : null);
+
+                    // Informations fournisseur
                     dto.setSupplier_id(pkg.getSupplier() != null ? pkg.getSupplier().getId() : null);
                     dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
-                    dto.setSupplierName(pkg.getSupplier() != null ? pkg.getSupplier().getFirstName() + " " +  pkg.getSupplier().getLastName(): null);
+                    dto.setSupplierName(pkg.getSupplier() != null ?
+                            pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
 
+                    // Packages associés
                     List<PackageDto> packageResponseDtos = pkg.getPackages().stream()
                             .filter(item -> item.getStatus() != StatusEnum.DELETE)
                             .filter(item -> item.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
@@ -224,7 +350,6 @@ public class ContainerServices {
                                 PackageDto packageDto = new PackageDto();
                                 packageDto.setId(packages.getId());
                                 packageDto.setRef(packages.getRef());
-                                packageDto.setWeight(packages.getWeight());
                                 packageDto.setWeight(packages.getWeight());
                                 packageDto.setCbn(packages.getCbn());
                                 packageDto.setStartDate(packages.getStartDate());
@@ -295,32 +420,51 @@ public class ContainerServices {
 
     @Transactional()
     public ContainersDto getContainerById(Long containerId) {
-        Containers container = containersRepository.findById(containerId)
+        Containers pkg = containersRepository.findById(containerId)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé avec l'ID: " + containerId));
 
-        if (container.getStatus() == StatusEnum.DELETE) {
+        if (pkg.getStatus() == StatusEnum.DELETE) {
             throw new RuntimeException("Ce conteneur est supprimé");
         }
 
         ContainersDto dto = new ContainersDto();
-        dto.setId(container.getId());
-        dto.setReference(container.getReference());
-        dto.setCreatedAt(container.getCreatedAt());
-        dto.setSize(container.getSize());
-        dto.setEditedAt(container.getEditedAt());
-        dto.setStatus(container.getStatus().name());
-        dto.setIsAvailable(container.getIsAvailable());
-        dto.setUserName(container.getUser() != null
-                ? container.getUser().getFirstName() + " " + container.getUser().getLastName()
-                : null);
-        dto.setUserId(container.getUser() != null ? container.getUser().getId() : null);
-        dto.setSupplier_id(container.getSupplier() != null ? container.getSupplier().getId() : null);
-        dto.setSupplierPhone(container.getSupplier() != null ? container.getSupplier().getPhoneNumber() : null);
-        dto.setSupplierName(container.getSupplier() != null ? container.getSupplier().getFirstName() + " " +  container.getSupplier().getLastName(): null);
+        // Informations de base
+        dto.setId(pkg.getId());
+        dto.setReference(pkg.getReference());
+        dto.setCreatedAt(pkg.getCreatedAt());
+        dto.setEditedAt(pkg.getEditedAt());
+        dto.setStatus(pkg.getStatus().name());
+        dto.setSize(pkg.getSize());
+        dto.setIsAvailable(pkg.getIsAvailable());
+        dto.setAmount(pkg.getAmount());
+        dto.setStartDeliveryDate(pkg.getStartDeliveryDate());
+        dto.setConfirmDeliveryDate(pkg.getConfirmDeliveryDate());
+        dto.setIsTeam(pkg.getIsTeam());
 
-        List<PackageDto> packageResponseDtos = container.getPackages().stream()
-                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)
-                .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
+        // Tous les frais
+        dto.setLoadingFee(pkg.getLoadingFee());
+        dto.setLocationFee(pkg.getLocationFee());
+        dto.setMargin(pkg.getMargin());
+        dto.setTelxFee(pkg.getTelxFee());
+        dto.setOtherFees(pkg.getOtherFees());
+        dto.setOverweightFee(pkg.getOverweightFee());
+        dto.setLocalCharge(pkg.getLocalCharge());
+        dto.setCheckingFee(pkg.getCheckingFee());
+
+        // Informations utilisateur
+        dto.setUserName(pkg.getUser() != null ?
+                pkg.getUser().getFirstName() + " " + pkg.getUser().getLastName() : null);
+        dto.setUserId(pkg.getUser() != null ? pkg.getUser().getId() : null);
+
+        // Informations fournisseur
+        dto.setSupplier_id(pkg.getSupplier() != null ? pkg.getSupplier().getId() : null);
+        dto.setSupplierPhone(pkg.getSupplier() != null ? pkg.getSupplier().getPhoneNumber() : null);
+        dto.setSupplierName(pkg.getSupplier() != null ?
+                pkg.getSupplier().getFirstName() + " " + pkg.getSupplier().getLastName() : null);
+
+        List<PackageDto> packageResponseDtos = pkg.getPackages().stream()
+                .filter(pkgs -> pkgs.getStatus() != StatusEnum.DELETE)
+                .filter(pkgs -> pkgs.getStatus() != StatusEnum.DELETE_ON_CONTAINER)
                 .map(packages -> {
                     PackageDto packageDto = new PackageDto();
                     packageDto.setId(packages.getId());
@@ -353,7 +497,8 @@ public class ContainerServices {
         return dto;
     }
 
-    public String startDelivery(Long id, Long userId) {
+    @Transactional
+    public String startDelivery(Long id, Long userId, LocalDateTime startDeliveryDate) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
 
@@ -364,9 +509,16 @@ public class ContainerServices {
             return "NO_PACKAGE_FOR_DELIVERY";
         }
 
+        // Mettre à jour le statut de tous les packages du conteneur
+        containers.getPackages().forEach(pkg -> {
+            pkg.setStatus(StatusEnum.INPROGRESS);
+            pkg.setEditedAt(LocalDateTime.now());
+        });
+
         containers.setStatus(StatusEnum.INPROGRESS);
         containers.setUser(user);
         containers.setEditedAt(LocalDateTime.now());
+        containers.setStartDeliveryDate(startDeliveryDate != null ? startDeliveryDate : LocalDateTime.now());
         containersRepository.save(containers);
 
         // Log action
@@ -378,7 +530,8 @@ public class ContainerServices {
         return "La livraison démarre avec succès.";
     }
 
-    public String confirmDelivery(Long id, Long userId) {
+    @Transactional
+    public String confirmDelivery(Long id, Long userId, LocalDateTime confirmDeliveryDate) {
         Containers containers = containersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Container not found with ID: " + id));
 
@@ -393,9 +546,16 @@ public class ContainerServices {
             return "CONTAINER_NOT_IN_PROGRESS";
         }
 
+        // Mettre à jour le statut de tous les packages du conteneur
+        containers.getPackages().forEach(pkg -> {
+            pkg.setStatus(StatusEnum.DELIVERED);
+            pkg.setEditedAt(LocalDateTime.now());
+        });
+
         containers.setStatus(StatusEnum.RECEIVED);
         containers.setUser(user);
         containers.setEditedAt(LocalDateTime.now());
+        containers.setConfirmDeliveryDate(confirmDeliveryDate != null ? confirmDeliveryDate : LocalDateTime.now());
         containersRepository.save(containers);
 
         // Log action

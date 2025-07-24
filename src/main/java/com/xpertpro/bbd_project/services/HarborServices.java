@@ -129,15 +129,36 @@ public class HarborServices {
 
                     List<ContainersDto> containersDtos = pkg.getContainers().stream().map(item -> {
                         ContainersDto containersDto = new ContainersDto();
-                        containersDto.setReference(item.getReference());
+                        // Informations de base
                         containersDto.setId(item.getId());
+                        containersDto.setReference(item.getReference());
+                        containersDto.setCreatedAt(item.getCreatedAt());
+                        containersDto.setEditedAt(item.getEditedAt());
+                        containersDto.setStatus(item.getStatus().name());
                         containersDto.setSize(item.getSize());
                         containersDto.setIsAvailable(item.getIsAvailable());
-                        containersDto.setStatus(item.getStatus().name());
+                        containersDto.setAmount(item.getAmount());
+
+                        // Tous les frais
+                        containersDto.setLoadingFee(item.getLoadingFee());
+                        containersDto.setLocationFee(item.getLocationFee());
+                        containersDto.setMargin(item.getMargin());
+                        containersDto.setTelxFee(item.getTelxFee());
+                        containersDto.setOtherFees(item.getOtherFees());
+                        containersDto.setOverweightFee(item.getOverweightFee());
+                        containersDto.setLocalCharge(item.getLocalCharge());
+                        containersDto.setCheckingFee(item.getCheckingFee());
+
+                        // Informations utilisateur
+                        containersDto.setUserName(item.getUser() != null ?
+                                item.getUser().getFirstName() + " " + item.getUser().getLastName() : null);
+                        containersDto.setUserId(item.getUser() != null ? item.getUser().getId() : null);
+
+                        // Informations fournisseur
                         containersDto.setSupplier_id(item.getSupplier() != null ? item.getSupplier().getId() : null);
                         containersDto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
-                        containersDto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName()
-                                + " " + item.getSupplier().getLastName(): null);
+                        containersDto.setSupplierName(item.getSupplier() != null ?
+                                item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName() : null);
 
                         List<PackageDto> packageResponseDtos = item.getPackages().stream()
                                 .filter(pkgItem -> pkgItem.getStatus() != StatusEnum.DELETE)
@@ -204,14 +225,36 @@ public class HarborServices {
                 .filter(container -> container.getStatus() != StatusEnum.DELETE)
                 .map(item -> {
                     ContainersDto containersDto = new ContainersDto();
+                    // Informations de base
+                    containersDto.setId(item.getId());
                     containersDto.setReference(item.getReference());
-                    containersDto.setIsAvailable(item.getIsAvailable());
-                    containersDto.setSize(item.getSize());
+                    containersDto.setCreatedAt(item.getCreatedAt());
+                    containersDto.setEditedAt(item.getEditedAt());
                     containersDto.setStatus(item.getStatus().name());
+                    containersDto.setSize(item.getSize());
+                    containersDto.setIsAvailable(item.getIsAvailable());
+                    containersDto.setAmount(item.getAmount());
+
+                    // Tous les frais
+                    containersDto.setLoadingFee(item.getLoadingFee());
+                    containersDto.setLocationFee(item.getLocationFee());
+                    containersDto.setMargin(item.getMargin());
+                    containersDto.setTelxFee(item.getTelxFee());
+                    containersDto.setOtherFees(item.getOtherFees());
+                    containersDto.setOverweightFee(item.getOverweightFee());
+                    containersDto.setLocalCharge(item.getLocalCharge());
+                    containersDto.setCheckingFee(item.getCheckingFee());
+
+                    // Informations utilisateur
+                    containersDto.setUserName(item.getUser() != null ?
+                            item.getUser().getFirstName() + " " + item.getUser().getLastName() : null);
+                    containersDto.setUserId(item.getUser() != null ? item.getUser().getId() : null);
+
+                    // Informations fournisseur
                     containersDto.setSupplier_id(item.getSupplier() != null ? item.getSupplier().getId() : null);
                     containersDto.setSupplierPhone(item.getSupplier() != null ? item.getSupplier().getPhoneNumber() : null);
-                    containersDto.setSupplierName(item.getSupplier() != null ? item.getSupplier().getFirstName()
-                            + " " + item.getSupplier().getLastName(): null);
+                    containersDto.setSupplierName(item.getSupplier() != null ?
+                            item.getSupplier().getFirstName() + " " + item.getSupplier().getLastName() : null);
 
                     List<PackageDto> packageResponseDtos = item.getPackages().stream()
                             .filter(pkg -> pkg.getStatus() != StatusEnum.DELETE)

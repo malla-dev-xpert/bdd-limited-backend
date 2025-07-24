@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -153,8 +154,8 @@ public class ContainersController {
     }
 
     @GetMapping("/delivery/{id}")
-    public String deliveryContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
-        String result = containerServices.startDelivery(id, userId);
+    public String deliveryContainer(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "deliveryDate")LocalDateTime deliveryDate){
+        String result = containerServices.startDelivery(id, userId, deliveryDate);
         switch (result){
             case "NO_PACKAGE_FOR_DELIVERY":
                 return "Impossible de démarrer la livraison, pas de colis dans le conteneur.";
@@ -164,8 +165,8 @@ public class ContainersController {
     }
 
     @GetMapping("/delivery-received/{id}")
-    public String confirmDelivery(@PathVariable Long id, @RequestParam(name = "userId") Long userId){
-        String result = containerServices.confirmDelivery(id, userId);
+    public String confirmDelivery(@PathVariable Long id, @RequestParam(name = "userId") Long userId, @RequestParam(name = "confirmDate") LocalDateTime confirmDate){
+        String result = containerServices.confirmDelivery(id, userId, confirmDate);
         switch (result){
             case "NO_PACKAGE_FOR_DELIVERY":
                 return "Impossible de confirmer la réception, pas de colis dans le conteneur.";

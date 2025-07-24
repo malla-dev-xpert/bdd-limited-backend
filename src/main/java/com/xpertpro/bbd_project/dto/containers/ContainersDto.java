@@ -16,7 +16,10 @@ public class ContainersDto {
     private String size;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime editedAt = LocalDateTime.now();
+    private LocalDateTime startDeliveryDate;
+    private LocalDateTime confirmDeliveryDate;
     private Boolean isAvailable;
+    private Boolean isTeam;
     private String status;
     private Long userId;
     private String userName;
@@ -27,4 +30,13 @@ public class ContainersDto {
     @JoinColumn(nullable = true)
     private Long supplier_id;
     private String supplierPhone;
+    private Double locationFee;
+    private Double  localCharge;
+    private Double  loadingFee;
+    private Double  overweightFee;
+    private Double  checkingFee;
+    private Double telxFee;
+    private Double  otherFees;
+    private Double  margin;
+    private Double amount;
 }
