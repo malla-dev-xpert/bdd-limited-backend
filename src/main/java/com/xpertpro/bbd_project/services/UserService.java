@@ -75,70 +75,105 @@ public class UserService {
         return passwordEncoder.encode(userPassword);
     }
 
-    private String generateRandomPassword(int length) {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()-_=+;?/|!~";
-        StringBuilder password = new StringBuilder();
+//    private String generateRandomPassword(int length) {
+//        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()-_=+;?/|!~";
+//        StringBuilder password = new StringBuilder();
+//
+//        for (int i = 0; i < length; i++) {
+//            int randomIndex = (int) (Math.random() * characters.length());
+//            password.append(characters.charAt(randomIndex));
+//        }
+//        return password.toString();
+//    }
 
-        for (int i = 0; i < length; i++) {
-            int randomIndex = (int) (Math.random() * characters.length());
-            password.append(characters.charAt(randomIndex));
-        }
-        return password.toString();
+//    public String createUser(CreateUserDto userDto) {
+//        Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
+//        String randomPassword = generateRandomPassword(10);
+//        // Stocker le mot de passe en clair temporairement
+//        String clearTextPassword = randomPassword;
+//
+//        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+//            return "EMAIL_EXIST";
+//        }
+//
+//        if (optionalUser.isPresent()) {
+//            return "USERNAME_EXIST";
+//        }
+//
+//        if (userRepository.findByPhoneNumber(userDto.getPhoneNumber()).isPresent()) {
+//            return "PHONE_EXIST";
+//        }
+//
+//        RolesEntity role = roleRepository.findByName(userDto.getRoleName())
+//                .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
+//
+//        UserEntity user = userMapper.toEntity(userDto);
+//        user.setRole(role);
+//        user.setPassword(encodePassword(randomPassword));
+//
+//        try {
+//            if (user.getEmail() != null && user.getStatusEnum() == StatusEnum.CREATE) {
+//                Context context = new Context();
+//                context.setVariable("firstName", user.getFirstName());
+//                context.setVariable("lastName", user.getLastName());
+//                context.setVariable("username", user.getUsername());
+//                context.setVariable("password", clearTextPassword);
+//                context.setVariable("roleName", user.getRole().getName());
+//                context.setVariable("createdAt", user.getCreatedAt());
+//
+//                String htmlContent = templateEngine.process("register", context);
+//
+//                MimeMessage mimeMessage = mailSender.createMimeMessage();
+//                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+//                helper.setTo(user.getEmail());
+//                helper.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
+//                helper.setText(htmlContent, true);
+//
+//                mailSender.send(mimeMessage);
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        userRepository.save(user);
+//        return "SUCCESS";
+//    }
+public String createUserWithoutSendEmail(CreateUserDto userDto) {
+    Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
+
+    // Vérifier que le mot de passe est fourni
+    if (userDto.getPassword() == null || userDto.getPassword().isEmpty()) {
+        return "PASSWORD_REQUIRED";
     }
 
-    public String createUser(CreateUserDto userDto) {
-        Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
-        String randomPassword = generateRandomPassword(10);
-        // Stocker le mot de passe en clair temporairement
-        String clearTextPassword = randomPassword;
+    if (optionalUser.isPresent()) {
+        return "USERNAME_EXIST";
+    }
 
+    // Vérification optionnelle pour l'email s'il est fourni
+    if (userDto.getEmail() != null && !userDto.getEmail().isEmpty()) {
         if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
             return "EMAIL_EXIST";
         }
+    }
 
-        if (optionalUser.isPresent()) {
-            return "USERNAME_EXIST";
-        }
-
+    // Vérification optionnelle pour le téléphone s'il est fourni
+    if (userDto.getPhoneNumber() != null && !userDto.getPhoneNumber().isEmpty()) {
         if (userRepository.findByPhoneNumber(userDto.getPhoneNumber()).isPresent()) {
             return "PHONE_EXIST";
         }
-
-        RolesEntity role = roleRepository.findByName(userDto.getRoleName())
-                .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
-
-        UserEntity user = userMapper.toEntity(userDto);
-        user.setRole(role);
-        user.setPassword(encodePassword(randomPassword));
-
-        try {
-            if (user.getEmail() != null && user.getStatusEnum() == StatusEnum.CREATE) {
-                Context context = new Context();
-                context.setVariable("firstName", user.getFirstName());
-                context.setVariable("lastName", user.getLastName());
-                context.setVariable("username", user.getUsername());
-                context.setVariable("password", clearTextPassword);
-                context.setVariable("roleName", user.getRole().getName());
-                context.setVariable("createdAt", user.getCreatedAt());
-
-                String htmlContent = templateEngine.process("register", context);
-
-                MimeMessage mimeMessage = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                helper.setTo(user.getEmail());
-                helper.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
-                helper.setText(htmlContent, true);
-
-                mailSender.send(mimeMessage);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        userRepository.save(user);
-        return "SUCCESS";
     }
 
+    RolesEntity role = roleRepository.findByName(userDto.getRoleName())
+            .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
+
+    UserEntity user = userMapper.toEntity(userDto);
+    user.setRole(role);
+    user.setPassword(encodePassword(userDto.getPassword())); // Utiliser le mot de passe fourni
+
+    userRepository.save(user);
+    return "SUCCESS";
+}
     public findUserDto getUserById(Long id) {
         Optional<UserEntity> userOptional = userRepository.findById(id);
         if (userOptional.isPresent()) {

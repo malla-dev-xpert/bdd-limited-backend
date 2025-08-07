@@ -205,6 +205,27 @@ public class PartnerServices {
                                 newPackageDto.setId(e.getId());
                                 newPackageDto.setStatus(e.getStatus().name());
 
+                                List<ItemDto> itemsDtos = e.getItems().stream()
+                                        .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                            itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
+                                            itemDto.setInvoiceNumber(i.getInvoiceNumber());
+                                            return itemDto;
+                                        }).collect(Collectors.toList());
+
+                                newPackageDto.setItems(itemsDtos);
+
                                 return newPackageDto;
 
                             }).collect(Collectors.toList());
@@ -355,6 +376,27 @@ public class PartnerServices {
                                 newPackageDto.setArrivalDate(e.getArrivalDate());
                                 newPackageDto.setId(e.getId());
                                 newPackageDto.setStatus(e.getStatus().name());
+
+                                List<ItemDto> itemsDtos = e.getItems().stream()
+                                        .sorted(Comparator.comparing(Items::getCreatedAt).reversed())
+                                        .filter(items -> items.getStatus() != StatusEnum.DELETE)
+                                        .map(i -> {
+                                            ItemDto itemDto = new ItemDto();
+                                            itemDto.setId(i.getId());
+                                            itemDto.setDescription(i.getDescription());
+                                            itemDto.setQuantity(i.getQuantity());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setSupplierName(i.getSupplier() != null ? i.getSupplier().getFirstName() + " " + i.getSupplier().getLastName() : null);
+                                            itemDto.setSupplierPhone(i.getSupplier() != null ? i.getSupplier().getPhoneNumber() : null);
+                                            itemDto.setStatus(i.getStatus().name());
+                                            itemDto.setUnitPrice(i.getUnitPrice());
+                                            itemDto.setTotalPrice(i.getTotalPrice());
+                                            itemDto.setSalesRate(i.getSalesRate());
+                                            itemDto.setInvoiceNumber(i.getInvoiceNumber());
+                                            return itemDto;
+                                        }).collect(Collectors.toList());
+
+                                newPackageDto.setItems(itemsDtos);
 
                                 return newPackageDto;
 

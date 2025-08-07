@@ -135,7 +135,7 @@ public class UserController {
 
     @PostMapping("/create")
     public ResponseEntity<String> register(@RequestBody CreateUserDto userDto) {
-        String result = userService.createUser(userDto);
+        String result = userService.createUserWithoutSendEmail(userDto);
         switch (result) {
             case "EMAIL_EXIST":
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Email déjà utilisé !");
