@@ -262,42 +262,114 @@ public String createUserWithoutSendEmail(CreateUserDto userDto) {
         }
     }
 
-    public String disableUser(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            user.setStatusEnum(StatusEnum.DISABLE);
-            userRepository.save(user);
+    @Transactional
+    public String disableUser(Long userId, UserEntity currentUser) {
+        // 1. Validation des entrées
+        validateInput(userId, currentUser);
 
-            if(user.getStatusEnum() == StatusEnum.DISABLE){
-                // déconnecter un utilisateur après la désactivation de son compte
-                SecurityContextHolder.getContext().setAuthentication(null);
-                SecurityContextHolder.clearContext();
+        // 2. Récupération et vérification de l'utilisateur
+        UserEntity userToDisable = getUserToDisable(userId);
 
-                try {
-                    System.out.println("Statut de l'utilisateur est DISABLE, envoi de l'email...");
-                    Context context = new Context();
-                    context.setVariable("firstName", user.getFirstName());
-                    context.setVariable("lastName", user.getLastName());
-                    context.setVariable("username", user.getUsername());
-                    context.setVariable("editedAt", user.getEditedAt());
+        // 3. Vérification des permissions
+        checkDisablePermissions(currentUser, userToDisable);
 
-                    String htmlContent = templateEngine.process("disable-user", context);
+        // 4. Mise à jour du statut
+        updateUserStatus(userToDisable, currentUser);
 
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setTo(user.getEmail());
-                    helper.setSubject("Compte désactivé – BBD LIMITED");
-                    helper.setText(htmlContent, true);
+        // 5. Gestion de la session
+        handleUserSession(userToDisable);
 
-                    mailSender.send(mimeMessage);
-                    return "user disable.";
-                } catch (Exception e) {
-                    throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage(), e);
-                }
-            }
+        // 6. Notification (si email disponible)
+        sendDisableNotification(userToDisable);
+
+        return String.format("L'utilisateur %s a été désactivé avec succès", userToDisable.getUsername());
+    }
+
+    private void validateInput(Long userId, UserEntity currentUser) {
+        if (userId == null) {
+            throw new IllegalArgumentException("L'ID utilisateur est requis");
         }
-        throw new RuntimeException("User not found with ID: " + userId);
+        if (currentUser == null) {
+            throw new IllegalArgumentException("L'utilisateur courant est requis");
+        }
+    }
+
+    private UserEntity getUserToDisable(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec l'ID: " + userId));
+    }
+
+    private void checkDisablePermissions(UserEntity currentUser, UserEntity userToDisable) {
+        // Empêche un utilisateur non admin de désactiver un compte
+        if (!currentUser.getRole().getPermissions().contains(PermissionsEnum.IS_ADMIN)) {
+            throw new SecurityException("Privilèges insuffisants pour désactiver un utilisateur");
+        }
+
+        // Empêche l'auto-désactivation (optionnel)
+        if (currentUser.getId().equals(userToDisable.getId())) {
+            throw new SecurityException("Auto-désactivation non autorisée");
+        }
+    }
+
+    private void updateUserStatus(UserEntity userToDisable, UserEntity currentUser) {
+        userToDisable.setStatusEnum(StatusEnum.DISABLE);
+        userToDisable.setEditedAt(LocalDateTime.now());
+
+        // Log l'action
+        logServices.logAction(
+                currentUser,
+                "DISABLE_USER",
+                "Users",
+                userToDisable.getId()
+        );
+
+        userRepository.save(userToDisable);
+    }
+
+    private void handleUserSession(UserEntity userToDisable) {
+        // Invalide toutes les sessions actives
+        List<SessionLog> activeSessions = sessionLogRepository
+                .findByUsernameAndLogoutTimeIsNull(userToDisable.getUsername());
+
+        activeSessions.forEach(session -> {
+            session.setLogoutTime(LocalDateTime.now());
+            sessionLogRepository.save(session);
+        });
+
+        // Nettoie le contexte de sécurité
+        SecurityContextHolder.clearContext();
+    }
+
+    private void sendDisableNotification(UserEntity userToDisable) {
+        if (userToDisable.getEmail() == null) {
+            return;
+        }
+
+        try {
+            MimeMessage message = buildDisableEmail(userToDisable);
+            mailSender.send(message);
+            System.out.println("Notification de désactivation envoyée à {}"+ userToDisable.getEmail());
+        } catch (Exception e) {
+            System.out.println("Échec d'envoi de l'email de désactivation à {}"+ userToDisable.getEmail()+ e);
+        }
+    }
+
+    private MimeMessage buildDisableEmail(UserEntity userToDisable) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("firstName", userToDisable.getFirstName());
+        context.setVariable("lastName", userToDisable.getLastName());
+        context.setVariable("username", userToDisable.getUsername());
+        context.setVariable("editedAt", LocalDateTime.now());
+
+        String htmlContent = templateEngine.process("disable-user", context);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(userToDisable.getEmail());
+        helper.setSubject("Compte désactivé – BBD LIMITED");
+        helper.setText(htmlContent, true);
+
+        return message;
     }
 
     @Transactional

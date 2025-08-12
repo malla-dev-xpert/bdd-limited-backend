@@ -1,5 +1,6 @@
 package com.xpertpro.bbd_project.controllers;
 
+import com.xpertpro.bbd_project.config.ApiResponsee;
 import com.xpertpro.bbd_project.config.JwtUtil;
 import com.xpertpro.bbd_project.dto.user.CreateUserDto;
 import com.xpertpro.bbd_project.dto.user.EditPasswordDto;
@@ -12,6 +13,7 @@ import com.xpertpro.bbd_project.logs.SessionLog;
 import com.xpertpro.bbd_project.repository.SessionLogRepository;
 import com.xpertpro.bbd_project.repository.UserRepository;
 import com.xpertpro.bbd_project.services.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -175,9 +179,59 @@ public class UserController {
     }
 
     @DeleteMapping("/disable/{id}")
-    public String disableUser(@PathVariable Long id){
-        userService.disableUser(id);
-        return "Le compte de l'utilisateur a été désactivé.";
+    public ResponseEntity<ApiResponsee<String>> disableUser(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long currentUserId) {
+
+        try {
+            // 1. Récupérer l'utilisateur courant depuis l'header
+            UserEntity currentUser = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new EntityNotFoundException("Utilisateur courant non trouvé"));
+
+            // 2. Appeler le service
+            String result = userService.disableUser(id, currentUser);
+
+            // 3. Retourner la réponse appropriée
+            return ResponseEntity.ok()
+                    .body(new ApiResponsee<>(
+                            true,
+                            result,
+                            "User disabled successfully",
+                            null));
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponsee<>(
+                            false,
+                            e.getMessage(),
+                            null,
+                            List.of("User not found")));
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponsee<>(
+                            false,
+                            e.getMessage(),
+                            null,
+                            List.of("Permission denied")));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponsee<>(
+                            false,
+                            e.getMessage(),
+                            null,
+                            List.of("Invalid input")));
+
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la désactivation de l'utilisateur ID: {}"+ id+ e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponsee<>(
+                            false,
+                            "Erreur interne du serveur",
+                            null,
+                            List.of("Server error")));
+        }
     }
 
     @DeleteMapping("/delete")
