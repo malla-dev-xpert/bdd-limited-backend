@@ -75,70 +75,105 @@ public class UserService {
         return passwordEncoder.encode(userPassword);
     }
 
-    private String generateRandomPassword(int length) {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()-_=+;?/|!~";
-        StringBuilder password = new StringBuilder();
+//    private String generateRandomPassword(int length) {
+//        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()-_=+;?/|!~";
+//        StringBuilder password = new StringBuilder();
+//
+//        for (int i = 0; i < length; i++) {
+//            int randomIndex = (int) (Math.random() * characters.length());
+//            password.append(characters.charAt(randomIndex));
+//        }
+//        return password.toString();
+//    }
 
-        for (int i = 0; i < length; i++) {
-            int randomIndex = (int) (Math.random() * characters.length());
-            password.append(characters.charAt(randomIndex));
-        }
-        return password.toString();
+//    public String createUser(CreateUserDto userDto) {
+//        Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
+//        String randomPassword = generateRandomPassword(10);
+//        // Stocker le mot de passe en clair temporairement
+//        String clearTextPassword = randomPassword;
+//
+//        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+//            return "EMAIL_EXIST";
+//        }
+//
+//        if (optionalUser.isPresent()) {
+//            return "USERNAME_EXIST";
+//        }
+//
+//        if (userRepository.findByPhoneNumber(userDto.getPhoneNumber()).isPresent()) {
+//            return "PHONE_EXIST";
+//        }
+//
+//        RolesEntity role = roleRepository.findByName(userDto.getRoleName())
+//                .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
+//
+//        UserEntity user = userMapper.toEntity(userDto);
+//        user.setRole(role);
+//        user.setPassword(encodePassword(randomPassword));
+//
+//        try {
+//            if (user.getEmail() != null && user.getStatusEnum() == StatusEnum.CREATE) {
+//                Context context = new Context();
+//                context.setVariable("firstName", user.getFirstName());
+//                context.setVariable("lastName", user.getLastName());
+//                context.setVariable("username", user.getUsername());
+//                context.setVariable("password", clearTextPassword);
+//                context.setVariable("roleName", user.getRole().getName());
+//                context.setVariable("createdAt", user.getCreatedAt());
+//
+//                String htmlContent = templateEngine.process("register", context);
+//
+//                MimeMessage mimeMessage = mailSender.createMimeMessage();
+//                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+//                helper.setTo(user.getEmail());
+//                helper.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
+//                helper.setText(htmlContent, true);
+//
+//                mailSender.send(mimeMessage);
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        userRepository.save(user);
+//        return "SUCCESS";
+//    }
+public String createUserWithoutSendEmail(CreateUserDto userDto) {
+    Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
+
+    // Vérifier que le mot de passe est fourni
+    if (userDto.getPassword() == null || userDto.getPassword().isEmpty()) {
+        return "PASSWORD_REQUIRED";
     }
 
-    public String createUser(CreateUserDto userDto) {
-        Optional<UserEntity> optionalUser = Optional.ofNullable(userRepository.findByUsername(userDto.getUsername()));
-        String randomPassword = generateRandomPassword(10);
-        // Stocker le mot de passe en clair temporairement
-        String clearTextPassword = randomPassword;
+    if (optionalUser.isPresent()) {
+        return "USERNAME_EXIST";
+    }
 
+    // Vérification optionnelle pour l'email s'il est fourni
+    if (userDto.getEmail() != null && !userDto.getEmail().isEmpty()) {
         if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
             return "EMAIL_EXIST";
         }
+    }
 
-        if (optionalUser.isPresent()) {
-            return "USERNAME_EXIST";
-        }
-
+    // Vérification optionnelle pour le téléphone s'il est fourni
+    if (userDto.getPhoneNumber() != null && !userDto.getPhoneNumber().isEmpty()) {
         if (userRepository.findByPhoneNumber(userDto.getPhoneNumber()).isPresent()) {
             return "PHONE_EXIST";
         }
-
-        RolesEntity role = roleRepository.findByName(userDto.getRoleName())
-                .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
-
-        UserEntity user = userMapper.toEntity(userDto);
-        user.setRole(role);
-        user.setPassword(encodePassword(randomPassword));
-
-        try {
-            if (user.getEmail() != null && user.getStatusEnum() == StatusEnum.CREATE) {
-                Context context = new Context();
-                context.setVariable("firstName", user.getFirstName());
-                context.setVariable("lastName", user.getLastName());
-                context.setVariable("username", user.getUsername());
-                context.setVariable("password", clearTextPassword);
-                context.setVariable("roleName", user.getRole().getName());
-                context.setVariable("createdAt", user.getCreatedAt());
-
-                String htmlContent = templateEngine.process("register", context);
-
-                MimeMessage mimeMessage = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                helper.setTo(user.getEmail());
-                helper.setSubject("Bienvenue sur BBD-LIMITED – Vos informations de connexion");
-                helper.setText(htmlContent, true);
-
-                mailSender.send(mimeMessage);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        userRepository.save(user);
-        return "SUCCESS";
     }
 
+    RolesEntity role = roleRepository.findByName(userDto.getRoleName())
+            .orElseThrow(() ->  new RuntimeException("ROLE_NOT_FOUND"));
+
+    UserEntity user = userMapper.toEntity(userDto);
+    user.setRole(role);
+    user.setPassword(encodePassword(userDto.getPassword())); // Utiliser le mot de passe fourni
+
+    userRepository.save(user);
+    return "SUCCESS";
+}
     public findUserDto getUserById(Long id) {
         Optional<UserEntity> userOptional = userRepository.findById(id);
         if (userOptional.isPresent()) {
@@ -227,42 +262,114 @@ public class UserService {
         }
     }
 
-    public String disableUser(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            user.setStatusEnum(StatusEnum.DISABLE);
-            userRepository.save(user);
+    @Transactional
+    public String disableUser(Long userId, UserEntity currentUser) {
+        // 1. Validation des entrées
+        validateInput(userId, currentUser);
 
-            if(user.getStatusEnum() == StatusEnum.DISABLE){
-                // déconnecter un utilisateur après la désactivation de son compte
-                SecurityContextHolder.getContext().setAuthentication(null);
-                SecurityContextHolder.clearContext();
+        // 2. Récupération et vérification de l'utilisateur
+        UserEntity userToDisable = getUserToDisable(userId);
 
-                try {
-                    System.out.println("Statut de l'utilisateur est DISABLE, envoi de l'email...");
-                    Context context = new Context();
-                    context.setVariable("firstName", user.getFirstName());
-                    context.setVariable("lastName", user.getLastName());
-                    context.setVariable("username", user.getUsername());
-                    context.setVariable("editedAt", user.getEditedAt());
+        // 3. Vérification des permissions
+        checkDisablePermissions(currentUser, userToDisable);
 
-                    String htmlContent = templateEngine.process("disable-user", context);
+        // 4. Mise à jour du statut
+        updateUserStatus(userToDisable, currentUser);
 
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setTo(user.getEmail());
-                    helper.setSubject("Compte désactivé – BBD LIMITED");
-                    helper.setText(htmlContent, true);
+        // 5. Gestion de la session
+        handleUserSession(userToDisable);
 
-                    mailSender.send(mimeMessage);
-                    return "user disable.";
-                } catch (Exception e) {
-                    throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage(), e);
-                }
-            }
+        // 6. Notification (si email disponible)
+        sendDisableNotification(userToDisable);
+
+        return String.format("L'utilisateur %s a été désactivé avec succès", userToDisable.getUsername());
+    }
+
+    private void validateInput(Long userId, UserEntity currentUser) {
+        if (userId == null) {
+            throw new IllegalArgumentException("L'ID utilisateur est requis");
         }
-        throw new RuntimeException("User not found with ID: " + userId);
+        if (currentUser == null) {
+            throw new IllegalArgumentException("L'utilisateur courant est requis");
+        }
+    }
+
+    private UserEntity getUserToDisable(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec l'ID: " + userId));
+    }
+
+    private void checkDisablePermissions(UserEntity currentUser, UserEntity userToDisable) {
+        // Empêche un utilisateur non admin de désactiver un compte
+        if (!currentUser.getRole().getPermissions().contains(PermissionsEnum.IS_ADMIN)) {
+            throw new SecurityException("Privilèges insuffisants pour désactiver un utilisateur");
+        }
+
+        // Empêche l'auto-désactivation (optionnel)
+        if (currentUser.getId().equals(userToDisable.getId())) {
+            throw new SecurityException("Auto-désactivation non autorisée");
+        }
+    }
+
+    private void updateUserStatus(UserEntity userToDisable, UserEntity currentUser) {
+        userToDisable.setStatusEnum(StatusEnum.DISABLE);
+        userToDisable.setEditedAt(LocalDateTime.now());
+
+        // Log l'action
+        logServices.logAction(
+                currentUser,
+                "DISABLE_USER",
+                "Users",
+                userToDisable.getId()
+        );
+
+        userRepository.save(userToDisable);
+    }
+
+    private void handleUserSession(UserEntity userToDisable) {
+        // Invalide toutes les sessions actives
+        List<SessionLog> activeSessions = sessionLogRepository
+                .findByUsernameAndLogoutTimeIsNull(userToDisable.getUsername());
+
+        activeSessions.forEach(session -> {
+            session.setLogoutTime(LocalDateTime.now());
+            sessionLogRepository.save(session);
+        });
+
+        // Nettoie le contexte de sécurité
+        SecurityContextHolder.clearContext();
+    }
+
+    private void sendDisableNotification(UserEntity userToDisable) {
+        if (userToDisable.getEmail() == null) {
+            return;
+        }
+
+        try {
+            MimeMessage message = buildDisableEmail(userToDisable);
+            mailSender.send(message);
+            System.out.println("Notification de désactivation envoyée à {}"+ userToDisable.getEmail());
+        } catch (Exception e) {
+            System.out.println("Échec d'envoi de l'email de désactivation à {}"+ userToDisable.getEmail()+ e);
+        }
+    }
+
+    private MimeMessage buildDisableEmail(UserEntity userToDisable) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("firstName", userToDisable.getFirstName());
+        context.setVariable("lastName", userToDisable.getLastName());
+        context.setVariable("username", userToDisable.getUsername());
+        context.setVariable("editedAt", LocalDateTime.now());
+
+        String htmlContent = templateEngine.process("disable-user", context);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(userToDisable.getEmail());
+        helper.setSubject("Compte désactivé – BBD LIMITED");
+        helper.setText(htmlContent, true);
+
+        return message;
     }
 
     @Transactional
